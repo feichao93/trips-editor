@@ -1,24 +1,25 @@
 import { h } from '@cycle/dom'
 import { DOMSource } from '@cycle/dom'
 import isolate from '@cycle/isolate'
-import actions from './actions'
+import * as d3 from 'd3'
 import { List, Map, OrderedSet } from 'immutable'
 import * as R from 'ramda'
 import { VNode } from 'snabbdom/vnode'
 import xs, { Stream } from 'xstream'
 import sampleCombine from 'xstream/extra/sampleCombine'
+import actions from './actions'
+import { initState, Updater } from './actions'
+import Inspector from './components/Inspector'
 import Svg from './components/Svg'
-import { ItemId, Item, Point, PolygonItem } from './interfaces'
+import { Item, ItemId, Point, PolygonItem } from './interfaces'
 import { PaintSink } from './makePaintDriver'
 import { ShortcutSource } from './makeShortcutDriver'
 import './styles/app.styl'
-import * as d3 from 'd3'
-import { Updater, initState } from './actions'
 
-const EmptyComponent = ({ DOM }: { DOM: DOMSource }) => ({ DOM: xs.of('') as any })
+const EmptyComponent = ({ DOM }: { DOM: DOMSource }) => ({ DOM: xs.of(null) as any })
 const Menubar = EmptyComponent
 const Structure = EmptyComponent
-const Inspector = EmptyComponent
+// const Inspector = EmptyComponent
 // const Svg = EmptyComponent
 const StatusBar = EmptyComponent
 
@@ -47,7 +48,7 @@ export default function App(sources: Sources): Sinks {
   const esc$ = sources.shortcut.shortcut('esc', 'idle')
 
   const changeInteraction$ = xs.create<string>()
-  const interaction$ = changeInteraction$.startWith(initInteraction).debug('interaction')
+  const interaction$ = changeInteraction$.startWith(initInteraction)
 
   const rectStartPos$: Stream<Point> = down$
     .compose(sampleCombine(interaction$))
@@ -98,9 +99,14 @@ export default function App(sources: Sources): Sinks {
     // paint: sources.paint,
     paint: xs.of({ transform: d3.zoomIdentity }),
     drawingItem: drawingRect$,
+    selectedItems: state$.map(R.prop('items')),
     state: state$,
   })
-  const inspector = (isolate(Inspector, 'inspector') as typeof Inspector)({ DOM: domSource })
+  const inspector = (isolate(Inspector, 'inspector') as typeof Inspector)({
+    DOM: domSource,
+    interaction: interaction$,
+  })
+
   const statusBar = (isolate(StatusBar, 'status-bar') as typeof StatusBar)({ DOM: domSource })
 
   changeInteraction$.imitate(
@@ -109,11 +115,11 @@ export default function App(sources: Sources): Sinks {
   move$.imitate(svg.move)
   down$.imitate(svg.down)
   up$.imitate(svg.up)
-  action$.imitate(xs.merge(addItemAction$).debug('action'))
+  action$.imitate(xs.merge(addItemAction$))
 
   const vdom$ = xs
     .combine(menubar.DOM, structure.DOM, svg.DOM, inspector.DOM, statusBar.DOM)
-    .map(components => h('div.app', components))
+    .map(components => h('div.app', components.filter(R.identity)))
 
   return {
     DOM: vdom$,

@@ -1,9 +1,12 @@
 import { DOMSource, h } from '@cycle/dom'
+import { OrderedMap } from 'immutable'
+import * as R from 'ramda'
 import { VNode } from 'snabbdom/vnode'
 import xs, { Stream } from 'xstream'
 import sampleCombine from 'xstream/extra/sampleCombine'
+import SelectionIndicator from './SelectionIndicator'
 import { State } from '../actions'
-import { Point, PolygonItem } from '../interfaces'
+import { Point, PolygonItem, ItemId, Item } from '../interfaces'
 import '../styles/svg.styl'
 
 export interface Sources {
@@ -11,6 +14,7 @@ export interface Sources {
   paint: Stream<{ transform: d3.ZoomTransform }>
   drawingItem: Stream<PolygonItem>
   state: Stream<State>
+  selectedItems: Stream<OrderedMap<ItemId, Item>>
 }
 
 export interface Sinks {
@@ -21,9 +25,9 @@ export interface Sinks {
   up: Stream<Point>
 }
 
-function itemView(item: PolygonItem) {
+function itemView(item: PolygonItem): VNode {
   if (item == null) {
-    return ''
+    return null
   }
   return h('polygon', {
     key: item.id,
@@ -50,44 +54,53 @@ function toPos(
 export default function Svg(sources: Sources): Sinks {
   const domSource = sources.DOM
   const paintSource = sources.paint
-  const svg$ = domSource.select('.svg').element() as Stream<any>
+  const svgdom = domSource.select('.svg')
+
+  svgdom.events('dragover', { preventDefault: true }).addListener({
+    next(e) {
+      e.dataTransfer.dropEffect = 'copy'
+    },
+  })
+
+  const file$ = svgdom
+    .events('drop', { preventDefault: true })
+    .map(e => e.dataTransfer.files[0])
+    .filter(R.identity)
+
+  // TODO handle open file
+  file$.debug('file').addListener({})
+
   const move$ = toPos(domSource.events('mousemove'), paintSource)
   const down$ = toPos(domSource.events('mousedown'), paintSource)
   const up$ = toPos(domSource.events('mouseup'), paintSource)
 
-  const vdom$ = xs.combine(sources.state, sources.paint, sources.drawingItem).map(
-    ([{ items }, { transform }, drawingItem]) =>
+  const vdom$ = xs
+    .combine(sources.state, sources.paint, sources.drawingItem, sources.selectedItems)
+    .map(([{ items }, { transform }, drawingItem, selectedItems]) =>
       h('svg.svg', [
-        h('g', { attrs: { transform: String(transform) } }, [
-          h('line', { attrs: { x1: 0, y1: 0, x2: 1000, y2: 0, stroke: 'red' } }),
-          h('line', { attrs: { x1: 0, y1: 0, x2: 0, y2: 1000, stroke: 'red' } }),
-          h('g[role=items]', items.map(itemView).toArray()),
-          // itemView(drawingItem), // TODO LAST EDIT HERE
-        ]),
+        h(
+          'g',
+          { attrs: { transform: String(transform) } },
+          [
+            h('line', { attrs: { x1: 0, y1: 0, x2: 1000, y2: 0, stroke: 'red' } }),
+            h('line', { attrs: { x1: 0, y1: 0, x2: 0, y2: 1000, stroke: 'red' } }),
+            h(
+              'g',
+              { attrs: { role: 'items' } },
+              items
+                .toList()
+                .map(itemView)
+                .toArray(),
+            ),
+            itemView(drawingItem),
+            SelectionIndicator({ selectedItems, transform }),
+          ].filter(R.identity),
+        ),
       ]),
-    // <svg
-    //   className="svg"
-    //   // ref={node => (this.svgNode = node)}
-    //   // onDragOver={this.onDragOver}
-    //   // onDrop={this.onDrop}
-    //   // {...this.handlers}
-    //   // style={{ cursor }}
-    // >
-    //   <g transform={String(transform)}>
-    //     <line x1="0" y1="0" x2="1000" y2="0" stroke="red" />
-    //     <line x1="0" y1="0" x2="0" y2="1000" stroke="red" />
-    //     <g role="items" />
-    //     {itemView(item)}
-    //     {/* <Items items={items} zlist={zlist} /> */ ''}
-    //     {/* {drawingItemHtml} */ ''}
-    //     {/* {selectedItemsIndicator} */ ''}
-    //     {/* <Addons addons={addons} transform={transform} /> */ ''}
-    //   </g>
-    // </svg>
-  )
+    )
   return {
     DOM: vdom$,
-    svg: svg$,
+    svg: svgdom.element() as any,
     move: move$,
     down: down$,
     up: up$,

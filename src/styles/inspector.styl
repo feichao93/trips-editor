@@ -1,0 +1,40 @@
+.inspector { 
+  position absolute
+  z-index 5
+  top 0
+  right 0
+  bottom 0
+  width 400px
+  border-left 1px solid #aaa
+  background rgba(221, 221, 221, 0.7)
+  overflow-y auto
+
+ .row {
+    display flex
+    margin 10px
+    overflow-x hidden
+
+    > h2 {
+      width 130px
+    }
+
+    .field {
+      display flex
+      flex-flow column
+
+      input {
+        height 30px
+      }
+
+      input[type=color] {
+        width 70px
+      }
+    }
+
+    .btn {
+      align-self center
+      width 70px
+      height 30px
+    }
+  }
+}
