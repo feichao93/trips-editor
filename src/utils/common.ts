@@ -1,5 +1,7 @@
-import { Point, Item, PolygonItem, ItemId } from '../interfaces'
 import { List, OrderedMap } from 'immutable'
+import { Stream } from 'xstream'
+import sampleCombine from 'xstream/extra/sampleCombine'
+import { Item, ItemId, Point, PolygonItem } from '../interfaces'
 
 const nextIdMap = new Map<string, number>()
 
@@ -65,4 +67,19 @@ export function moveItem(item: Item, dx: number, dy: number) {
     return item.update('points', points => points.map(p => ({ x: p.x + dx, y: p.y + dy })))
   }
   throw new Error('NOT IMPLEMENTED')
+}
+
+export function invertPos(
+  mouseEvent$: Stream<MouseEvent>,
+  transform$: Stream<d3.ZoomTransform>,
+): Stream<Point> {
+  return mouseEvent$.compose(sampleCombine(transform$)).map(([event, transform]) => {
+    const [x, y] = transform.invert([event.x, event.y])
+    return { x, y }
+  })
+}
+
+export function invert(p: Point, transform: d3.ZoomTransform): Point {
+  const [x, y] = transform.invert([p.x, p.y])
+  return { x, y }
 }

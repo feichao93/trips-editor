@@ -1,4 +1,5 @@
 import { List, Record } from 'immutable'
+import { Stream } from 'xstream'
 
 declare global {
   interface Event {
@@ -29,3 +30,11 @@ export const PolygonItem = Record(
 )
 export const polygonItem = PolygonItem()
 export type PolygonItem = typeof polygonItem
+
+export interface Mouse {
+  move$: Stream<Point>
+  down$: Stream<Point>
+  up$: Stream<Point>
+  dblclick$: Stream<Point>
+  wheel$: Stream<{ pos: Point; deltaY: number }>
+}

@@ -8,10 +8,10 @@ import SelectionIndicator from './SelectionIndicator'
 import { State } from '../actions'
 import { Point, PolygonItem, ItemId, Item } from '../interfaces'
 import '../styles/svg.styl'
+import { invertPos } from '../utils/common'
 
 export interface Sources {
   DOM: DOMSource
-  paint: Stream<{ transform: d3.ZoomTransform }>
   drawingItem: Stream<PolygonItem>
   state: Stream<State>
   selectedItems: Stream<OrderedMap<ItemId, Item>>
@@ -20,10 +20,11 @@ export interface Sources {
 export interface Sinks {
   DOM: Stream<VNode>
   svg: Stream<SVGSVGElement>
-  move: Stream<Point>
   down: Stream<Point>
-  up: Stream<Point>
-  click: Stream<Point>
+  rawDown: Stream<Point>
+  dblclick: Stream<Point>
+  rawDblclick: Stream<Point>
+  rawWheel: Stream<{ pos: Point; deltaY: number }>
 }
 
 function Item(item: PolygonItem): VNode {
@@ -43,19 +44,8 @@ function Item(item: PolygonItem): VNode {
   })
 }
 
-function toPos(
-  mouseEvent$: Stream<MouseEvent>,
-  paintSouce: Stream<{ transform: d3.ZoomTransform }>,
-): Stream<Point> {
-  return mouseEvent$.compose(sampleCombine(paintSouce)).map(([event, paint]) => {
-    const [x, y] = paint.transform.invert([event.x, event.y])
-    return { x, y }
-  })
-}
-
 export default function Svg(sources: Sources): Sinks {
   const domSource = sources.DOM
-  const paintSource = sources.paint
   const svgdom = domSource.select('.svg')
 
   svgdom.events('dragover', { preventDefault: true }).addListener({
@@ -72,16 +62,17 @@ export default function Svg(sources: Sources): Sinks {
   // TODO handle open file
   file$.debug('file').addListener({})
 
-  const window$ = domSource.select('document').element()
+  const transform$ = sources.state.map(s => s.transform)
 
-  const move$ = toPos(domSource.events('mousemove'), paintSource)
-  const down$ = toPos(domSource.events('mousedown'), paintSource)
-  const up$ = toPos(domSource.events('mouseup'), paintSource)
-  const click$ = toPos(domSource.events('click'), paintSource)
+  const rawDown$ = domSource.events('mousedown')
+  const down$ = invertPos(rawDown$, transform$)
+  const rawDblclick$ = domSource.events('dblclick')
+  const rawWheel$ = domSource.events('wheel').map(e => ({ pos: e, deltaY: e.deltaY }))
+  const dblclick$ = invertPos(rawDblclick$, transform$)
 
   const vdom$ = xs
-    .combine(sources.state, sources.paint, sources.drawingItem, sources.selectedItems)
-    .map(([{ items, zlist }, { transform }, drawingItem, selectedItems]) =>
+    .combine(sources.state, sources.drawingItem, sources.selectedItems)
+    .map(([{ items, zlist, transform }, drawingItem, selectedItems]) =>
       h('svg.svg', [
         h(
           'g',
@@ -106,9 +97,10 @@ export default function Svg(sources: Sources): Sinks {
   return {
     DOM: vdom$,
     svg: svgdom.element() as any,
-    move: move$,
     down: down$,
-    up: up$,
-    click: click$,
+    rawDown: rawDown$,
+    dblclick: dblclick$,
+    rawDblclick: rawDblclick$,
+    rawWheel: rawWheel$,
   }
 }

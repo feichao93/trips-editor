@@ -129,7 +129,10 @@ function Z({ sids, zlist }: State) {
   const isAtBottom = is(sidsList.sort(), zlist.take(sidsCount).sort())
   const isAtTop = is(sidsList.sort(), zlist.takeLast(sidsCount).sort())
 
+  const zIndex = zlist.indexOf(sids.first())
+
   return Row({ label: 'Z-index' }, [
+    h('p', String(zIndex)),
     h(
       'button.btn',
       { attrs: { disabled: isAtBottom }, dataset: { action: 'z-bottom' } },
