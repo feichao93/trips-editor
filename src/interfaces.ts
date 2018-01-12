@@ -1,5 +1,11 @@
 import { List, Record } from 'immutable'
 
+declare global {
+  interface Event {
+    ownerTarget: EventTarget
+  }
+}
+
 export interface Point {
   x: number
   y: number
@@ -13,7 +19,7 @@ export const PolygonItem = Record(
   {
     id: -1,
     locked: false,
-    points: List(),
+    points: List<Point>(),
     stroke: '#000000',
     strokeWidth: 3,
     opacity: 1,

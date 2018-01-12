@@ -5,7 +5,7 @@ import { MAX_SCALE, MIN_SCALE } from './constants'
 
 export type PaintSink = Stream<{
   svg: SVGSVGElement
-  interaction: string
+  mode: string
 }>
 
 export default function makePaintDriver() {
@@ -16,11 +16,11 @@ export default function makePaintDriver() {
     let on = false
 
     paint$.addListener({
-      next({ svg, interaction }) {
-        if (interaction === 'idle' && !on) {
+      next({ svg, mode }) {
+        if (mode === 'idle' && !on) {
           d3.select(svg).call(zoom)
           on = true
-        } else if (interaction !== 'idle' && on) {
+        } else if (mode !== 'idle' && on) {
           d3.select(svg).on('.zoom', null)
           on = false
         }

@@ -1,6 +1,6 @@
 import { ItemId, Item } from '../interfaces'
 import { OrderedMap } from 'immutable'
-import { getBoundingBoxOfPoints } from '../utils/common'
+import { getBoundingBoxOfPoints, getItemPoints } from '../utils/common'
 import { h } from '@cycle/dom'
 
 const INDICATOR_RECT_SIZE = 12
@@ -59,10 +59,6 @@ const BorderLine = ({ k, x1, y1, x2, y2 }: BorderLineProps) =>
       y2,
     },
   })
-
-function getItemPoints(item: Item) {
-  return item.points
-}
 
 export default function SelectedItemsIndicator({
   selectedItems,

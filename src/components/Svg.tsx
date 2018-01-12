@@ -23,15 +23,17 @@ export interface Sinks {
   move: Stream<Point>
   down: Stream<Point>
   up: Stream<Point>
+  click: Stream<Point>
 }
 
-function itemView(item: PolygonItem): VNode {
+function Item(item: PolygonItem): VNode {
   if (item == null) {
     return null
   }
   return h('polygon', {
     key: item.id,
     attrs: {
+      stroke: item.stroke,
       'stroke-linejoin': 'round',
       'stroke-width': item.strokeWidth,
       opacity: item.opacity,
@@ -70,13 +72,16 @@ export default function Svg(sources: Sources): Sinks {
   // TODO handle open file
   file$.debug('file').addListener({})
 
+  const window$ = domSource.select('document').element()
+
   const move$ = toPos(domSource.events('mousemove'), paintSource)
   const down$ = toPos(domSource.events('mousedown'), paintSource)
   const up$ = toPos(domSource.events('mouseup'), paintSource)
+  const click$ = toPos(domSource.events('click'), paintSource)
 
   const vdom$ = xs
     .combine(sources.state, sources.paint, sources.drawingItem, sources.selectedItems)
-    .map(([{ items }, { transform }, drawingItem, selectedItems]) =>
+    .map(([{ items, zlist }, { transform }, drawingItem, selectedItems]) =>
       h('svg.svg', [
         h(
           'g',
@@ -87,12 +92,12 @@ export default function Svg(sources: Sources): Sinks {
             h(
               'g',
               { attrs: { role: 'items' } },
-              items
-                .toList()
-                .map(itemView)
+              zlist
+                .map(itemId => items.get(itemId))
+                .map(Item)
                 .toArray(),
             ),
-            itemView(drawingItem),
+            Item(drawingItem),
             SelectionIndicator({ selectedItems, transform }),
           ].filter(R.identity),
         ),
@@ -104,5 +109,6 @@ export default function Svg(sources: Sources): Sinks {
     move: move$,
     down: down$,
     up: up$,
+    click: click$,
   }
 }
