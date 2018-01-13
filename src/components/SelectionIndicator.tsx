@@ -1,11 +1,13 @@
-import { ItemId, Item } from '../interfaces'
-import { OrderedMap } from 'immutable'
-import { getBoundingBoxOfPoints, getItemPoints } from '../utils/common'
 import { h } from '@cycle/dom'
+import { OrderedMap } from 'immutable'
+import { INDICATOR_RECT_SIZE } from '../constants'
+import { Item, ItemId } from '../interfaces'
+import { getBoundingBoxOfPoints, getItemPoints } from '../utils/common'
+import xs, { Stream } from 'xstream'
+import { VNode } from 'snabbdom/vnode'
+import { DOMSource } from '@cycle/dom/lib/cjs/DOMSource'
 
-const INDICATOR_RECT_SIZE = 12
-
-const SmallCross = ({ x, y, k }: { x: number; y: number; k: number }) => (
+const SmallCross = ({ x, y, k }: { x: number; y: number; k: number; cursor?: string }) => (
   <g transform={`translate(${x}, ${y})`}>
     <line
       x1={0}
@@ -26,7 +28,7 @@ const SmallCross = ({ x, y, k }: { x: number; y: number; k: number }) => (
   </g>
 )
 
-const SmallRect = ({ x, y, k }: { x: number; y: number; k: number }) =>
+const SmallRect = ({ x, y, k, cursor }: { x: number; y: number; k: number; cursor?: string }) =>
   h('rect', {
     attrs: {
       x,
@@ -37,6 +39,8 @@ const SmallRect = ({ x, y, k }: { x: number; y: number; k: number }) =>
       'stroke-width': 2 / k,
       fill: 'white',
     },
+    dataset: { resizer: cursor },
+    style: { cursor },
   })
 
 interface BorderLineProps {
@@ -60,41 +64,59 @@ const BorderLine = ({ k, x1, y1, x2, y2 }: BorderLineProps) =>
     },
   })
 
-export default function SelectedItemsIndicator({
-  selectedItems,
-  transform,
-}: {
-  selectedItems: OrderedMap<ItemId, Item>
-  transform: d3.ZoomTransform
-}) {
-  const points = selectedItems.toList().flatMap(getItemPoints)
-  if (points.isEmpty()) {
-    return null
-  }
-  const { x, y, width, height } = getBoundingBoxOfPoints(points)
+export interface Sources {
+  DOM: DOMSource
+  selectedItems: Stream<OrderedMap<ItemId, Item>>
+  transform: Stream<d3.ZoomTransform>
+}
 
-  const k = transform.k
+export interface Sinks {
+  DOM: Stream<VNode>
+  resizer: Stream<string>
+}
 
-  const x0 = x - INDICATOR_RECT_SIZE / 2 / k
-  const y0 = y - INDICATOR_RECT_SIZE / 2 / k
+export default function SelectedItemsIndicator(sources: Sources): Sinks {
+  const { DOM: domSource, selectedItems: selectedItems$, transform: transform$ } = sources
+  const resizerSource = domSource.select('*[data-resizer]')
 
-  // todo 目前选中元素总是一个, 所以用.first()即可
-  const SmallShape = selectedItems.first().locked ? SmallCross : SmallRect
+  const enter$ = resizerSource
+    .events('mouseover')
+    .map(e => (e.ownerTarget as HTMLElement).dataset.resizer)
+  const exit$ = resizerSource.events('mouseout').mapTo(null)
 
-  return (
-    <g role="selected-items-indicator">
-      <BorderLine k={k} x1={x} y1={y} x2={x + width} y2={y} />
-      <BorderLine k={k} x1={x + width} y1={y} x2={x + width} y2={y + height} />
-      <BorderLine k={k} x1={x + width} y1={y + height} x2={x} y2={y + height} />
-      <BorderLine k={k} x1={x} y1={y + height} x2={x} y2={y} />
-      <SmallShape k={k} x={x0} y={y0} />
-      <SmallShape k={k} x={x0 + width / 2} y={y0} />
-      <SmallShape k={k} x={x0 + width} y={y0} />
-      <SmallShape k={k} x={x0} y={y0 + height / 2} />
-      <SmallShape k={k} x={x0 + width} y={y0 + height / 2} />
-      <SmallShape k={k} x={x0} y={y0 + height} />
-      <SmallShape k={k} x={x0 + width / 2} y={y0 + height} />
-      <SmallShape k={k} x={x0 + width} y={y0 + height} />
-    </g>
-  )
+  const resizer$ = xs.merge(enter$, exit$)
+
+  const vdom$ = xs.combine(selectedItems$, transform$).map(([selectedItems, transform]) => {
+    const points = selectedItems.toList().flatMap(getItemPoints)
+    if (points.isEmpty()) {
+      return null
+    }
+    const { x, y, width, height } = getBoundingBoxOfPoints(points)
+
+    const k = transform.k
+    const x0 = x - INDICATOR_RECT_SIZE / 2 / k
+    const y0 = y - INDICATOR_RECT_SIZE / 2 / k
+
+    // TODO 目前选中元素总是一个, 所以用.first()即可
+    const SmallShape = selectedItems.first().locked ? SmallCross : SmallRect
+
+    return (
+      <g role="selected-items-indicator">
+        <BorderLine k={k} x1={x} y1={y} x2={x + width} y2={y} />
+        <BorderLine k={k} x1={x + width} y1={y} x2={x + width} y2={y + height} />
+        <BorderLine k={k} x1={x + width} y1={y + height} x2={x} y2={y + height} />
+        <BorderLine k={k} x1={x} y1={y + height} x2={x} y2={y} />
+        <SmallShape cursor="nw-resize" k={k} x={x0} y={y0} />
+        <SmallShape cursor="n-resize" k={k} x={x0 + width / 2} y={y0} />
+        <SmallShape cursor="ne-resize" k={k} x={x0 + width} y={y0} />
+        <SmallShape cursor="w-resize" k={k} x={x0} y={y0 + height / 2} />
+        <SmallShape cursor="e-resize" k={k} x={x0 + width} y={y0 + height / 2} />
+        <SmallShape cursor="sw-resize" k={k} x={x0} y={y0 + height} />
+        <SmallShape cursor="s-resize" k={k} x={x0 + width / 2} y={y0 + height} />
+        <SmallShape cursor="se-resize" k={k} x={x0 + width} y={y0 + height} />
+      </g>
+    )
+  })
+
+  return { DOM: vdom$, resizer: resizer$ }
 }

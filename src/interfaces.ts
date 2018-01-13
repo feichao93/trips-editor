@@ -1,5 +1,7 @@
-import { List, Record } from 'immutable'
+import { List, OrderedMap, Record } from 'immutable'
 import { Stream } from 'xstream'
+
+// TODO 整理该文件
 
 declare global {
   interface Event {
@@ -11,10 +13,18 @@ export interface Point {
   x: number
   y: number
 }
+export interface Rect {
+  x: number
+  y: number
+  width: number
+  height: number
+}
 
 export type ItemId = number
 
 export type Item = PolygonItem | PolylineItem
+
+export type Selection = OrderedMap<ItemId, Item>
 
 export const PolygonItem = Record(
   {
@@ -33,10 +43,15 @@ export type PolygonItem = typeof polygonItem
 
 export interface Mouse {
   move$: Stream<Point>
+  rawMove$: Stream<Point>
   down$: Stream<Point>
+  rawDown$: Stream<Point>
   up$: Stream<Point>
+  rawUp$: Stream<Point>
   dblclick$: Stream<Point>
+  rawDblclick$: Stream<Point>
   wheel$: Stream<{ pos: Point; deltaY: number }>
+  rawWheel$: Stream<{ pos: Point; deltaY: number }>
 }
 
 export const PolylineItem = Record(
@@ -53,3 +68,8 @@ export const PolylineItem = Record(
 )
 export const polylineItem = PolylineItem()
 export type PolylineItem = typeof polylineItem
+
+export interface ResizeDirConfig {
+  h: boolean
+  v: boolean
+}

@@ -2,27 +2,29 @@ import * as d3 from 'd3'
 import * as R from 'ramda'
 import xs, { Stream } from 'xstream'
 import sampleCombine from 'xstream/extra/sampleCombine'
-import actions, { Action, State } from '../actions'
+import actions, { State } from '../actions'
 import { Mouse } from '../interfaces'
-import { containsPoint, invert, moveItems } from '../utils/common'
+import { containsPoint } from '../utils/common'
 import transition from '../utils/transition'
 
 const MIN_SCALE = 0.5
 const MAX_SCALE = 4
 
 export default function zoom(
-  rawMouse: Mouse,
+  mouse: Mouse,
   mode$: Stream<string>,
   state$: Stream<State>,
-): Stream<Action> {
+  resizer$: Stream<string>,
+) {
   const dragStart$ = xs
     .merge(
-      rawMouse.down$.map(pos => ({ type: 'down', pos })),
-      rawMouse.up$.map(pos => ({ type: 'up', pos })),
+      mouse.rawDown$.map(pos => ({ type: 'down', pos })),
+      mouse.rawUp$.map(pos => ({ type: 'up', pos })),
     )
-    .compose(sampleCombine(mode$, state$))
-    .filter(([_, mode]) => mode === 'idle')
-    .map(([{ type, pos: rawPos }, mode, state]) => {
+    .peekFilter(mode$, R.identical('idle'))
+    .peekFilter(resizer$, R.identical(null))
+    .sampleCombine(state$)
+    .map(([{ type, pos: rawPos }, state]) => {
       const [x, y] = state.transform.invert([rawPos.x, rawPos.y])
       const pos = { x, y }
       if (type === 'down') {
@@ -37,7 +39,7 @@ export default function zoom(
 
   const drag$ = dragStart$
     .map(dragStart => {
-      return rawMouse.move$.map(pos => {
+      return mouse.rawMove$.map(pos => {
         if (dragStart == null) {
           return null
         } else {
@@ -51,8 +53,8 @@ export default function zoom(
     .flatten()
     .filter(R.identity)
 
-  const zoomFromDblclick$ = rawMouse.dblclick$.map(pos => ({ pos, delta: 2, useTransition: true }))
-  const zoomFromWheel$ = rawMouse.wheel$.map(({ pos, deltaY }) => ({
+  const zoomFromDblclick$ = mouse.rawDblclick$.map(pos => ({ pos, delta: 2, useTransition: true }))
+  const zoomFromWheel$ = mouse.rawWheel$.map(({ pos, deltaY }) => ({
     pos,
     delta: 0.95 ** (deltaY / 100),
     useTransition: false,
@@ -75,5 +77,5 @@ export default function zoom(
     .flatten()
     .map(([x, y, k]) => d3.zoomIdentity.translate(x, y).scale(k))
 
-  return xs.merge(zoom$, drag$).map(actions.updateTransform)
+  return { action$: xs.merge(zoom$, drag$).map(actions.updateTransform) }
 }

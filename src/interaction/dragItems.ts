@@ -1,19 +1,24 @@
 import * as R from 'ramda'
 import xs, { Stream } from 'xstream'
-import sampleCombine from 'xstream/extra/sampleCombine'
 import actions, { State } from '../actions'
 import { Mouse } from '../interfaces'
 import { containsPoint, moveItems } from '../utils/common'
 
-export default function dragItems(mouse: Mouse, mode$: Stream<string>, state$: Stream<State>) {
+export default function dragItems(
+  mouse: Mouse,
+  mode$: Stream<string>,
+  state$: Stream<State>,
+  resizer$: Stream<string>,
+) {
   const dragStart$ = xs
     .merge(
       mouse.down$.map(pos => ({ type: 'down', pos })),
       mouse.up$.map(pos => ({ type: 'up', pos })),
     )
-    .compose(sampleCombine(mode$, state$))
-    .filter(([_, mode]) => mode === 'idle')
-    .map(([{ type, pos }, mode, state]) => {
+    .peekFilter(resizer$, R.identical(null))
+    .peekFilter(mode$, R.equals('idle'))
+    .sampleCombine(state$)
+    .map(([{ type, pos }, state]) => {
       if (type === 'down') {
         const clickedItems = state.items.filter(item => containsPoint(item, pos))
         const targetItemId = state.zlist.findLast(itemId => clickedItems.has(itemId))

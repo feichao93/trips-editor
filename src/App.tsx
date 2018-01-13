@@ -3,18 +3,18 @@ import isolate from '@cycle/isolate'
 import * as R from 'ramda'
 import { VNode } from 'snabbdom/vnode'
 import xs, { Stream } from 'xstream'
-import sampleCombine from 'xstream/extra/sampleCombine'
 import actions, { Action, initState } from './actions'
 import Inspector from './components/Inspector'
 import Svg from './components/Svg'
-import dragItems from './interaction/dragItems'
-import doDrawRect from './interaction/drawRect'
+import doDragItems from './interaction/dragItems'
 import doDrawLine from './interaction/drawLine'
-import zoom from './interaction/zoom'
+import doDrawRect from './interaction/drawRect'
+import doResizeItems from './interaction/resizeItems'
+import doZoom from './interaction/zoom'
 import { Mouse } from './interfaces'
 import { ShortcutSource } from './makeShortcutDriver'
 import './styles/app.styl'
-import { containsPoint, invertPos } from './utils/common'
+import { containsPoint, getBoundingBoxOfPoints, getItemPoints, invertPos } from './utils/common'
 
 const EmptyComponent = ({ DOM }: { DOM: DOMSource }) => ({ DOM: xs.of(null) as any })
 const Menubar = EmptyComponent
@@ -38,35 +38,39 @@ export default function App(sources: Sources): Sinks {
   const shortcut = sources.shortcut
   const actionProxy$ = xs.create<Action>()
   const changeModeProxy$ = xs.create<string>()
+  const nextResizerProxy$ = xs.create<string>()
+  const resizer$ = nextResizerProxy$.startWith(null)
 
   const state$ = actionProxy$.fold((s, updater) => updater(s), initState)
-  const transform$ = state$.map(s => s.transform)
-  const selectedItems$ = state$.map(s => s.items.filter(item => s.sids.has(item.id)))
+  const transform$ = state$.map(R.prop('transform'))
 
-  const rawMouse: Mouse = {
-    down$: xs.create(),
-    move$: sources.mousemove,
-    up$: sources.mouseup,
-    dblclick$: xs.create(),
-    wheel$: xs.create(),
-  }
+  // 当前选中的元素集合
+  const selection$ = state$.map(s => s.items.filter(item => s.sids.has(item.id)))
+  // 当前选中元素集合在画板中的MBR
+  const selectionBBox$ = selection$.map(sel =>
+    getBoundingBoxOfPoints(sel.toList().flatMap(getItemPoints)),
+  )
 
   const mouse: Mouse = {
     down$: xs.create(),
+    rawDown$: xs.create(),
     move$: invertPos(sources.mousemove, transform$),
+    rawMove$: sources.mousemove,
     up$: invertPos(sources.mouseup, transform$),
+    rawUp$: sources.mouseup,
     dblclick$: xs.create(),
-    wheel$: xs.empty(), // TODO todo
+    rawDblclick$: xs.create(),
+    wheel$: xs.empty(),
+    rawWheel$: xs.empty(),
   }
 
   const esc$ = sources.shortcut.shortcut('esc', 'idle')
   const mode$ = changeModeProxy$.startWith(initMode)
 
   const changeSidsAction$ = mouse.down$
-    .sampleCombine(mode$)
-    .filter(([_, mode]) => mode === 'idle')
-    .map(([pos]) => pos)
-    .compose(sampleCombine(state$))
+    .peekFilter(mode$, R.identical('idle'))
+    .peekFilter(resizer$, R.identical(null))
+    .sampleCombine(state$)
     .map(([pos, state]) => {
       const clickedItems = state.items.filter(item => containsPoint(item, pos))
       const targetItemId = state.zlist.findLast(itemId => clickedItems.has(itemId))
@@ -78,11 +82,13 @@ export default function App(sources: Sources): Sinks {
       }
     })
 
-  const dragItems$ = dragItems(mouse, mode$, state$)
-  const updateZoomAction$ = zoom(rawMouse, mode$, state$)
+  const dragItems = doDragItems(mouse, mode$, state$, resizer$)
+  const resizeItems = doResizeItems(mouse, mode$, selection$, resizer$)
+  const zoom = doZoom(mouse, mode$, state$, resizer$)
   const drawRect = doDrawRect(mouse, mode$, shortcut)
   const drawLine = doDrawLine(mouse, mode$, shortcut)
 
+  // 目前正在绘制的元素 用于绘制预览
   const drawingItem$ = xs.merge(drawRect.drawingItem$, drawLine.drawingItem$).startWith(null)
 
   // views
@@ -91,7 +97,6 @@ export default function App(sources: Sources): Sinks {
   const svg = (isolate(Svg, 'svg') as typeof Svg)({
     DOM: domSource,
     drawingItem: drawingItem$,
-    selectedItems: selectedItems$,
     state: state$,
   })
   const inspector = (isolate(Inspector, 'inspector') as typeof Inspector)({
@@ -103,19 +108,32 @@ export default function App(sources: Sources): Sinks {
   const statusBar = (isolate(StatusBar, 'status-bar') as typeof StatusBar)({ DOM: domSource })
 
   changeModeProxy$.imitate(xs.merge(esc$, drawRect.changeMode$, drawLine.changeMode$))
-  mouse.down$.imitate(svg.down)
-  mouse.dblclick$.imitate(svg.dblclick)
-  rawMouse.down$.imitate(svg.rawDown)
-  rawMouse.dblclick$.imitate(svg.rawDblclick)
-  rawMouse.wheel$.imitate(svg.rawWheel)
+  nextResizerProxy$.imitate(svg.resizer)
+  mouse.rawDown$.imitate(svg.rawDown)
+  mouse.down$.imitate(invertPos(svg.rawDown, transform$))
+  mouse.rawDblclick$.imitate(svg.rawDblclick)
+  mouse.dblclick$.imitate(invertPos(svg.rawDblclick, transform$))
+  mouse.rawWheel$.imitate(svg.rawWheel)
+  mouse.wheel$.imitate(
+    svg.rawWheel.sampleCombine(transform$).map(([{ deltaY, pos }, transform]) => ({
+      deltaY,
+      pos: {
+        x: transform.invertX(pos.x),
+        y: transform.invertY(pos.y),
+      },
+    })),
+  )
+
   actionProxy$.imitate(
     xs.merge(
+      changeSidsAction$,
+      dragItems,
+      // interactions
       drawRect.action$,
       drawLine.action$,
       inspector.actions,
-      changeSidsAction$,
-      dragItems$,
-      updateZoomAction$,
+      zoom.action$,
+      resizeItems.action$,
     ),
   )
 
