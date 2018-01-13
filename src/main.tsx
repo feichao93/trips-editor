@@ -1,4 +1,5 @@
-import { makeDOMDriver, } from '@cycle/dom'
+import './preloaded'
+import { makeDOMDriver } from '@cycle/dom'
 import { run } from '@cycle/run'
 import 'normalize.css'
 import App from './App'

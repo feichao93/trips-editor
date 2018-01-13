@@ -1,7 +1,7 @@
 import { List, OrderedMap } from 'immutable'
 import { Stream } from 'xstream'
 import sampleCombine from 'xstream/extra/sampleCombine'
-import { Item, ItemId, Point, PolygonItem } from '../interfaces'
+import { Item, ItemId, Point, PolygonItem, PolylineItem } from '../interfaces'
 
 const nextIdMap = new Map<string, number>()
 
@@ -54,6 +54,8 @@ export function containsPoint(item: Item, p: Point) {
       if (intersect) inside = !inside
     }
     return inside
+  } else if (item instanceof PolylineItem) {
+    return false
   }
   throw new Error('Unsupported type of item')
 }
@@ -82,4 +84,14 @@ export function invertPos(
 export function invert(p: Point, transform: d3.ZoomTransform): Point {
   const [x, y] = transform.invert([p.x, p.y])
   return { x, y }
+}
+
+export function polygonItemFromPoints([{ x: x1, y: y1 }, { x: x2, y: y2 }]: [Point, Point]) {
+  return PolygonItem({
+    points: List([{ x: x1, y: y1 }, { x: x2, y: y1 }, { x: x2, y: y2 }, { x: x1, y: y2 }]),
+  })
+}
+
+export function polylineItemFromPoints([p1, p2]: [Point, Point]) {
+  return PolylineItem({ points: List([p1, p2]) })
 }

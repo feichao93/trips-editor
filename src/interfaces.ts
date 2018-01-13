@@ -14,7 +14,7 @@ export interface Point {
 
 export type ItemId = number
 
-export type Item = PolygonItem
+export type Item = PolygonItem | PolylineItem
 
 export const PolygonItem = Record(
   {
@@ -38,3 +38,18 @@ export interface Mouse {
   dblclick$: Stream<Point>
   wheel$: Stream<{ pos: Point; deltaY: number }>
 }
+
+export const PolylineItem = Record(
+  {
+    id: -1,
+    locked: false,
+    points: List<Point>(),
+    stroke: '#000000',
+    strokeWidth: 5,
+    opacity: 1,
+    fill: 'none',
+  },
+  'PolylineItem',
+)
+export const polylineItem = PolylineItem()
+export type PolylineItem = typeof polylineItem
