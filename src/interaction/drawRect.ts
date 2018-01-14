@@ -3,7 +3,7 @@ import xs, { Stream } from 'xstream'
 import actions from '../actions'
 import { Mouse, Point } from '../interfaces'
 import { ShortcutSource } from '../makeShortcutDriver'
-import { polygonItemFromPoints } from '../utils/common'
+import PolygonItem from '../utils/PolygonItem'
 
 export default function drawingRect(mouse: Mouse, mode$: Stream<string>, shortcut: ShortcutSource) {
   const { down$, move$, up$ } = mouse
@@ -17,7 +17,7 @@ export default function drawingRect(mouse: Mouse, mode$: Stream<string>, shortcu
 
   const drawingRect$ = xs.combine(startPos$, movingPos$, mode$).map(([p1, p2, mode]) => {
     if (mode === 'rect.drawing') {
-      return polygonItemFromPoints([p1, p2])
+      return PolygonItem.rectFromPoints(p1, p2)
     } else {
       return null
     }

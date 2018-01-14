@@ -1,8 +1,7 @@
 import * as d3 from 'd3'
 import { List, Map, OrderedMap, OrderedSet, Record } from 'immutable'
-import * as R from 'ramda'
-import { Item, ItemId } from './interfaces'
-import { getNextId, moveItem } from './utils/common'
+import { Item, ItemId, Selection } from './interfaces'
+import { getNextId } from './utils/common'
 
 export type Cursor = 'default' | 'cross' | 'pointer'
 
@@ -14,12 +13,11 @@ export const StateRecord = Record({
   transform: d3.zoomIdentity,
 })
 
-export interface Updater<T> {
-  (old: T): T
-}
 export const initState = StateRecord()
 export type State = typeof initState
-export type Action = Updater<State>
+export interface Action {
+  (s: State): State
+}
 export type ZIndexOp = 'z-inc' | 'z-dec' | 'z-top' | 'z-bottom'
 
 export default {
@@ -68,5 +66,11 @@ export default {
         }
       }
     }
+  },
+  lockItems(selection: Selection): Action {
+    return state => state.mergeIn(['items'], selection.map(item => item.set('locked', true)))
+  },
+  unlockItems(selection: Selection): Action {
+    return state => state.mergeIn(['items'], selection.map(item => item.set('locked', false)))
   },
 }

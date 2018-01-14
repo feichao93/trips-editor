@@ -1,13 +1,9 @@
-import { List, OrderedMap, Record } from 'immutable'
+import { OrderedMap } from 'immutable'
 import { Stream } from 'xstream'
+import PolylineItem from './utils/PolylineItem'
+import PolygonItem from './utils/PolygonItem'
 
-// TODO 整理该文件
-
-declare global {
-  interface Event {
-    ownerTarget: EventTarget
-  }
-}
+export { PolygonItem, PolylineItem }
 
 export interface Point {
   x: number
@@ -26,21 +22,6 @@ export type Item = PolygonItem | PolylineItem
 
 export type Selection = OrderedMap<ItemId, Item>
 
-export const PolygonItem = Record(
-  {
-    id: -1,
-    locked: false,
-    points: List<Point>(),
-    stroke: '#000000',
-    strokeWidth: 3,
-    opacity: 1,
-    fill: '#888888',
-  },
-  'PolygonItem',
-)
-export const polygonItem = PolygonItem()
-export type PolygonItem = typeof polygonItem
-
 export interface Mouse {
   move$: Stream<Point>
   rawMove$: Stream<Point>
@@ -53,21 +34,6 @@ export interface Mouse {
   wheel$: Stream<{ pos: Point; deltaY: number }>
   rawWheel$: Stream<{ pos: Point; deltaY: number }>
 }
-
-export const PolylineItem = Record(
-  {
-    id: -1,
-    locked: false,
-    points: List<Point>(),
-    stroke: '#000000',
-    strokeWidth: 5,
-    opacity: 1,
-    fill: 'none',
-  },
-  'PolylineItem',
-)
-export const polylineItem = PolylineItem()
-export type PolylineItem = typeof polylineItem
 
 export interface ResizeDirConfig {
   h: boolean

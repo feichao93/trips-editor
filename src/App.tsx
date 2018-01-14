@@ -6,6 +6,7 @@ import xs, { Stream } from 'xstream'
 import actions, { Action, initState } from './actions'
 import Inspector from './components/Inspector'
 import Svg from './components/Svg'
+import StatusBar from './components/StatusBar'
 import doDragItems from './interaction/dragItems'
 import doDrawLine from './interaction/drawLine'
 import doDrawRect from './interaction/drawRect'
@@ -14,12 +15,11 @@ import doZoom from './interaction/zoom'
 import { Mouse } from './interfaces'
 import { ShortcutSource } from './makeShortcutDriver'
 import './styles/app.styl'
-import { containsPoint, getBoundingBoxOfPoints, getItemPoints, invertPos } from './utils/common'
+import { invertPos } from './utils/common'
 
-const EmptyComponent = ({ DOM }: { DOM: DOMSource }) => ({ DOM: xs.of(null) as any })
+const EmptyComponent = (sources: { DOM: DOMSource }) => ({ DOM: xs.of(null) as any })
 const Menubar = EmptyComponent
 const Structure = EmptyComponent
-const StatusBar = EmptyComponent
 
 export interface Sources {
   DOM: DOMSource
@@ -47,9 +47,9 @@ export default function App(sources: Sources): Sinks {
   // 当前选中的元素集合
   const selection$ = state$.map(s => s.items.filter(item => s.sids.has(item.id)))
   // 当前选中元素集合在画板中的MBR
-  const selectionBBox$ = selection$.map(sel =>
-    getBoundingBoxOfPoints(sel.toList().flatMap(getItemPoints)),
-  )
+  // const selectionBBox$ = selection$.map(sel =>
+  //   getBoundingBoxOfPoints(sel.toList().flatMap(item => item.getPoints())),
+  // )
 
   const mouse: Mouse = {
     down$: xs.create(),
@@ -72,7 +72,7 @@ export default function App(sources: Sources): Sinks {
     .peekFilter(resizer$, R.identical(null))
     .sampleCombine(state$)
     .map(([pos, state]) => {
-      const clickedItems = state.items.filter(item => containsPoint(item, pos))
+      const clickedItems = state.items.filter(item => item.containsPoint(pos))
       const targetItemId = state.zlist.findLast(itemId => clickedItems.has(itemId))
       // const canMoveItem = !clickedItems.isEmpty() && !state.items.get(targetItemId).locked
       if (targetItemId != null) {
@@ -101,11 +101,15 @@ export default function App(sources: Sources): Sinks {
   })
   const inspector = (isolate(Inspector, 'inspector') as typeof Inspector)({
     DOM: domSource,
-    mode: mode$,
+    selection: selection$,
     state: state$,
   })
 
-  const statusBar = (isolate(StatusBar, 'status-bar') as typeof StatusBar)({ DOM: domSource })
+  const statusBar = (isolate(StatusBar, 'status-bar') as typeof StatusBar)({
+    DOM: domSource,
+    state: state$,
+    mode: mode$,
+  })
 
   changeModeProxy$.imitate(xs.merge(esc$, drawRect.changeMode$, drawLine.changeMode$))
   nextResizerProxy$.imitate(svg.resizer)

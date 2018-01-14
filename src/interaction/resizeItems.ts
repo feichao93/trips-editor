@@ -2,9 +2,8 @@ import * as R from 'ramda'
 import xs, { Stream } from 'xstream'
 import { Item, ItemId, Mouse, Point, Rect, ResizeDirConfig, Selection } from '../interfaces'
 import { Action, State } from '../actions'
-import { getBoundingBoxOfPoints, getItemPoints } from '../utils/common'
 import { OrderedMap } from 'immutable'
-import PolygonItemHelper from '../utils/PolygonItemHelper'
+import * as selectionUtils from '../utils/selectionUtils'
 
 // TODO 该文件还可以进行优化
 
@@ -30,7 +29,7 @@ export default function resizeItems(
     .peekFilter(mode$, R.identical('idle'))
     .sampleCombine(resizer$, selection$)
     .map(([{ type, pos }, resizer, selection]) => {
-      const bbox = getBoundingBoxOfPoints(selection.toList().flatMap(getItemPoints))
+      const bbox = selectionUtils.getBBox(selection)
       if (bbox != null && type === 'down') {
         return {
           startPos: pos,
@@ -63,9 +62,7 @@ export default function resizeItems(
     .map(({ selection, anchor, resizeDirConfig, startPos, movingPos }) => (state: State) =>
       state.mergeIn(
         ['items'],
-        selection.map(item =>
-          PolygonItemHelper.resize(item, anchor, resizeDirConfig, startPos, movingPos),
-        ),
+        selection.map(item => item.resize(anchor, resizeDirConfig, startPos, movingPos)),
       ),
     )
 

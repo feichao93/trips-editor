@@ -3,6 +3,12 @@ import peek from './utils/peek'
 import peekFilter from './utils/peekFilter'
 import sampleCombine from 'xstream/extra/sampleCombine'
 
+declare global {
+  interface Event {
+    ownerTarget: EventTarget
+  }
+}
+
 Stream.prototype.peek = function<T, U>(this: Stream<T>, peekStream: Stream<U>) {
   return this.compose(peek(peekStream))
 }

@@ -2,7 +2,6 @@ import * as R from 'ramda'
 import xs, { Stream } from 'xstream'
 import actions, { State } from '../actions'
 import { Mouse } from '../interfaces'
-import { containsPoint, moveItems } from '../utils/common'
 
 export default function dragItems(
   mouse: Mouse,
@@ -20,7 +19,7 @@ export default function dragItems(
     .sampleCombine(state$)
     .map(([{ type, pos }, state]) => {
       if (type === 'down') {
-        const clickedItems = state.items.filter(item => containsPoint(item, pos))
+        const clickedItems = state.items.filter(item => item.containsPoint(pos))
         const targetItemId = state.zlist.findLast(itemId => clickedItems.has(itemId))
         // TODO 目前仅支持单个元素的拖动
         return { startPos: pos, startItems: state.items.filter(item => item.id === targetItemId) }
@@ -39,7 +38,7 @@ export default function dragItems(
           const { startItems, startPos } = dragStart
           const dx = pos.x - startPos.x
           const dy = pos.y - startPos.y
-          const movedItems = moveItems(startItems, dx, dy)
+          const movedItems = startItems.map(item => item.move(dx, dy))
           return actions.moveItems(movedItems)
         }
       })

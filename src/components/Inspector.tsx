@@ -1,17 +1,20 @@
 import { DOMSource, h } from '@cycle/dom'
-import { is, List, OrderedMap, OrderedSet } from 'immutable'
+import { is } from 'immutable'
 import { VNode } from 'snabbdom/vnode'
 import xs, { Stream } from 'xstream'
 import sampleCombine from 'xstream/extra/sampleCombine'
 import actions, { Action, State, ZIndexOp } from '../actions'
-import { Item, ItemId, PolygonItem } from '../interfaces'
+import { Item, Selection } from '../interfaces'
 import '../styles/inspector.styl'
-import { getBoundingBoxOfPoints, getItemPoints, round3 } from '../utils/common'
+import { round3 } from '../utils/common'
+import PolygonItem from '../utils/PolygonItem'
+import PolylineItem from '../utils/PolylineItem'
+import * as selectionUtils from '../utils/selectionUtils'
 
 export interface Sources {
   DOM: DOMSource
-  mode: Stream<string>
   state: Stream<State>
+  selection: Stream<Selection>
 }
 
 export interface Sinks {
@@ -19,8 +22,8 @@ export interface Sinks {
   actions: Stream<Action>
 }
 
-function Row({ label }: { label: string }, children: VNode[]) {
-  return h('div.row', [h('h2', label), ...children])
+function Row({ label, key }: { label: string; key: string }, children: VNode[]) {
+  return h('div.row', { key }, [h('h2', label), ...children])
 }
 
 type EditableFieldProps = {
@@ -30,10 +33,7 @@ type EditableFieldProps = {
   value: number | string
   [key: string]: any
 }
-function EditableField(
-  { label, type, value, field, ...otherProps }: EditableFieldProps,
-  children: VNode[] = [],
-) {
+function EditableField({ label, type, value, field, ...otherProps }: EditableFieldProps) {
   return h('div.field', [
     h('input', { dataset: { field }, attrs: { type, value, ...otherProps } }),
     h('p', label),
@@ -41,18 +41,18 @@ function EditableField(
 }
 
 function PositionAndSize({ sids, items }: State) {
-  if (sids.isEmpty()) {
+  const selectedItems = items.filter(item => sids.has(item.id))
+  const bbox = selectionUtils.getBBox(selectedItems)
+  if (bbox == null) {
     return null
   }
-  const selectedItems = items.filter(item => sids.has(item.id))
-  const points = selectedItems.toList().flatMap(getItemPoints)
-  const { x, y, width, height } = getBoundingBoxOfPoints(points)
+  const { x, y, width, height } = bbox
   return h('div', [
-    Row({ label: 'Position' }, [
+    Row({ label: 'Position', key: 'position' }, [
       EditableField({ field: 'x', label: 'X', type: 'number', value: round3(x) }),
       EditableField({ field: 'y', label: 'Y', type: 'number', value: round3(y) }),
     ]),
-    Row({ label: 'Side' }, [
+    Row({ label: 'Side', key: 'side' }, [
       EditableField({
         field: 'width',
         label: 'width',
@@ -76,7 +76,7 @@ function Fill(sitem: Item) {
     return null
   }
   if (sitem instanceof PolygonItem) {
-    return Row({ label: 'Fill' }, [
+    return Row({ label: 'Fill', key: 'fill' }, [
       EditableField({ field: 'fill', label: 'Fill', type: 'color', value: sitem.fill }),
     ])
   }
@@ -87,8 +87,8 @@ function Stroke(sitem: Item) {
   if (sitem == null) {
     return null
   }
-  if (sitem instanceof PolygonItem /* || sitem instanceof PolylineItem */) {
-    return Row({ label: 'Stroke' }, [
+  if (sitem instanceof PolygonItem || sitem instanceof PolylineItem) {
+    return Row({ label: 'Stroke', key: 'stroke' }, [
       EditableField({ field: 'stroke', label: 'Stroke', type: 'color', value: sitem.stroke }),
       EditableField({
         field: 'strokeWidth',
@@ -107,7 +107,7 @@ function Opacity(sitem: Item) {
   if (sitem == null) {
     return null
   }
-  return Row({ label: 'Opacity' }, [
+  return Row({ label: 'Opacity', key: 'opacity' }, [
     EditableField({
       field: 'opacity',
       label: 'Opacity',
@@ -131,7 +131,7 @@ function Z({ sids, zlist }: State) {
 
   const zIndex = zlist.indexOf(sids.first())
 
-  return Row({ label: 'Z-index' }, [
+  return Row({ label: 'Z-index', key: 'z' }, [
     h('p', String(zIndex)),
     h(
       'button.btn',
@@ -144,14 +144,37 @@ function Z({ sids, zlist }: State) {
   ])
 }
 
+function LockInfo(sitem: Item) {
+  if (sitem == null) {
+    return null
+  }
+  return Row(
+    { label: 'Lock', key: 'lock' },
+    sitem.locked
+      ? [h('h2', 'locked'), h('button', { dataset: { action: 'unlock' } }, 'Unlock')]
+      : [h('h2', 'not locked'), h('button', { dataset: { action: 'lock' } }, 'Lock')],
+  )
+}
+
 export default function Inspector(sources: Sources): Sinks {
   const domSource = sources.DOM
-  const mode$ = sources.mode
   const state$ = sources.state
+  const selection$ = sources.selection
   const zIndexAction$ = domSource
     .select('*[data-action]')
     .events('click')
     .map(e => actions.updateZIndex((e.ownerTarget as HTMLButtonElement).dataset.action as ZIndexOp))
+
+  const lockAction$ = domSource
+    .select('*[data-action=lock]')
+    .events('click')
+    .peek(selection$)
+    .map(actions.lockItems)
+  const unlockAction$ = domSource
+    .select('*[data-action=unlock]')
+    .events('click')
+    .peek(selection$)
+    .map(actions.unlockItems)
 
   // TODO editAction还不完善，X和Y的编辑有点问题
   const editAction$ = domSource
@@ -167,29 +190,21 @@ export default function Inspector(sources: Sources): Sinks {
       return actions.updateItems(updatedItems)
     })
 
-  const sitem$ = state$.map(s => {
-    if (s.sids.count() !== 1) {
-      return null
-    } else {
-      return s.items.get(s.sids.first())
-    }
-  })
-
-  const vdom$ = xs
-    .combine(mode$, state$)
-    .compose(sampleCombine(sitem$))
-    .map(([[mode, state], sitem]) =>
-      h('div.inspector', [
-        h('p', ['Current Mode: ', mode]),
+  const sitem$ = selection$.map(sel => sel.first() || null)
+  const vdom$ = state$
+    .sampleCombine(sitem$)
+    .map(([state, sitem]) =>
+      h('div.inspector', { style: { display: sitem == null ? 'none' : 'block' } }, [
         PositionAndSize(state),
         Fill(sitem),
         Stroke(sitem),
         Opacity(sitem),
         Z(state),
+        LockInfo(sitem),
       ]),
     )
   return {
     DOM: vdom$,
-    actions: xs.merge(editAction$, zIndexAction$),
+    actions: xs.merge(editAction$, zIndexAction$, lockAction$, unlockAction$),
   }
 }

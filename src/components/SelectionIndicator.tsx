@@ -1,32 +1,33 @@
-import { h } from '@cycle/dom'
+import { VNode, DOMSource, h } from '@cycle/dom'
 import { OrderedMap } from 'immutable'
 import { INDICATOR_RECT_SIZE } from '../constants'
 import { Item, ItemId } from '../interfaces'
-import { getBoundingBoxOfPoints, getItemPoints } from '../utils/common'
+import { getBoundingBoxOfPoints } from '../utils/common'
 import xs, { Stream } from 'xstream'
-import { VNode } from 'snabbdom/vnode'
-import { DOMSource } from '@cycle/dom/lib/cjs/DOMSource'
 
-const SmallCross = ({ x, y, k }: { x: number; y: number; k: number; cursor?: string }) => (
-  <g transform={`translate(${x}, ${y})`}>
-    <line
-      x1={0}
-      y1={0}
-      x2={INDICATOR_RECT_SIZE / k}
-      y2={INDICATOR_RECT_SIZE / k}
-      stroke="black"
-      stroke-width={2 / k}
-    />
-    <line
-      x1={INDICATOR_RECT_SIZE / k}
-      y1={0}
-      x2={0}
-      y2={INDICATOR_RECT_SIZE / k}
-      stroke="black"
-      stroke-width={2 / k}
-    />
-  </g>
-)
+const SmallCross = ({ x, y, k }: { x: number; y: number; k: number; cursor?: string }) =>
+  h('g', { attrs: { transform: `translate(${x}, ${y})` } }, [
+    h('line', {
+      attrs: {
+        x1: 0,
+        y1: 0,
+        x2: INDICATOR_RECT_SIZE / k,
+        y2: INDICATOR_RECT_SIZE / k,
+        stroke: 'black',
+        'stroke-width': 2 / k,
+      },
+    }),
+    h('line', {
+      attrs: {
+        x1: INDICATOR_RECT_SIZE / k,
+        y1: 0,
+        x2: 0,
+        y2: INDICATOR_RECT_SIZE / k,
+        stroke: 'black',
+        'stroke-width': 2 / k,
+      },
+    }),
+  ])
 
 const SmallRect = ({ x, y, k, cursor }: { x: number; y: number; k: number; cursor?: string }) =>
   h('rect', {
@@ -87,7 +88,7 @@ export default function SelectedItemsIndicator(sources: Sources): Sinks {
   const resizer$ = xs.merge(enter$, exit$)
 
   const vdom$ = xs.combine(selectedItems$, transform$).map(([selectedItems, transform]) => {
-    const points = selectedItems.toList().flatMap(getItemPoints)
+    const points = selectedItems.toList().flatMap(item => item.getPoints())
     if (points.isEmpty()) {
       return null
     }

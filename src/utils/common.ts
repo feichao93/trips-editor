@@ -1,7 +1,7 @@
-import { List, OrderedMap } from 'immutable'
+import { List } from 'immutable'
 import { Stream } from 'xstream'
 import sampleCombine from 'xstream/extra/sampleCombine'
-import { Item, ItemId, Point, PolygonItem, PolylineItem, Rect } from '../interfaces'
+import { Point, Rect } from '../interfaces'
 
 const nextIdMap = new Map<string, number>()
 
@@ -29,10 +29,6 @@ export function getBoundingBoxOfPoints(points: List<Point>): Rect {
   return { x, y, width, height }
 }
 
-export function getItemPoints(item: Item) {
-  return item.points
-}
-
 export function round(number: number, n: number) {
   const t = 10 ** n
   return Math.round(number * t) / t
@@ -40,40 +36,21 @@ export function round(number: number, n: number) {
 
 export const round3 = (number: number) => round(number, 3)
 
-export function containsPoint(item: Item, p: Point) {
-  if (item instanceof PolygonItem) {
-    // copied from node packge point-in-polygon
-    // ray-casting algorithm based on
-    // http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
-    const { x, y } = p
-    const vs = item.points.toArray()
-    let inside = false
-    for (let i = 0, j = vs.length - 1; i < vs.length; j = i, i += 1) {
-      const xi = vs[i].x
-      const yi = vs[i].y
-      const xj = vs[j].x
-      const yj = vs[j].y
-      const intersect = yi > y !== yj > y && x < (xj - xi) * (y - yi) / (yj - yi) + xi
-      if (intersect) inside = !inside
-    }
-    return inside
-  } else if (item instanceof PolylineItem) {
-    return false
+export function containsPoint(vs: Point[], p: Point) {
+  // copied from node packge point-in-polygon
+  // ray-casting algorithm based on
+  // http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
+  const { x, y } = p
+  let inside = false
+  for (let i = 0, j = vs.length - 1; i < vs.length; j = i, i += 1) {
+    const xi = vs[i].x
+    const yi = vs[i].y
+    const xj = vs[j].x
+    const yj = vs[j].y
+    const intersect = yi > y !== yj > y && x < (xj - xi) * (y - yi) / (yj - yi) + xi
+    if (intersect) inside = !inside
   }
-  throw new Error('Unsupported type of item')
-}
-
-// TODO refactor
-export function moveItems(items: OrderedMap<ItemId, Item>, dx: number, dy: number) {
-  return items.map(item => moveItem(item, dx, dy))
-}
-
-// TODO refactor
-export function moveItem(item: Item, dx: number, dy: number) {
-  if (item instanceof PolygonItem) {
-    return item.update('points', points => points.map(p => ({ x: p.x + dx, y: p.y + dy })))
-  }
-  throw new Error('NOT IMPLEMENTED')
+  return inside
 }
 
 // TODO refactor
@@ -85,24 +62,6 @@ export function invertPos(
     const [x, y] = transform.invert([event.x, event.y])
     return { x, y }
   })
-}
-
-// TODO refactor
-export function invert(p: Point, transform: d3.ZoomTransform): Point {
-  const [x, y] = transform.invert([p.x, p.y])
-  return { x, y }
-}
-
-// TODO refactor
-export function polygonItemFromPoints([{ x: x1, y: y1 }, { x: x2, y: y2 }]: [Point, Point]) {
-  return PolygonItem({
-    points: List([{ x: x1, y: y1 }, { x: x2, y: y1 }, { x: x2, y: y2 }, { x: x1, y: y2 }]),
-  })
-}
-
-// TODO refactor
-export function polylineItemFromPoints([p1, p2]: [Point, Point]) {
-  return PolylineItem({ points: List([p1, p2]) })
 }
 
 // 在resize元素的时候, 该函数用来获取点坐标的更新函数
@@ -120,8 +79,7 @@ export function distanceBetweenPointAndPoint(point1: Point, point2: Point) {
   return Math.sqrt(dx * dx + dy * dy)
 }
 
-// 计算点与线段之间的距离
-// start, end分别为线段的起点和终点
+// 计算点与线段之间的距离  start, end分别为线段的起点和终点
 export function distanceBetweenPointAndSegment(point: Point, start: Point, end: Point) {
   const length2 = dist2(start, end)
   if (length2 === 0) {

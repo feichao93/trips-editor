@@ -4,12 +4,12 @@ import { VNode } from 'snabbdom/vnode'
 import xs, { Stream } from 'xstream'
 import SelectionIndicator from './SelectionIndicator'
 import { State } from '../actions'
-import { Point, PolygonItem } from '../interfaces'
+import { Point, Item } from '../interfaces'
 import '../styles/svg.styl'
 
 export interface Sources {
   DOM: DOMSource
-  drawingItem: Stream<PolygonItem>
+  drawingItem: Stream<Item>
   state: Stream<State>
 }
 
@@ -20,23 +20,6 @@ export interface Sinks {
   rawDblclick: Stream<Point>
   rawWheel: Stream<{ pos: Point; deltaY: number }>
   resizer: Stream<string>
-}
-
-function Item(item: PolygonItem): VNode {
-  if (item == null) {
-    return null
-  }
-  return h('polygon', {
-    key: item.id,
-    attrs: {
-      stroke: item.stroke,
-      'stroke-linejoin': 'round',
-      'stroke-width': item.strokeWidth,
-      opacity: item.opacity,
-      fill: item.fill,
-      points: item.points.map(p => `${p.x},${p.y}`).join(' '),
-    },
-  })
 }
 
 export default function Svg(sources: Sources): Sinks {
@@ -85,10 +68,10 @@ export default function Svg(sources: Sources): Sinks {
               { attrs: { role: 'items' } },
               zlist
                 .map(itemId => items.get(itemId))
-                .map(Item)
+                .map(item => item.render())
                 .toArray(),
             ),
-            Item(drawingItem),
+            drawingItem && drawingItem.render(),
             selectionIndicator,
           ].filter(R.identity),
         ),

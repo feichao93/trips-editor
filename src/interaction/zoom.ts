@@ -4,7 +4,6 @@ import xs, { Stream } from 'xstream'
 import sampleCombine from 'xstream/extra/sampleCombine'
 import actions, { State } from '../actions'
 import { Mouse } from '../interfaces'
-import { containsPoint } from '../utils/common'
 import transition from '../utils/transition'
 
 const MIN_SCALE = 0.5
@@ -28,7 +27,7 @@ export default function zoom(
       const [x, y] = state.transform.invert([rawPos.x, rawPos.y])
       const pos = { x, y }
       if (type === 'down') {
-        const clickedItems = state.items.filter(item => containsPoint(item, pos))
+        const clickedItems = state.items.filter(item => item.containsPoint(pos))
         if (clickedItems.every(item => item.locked)) {
           return { pos: rawPos, transform: state.transform }
         }
