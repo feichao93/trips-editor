@@ -16,6 +16,17 @@ export interface Action {
 export type ZIndexOp = 'z-inc' | 'z-dec' | 'z-top' | 'z-bottom'
 
 export default {
+  deleteSelection(): Action {
+    return state => {
+      const sids = state.sids
+      if (sids.isEmpty()) {
+        return state
+      }
+      return state
+        .update('items', items => items.filterNot(item => sids.has(item.id)))
+        .update('zlist', zlist => zlist.filterNot(itemId => sids.has(itemId)))
+    }
+  },
   moveItems(movedItems: OrderedMap<ItemId, Item>): Action {
     return state => state.mergeIn(['items'], movedItems)
   },

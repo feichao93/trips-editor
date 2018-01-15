@@ -1,7 +1,9 @@
 import { OrderedMap } from 'immutable'
-import { Stream } from 'xstream'
-import PolylineItem from './utils/PolylineItem'
+import { MemoryStream, Stream } from 'xstream'
+import { Action, State } from './actions'
+import { ShortcutSource } from './makeShortcutDriver'
 import PolygonItem from './utils/PolygonItem'
+import PolylineItem from './utils/PolylineItem'
 
 export { PolygonItem, PolylineItem }
 
@@ -44,4 +46,26 @@ export interface Mouse {
 export interface ResizeDirConfig {
   h: boolean
   v: boolean
+}
+
+export interface InterfaceFnSources {
+  mouse: Mouse
+  mode: MemoryStream<string>
+  state: MemoryStream<State>
+  selection: MemoryStream<Selection>
+  transform: MemoryStream<d3.ZoomTransform>
+  resizer: MemoryStream<string>
+  shortcut: ShortcutSource
+}
+
+export interface InteractionFnSinks {
+  action: Stream<Action>
+  nextMode: Stream<string>
+  nextTransform: Stream<d3.ZoomTransform>
+  drawingItem: Stream<Item>
+  addons: { [key: string]: Stream<any> }
+}
+
+export interface InteractionFn {
+  (sources: InterfaceFnSources): Partial<InteractionFnSinks>
 }

@@ -1,20 +1,19 @@
 import * as d3 from 'd3'
 import * as R from 'ramda'
-import xs, { Stream } from 'xstream'
-import { State } from '../actions'
-import { Mouse } from '../interfaces'
+import xs from 'xstream'
+import { InteractionFn } from '../interfaces'
 import transition from '../utils/transition'
 
 const MIN_SCALE = 0.5
 const MAX_SCALE = 4
 
-export default function zoom(
-  mouse: Mouse,
-  mode$: Stream<string>,
-  state$: Stream<State>,
-  transform$: Stream<d3.ZoomTransform>,
-  resizer$: Stream<string>,
-) {
+const zoom: InteractionFn = ({
+  mouse,
+  mode: mode$,
+  state: state$,
+  transform: transform$,
+  resizer: resizer$,
+}) => {
   const dragStart$ = xs
     .merge(
       mouse.rawDown$.map(pos => ({ type: 'down', pos })),
@@ -78,3 +77,5 @@ export default function zoom(
 
   return { nextTransform: xs.merge(zoom$, drag$) }
 }
+
+export default zoom

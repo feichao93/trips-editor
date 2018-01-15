@@ -1,14 +1,9 @@
 import * as R from 'ramda'
-import xs, { Stream } from 'xstream'
-import actions, { State } from '../actions'
-import { Mouse } from '../interfaces'
+import xs from 'xstream'
+import actions from '../actions'
+import { InteractionFn } from '../interfaces'
 
-export default function dragItems(
-  mouse: Mouse,
-  mode$: Stream<string>,
-  state$: Stream<State>,
-  resizer$: Stream<string>,
-) {
+const dragItems: InteractionFn = ({ mouse, mode: mode$, state: state$, resizer: resizer$ }) => {
   const dragStart$ = xs
     .merge(
       mouse.down$.map(pos => ({ type: 'down', pos })),
@@ -48,5 +43,7 @@ export default function dragItems(
     .flatten()
     .filter(R.identity)
 
-  return dragItems$
+  return { action: dragItems$ }
 }
+
+export default dragItems

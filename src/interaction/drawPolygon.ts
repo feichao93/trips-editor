@@ -1,19 +1,13 @@
 import { h, VNode } from '@cycle/dom'
 import { List } from 'immutable'
 import * as R from 'ramda'
-import xs, { MemoryStream, Stream } from 'xstream'
+import xs, { Stream } from 'xstream'
 import actions from '../actions'
 import { SENSE_RANGE } from '../constants'
-import { Mouse, Point, PolygonItem, Updater } from '../interfaces'
-import { ShortcutSource } from '../makeShortcutDriver'
+import { InteractionFn, Point, PolygonItem, Updater } from '../interfaces'
 import { distanceBetweenPointAndPoint } from '../utils/common'
 
-export default function drawPolygon(
-  mouse: Mouse,
-  mode$: MemoryStream<string>,
-  shortcut: ShortcutSource,
-  transform$: MemoryStream<d3.ZoomTransform>,
-) {
+const drawPolygon: InteractionFn = ({ mouse, mode: mode$, shortcut, transform: transform$ }) => {
   const start$ = shortcut.shortcut('q', 'polygon')
   const addPointProxy$ = xs.create<Point>()
   const resetPointsProxy$ = xs.create()
@@ -70,14 +64,22 @@ export default function drawPolygon(
         p == null
           ? null
           : h('circle.close-indicator', {
-              attrs: { cx: p.x, cy: p.y, fill: 'red', opacity: 0.3, r: SENSE_RANGE / transform.k },
+              attrs: {
+                cx: p.x,
+                cy: p.y,
+                fill: 'red',
+                opacity: 0.3,
+                r: SENSE_RANGE / transform.k,
+              },
             }),
     )
 
   return {
-    drawingItem$: drawingPolygon$,
-    action$: addItem$,
-    changeMode$: xs.merge(start$, addItem$.mapTo('idle')),
-    closeIndicator$,
+    drawingItem: drawingPolygon$,
+    action: addItem$,
+    nextMode: xs.merge(start$, addItem$.mapTo('idle')),
+    addons: { polygonCloseIndicator: closeIndicator$ },
   }
 }
+
+export default drawPolygon

@@ -19,7 +19,7 @@ export interface Sources {
 
 export interface Sinks {
   DOM: Stream<VNode>
-  actions: Stream<Action>
+  action: Stream<Action>
 }
 
 function Row({ label, key }: { label: string; key: string }, children: VNode[]) {
@@ -205,6 +205,6 @@ export default function Inspector(sources: Sources): Sinks {
     )
   return {
     DOM: vdom$,
-    actions: xs.merge(editAction$, zIndexAction$, lockAction$, unlockAction$),
+    action: xs.merge(editAction$, zIndexAction$, lockAction$, unlockAction$),
   }
 }

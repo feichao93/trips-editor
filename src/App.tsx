@@ -4,17 +4,18 @@ import * as d3 from 'd3'
 import * as R from 'ramda'
 import { VNode } from 'snabbdom/vnode'
 import xs, { Stream } from 'xstream'
-import actions, { Action, initState } from './actions'
+import { Action, initState } from './actions'
 import Inspector from './components/Inspector'
 import StatusBar from './components/StatusBar'
 import Svg from './components/Svg'
-import doDragItems from './interaction/dragItems'
-import doDrawLine from './interaction/drawLine'
-import doDrawPolygon from './interaction/drawPolygon'
-import doDrawRect from './interaction/drawRect'
-import doResizeItems from './interaction/resizeItems'
-import doZoom from './interaction/zoom'
-import { Mouse } from './interfaces'
+import commonInteraction from './interaction/commonInteraction'
+import dragItems from './interaction/dragItems'
+import drawLine from './interaction/drawLine'
+import drawPolygon from './interaction/drawPolygon'
+import drawRect from './interaction/drawRect'
+import resizeItems from './interaction/resizeItems'
+import zoom from './interaction/zoom'
+import { InteractionFn, Mouse } from './interfaces'
 import { ShortcutSource } from './makeShortcutDriver'
 import './styles/app.styl'
 import { invertPos } from './utils/common'
@@ -39,21 +40,19 @@ const initMode = 'idle'
 export default function App(sources: Sources): Sinks {
   const domSource = sources.DOM
   const shortcut = sources.shortcut
+
   const actionProxy$ = xs.create<Action>()
-  const changeModeProxy$ = xs.create<string>()
+  const nextModeProxy$ = xs.create<string>()
   const nextResizerProxy$ = xs.create<string>()
-  const resizer$ = nextResizerProxy$.startWith(null)
   const nextTransformProxy$ = xs.create<d3.ZoomTransform>()
 
+  const resizer$ = nextResizerProxy$.startWith(null)
   const state$ = actionProxy$.fold((s, updater) => updater(s), initState)
   const transform$ = nextTransformProxy$.startWith(d3.zoomIdentity)
+  const mode$ = nextModeProxy$.startWith(initMode)
 
   // 当前选中的元素集合
   const selection$ = state$.map(s => s.items.filter(item => s.sids.has(item.id)))
-  // 当前选中元素集合在画板中的MBR
-  // const selectionBBox$ = selection$.map(sel =>
-  //   getBoundingBoxOfPoints(sel.toList().flatMap(item => item.getPoints())),
-  // )
 
   const mouse: Mouse = {
     down$: xs.create(),
@@ -66,44 +65,34 @@ export default function App(sources: Sources): Sinks {
     rawClick$: xs.create(),
     dblclick$: xs.create(),
     rawDblclick$: xs.create(),
-    wheel$: xs.empty(),
-    rawWheel$: xs.empty(),
+    wheel$: xs.create(),
+    rawWheel$: xs.create(),
   }
 
-  const esc$ = sources.shortcut.shortcut('esc', 'idle')
-  const mode$ = changeModeProxy$.startWith(initMode)
-
-  const changeSidsAction$ = mouse.down$
-    .peekFilter(mode$, R.identical('idle'))
-    .peekFilter(resizer$, R.identical(null))
-    .sampleCombine(state$)
-    .map(([pos, state]) => {
-      const clickedItems = state.items.filter(item => item.containsPoint(pos))
-      // 如果和目前选中的元素，则返回null
-      if (state.sids == clickedItems.keySeq().toOrderedSet()) {
-        return null
-      }
-      const targetItemId = state.zlist.findLast(itemId => clickedItems.has(itemId))
-      // const canMoveItem = !clickedItems.isEmpty() && !state.items.get(targetItemId).locked
-      if (targetItemId != null) {
-        return actions.updateSids([targetItemId])
-      } else {
-        return actions.clearSids()
-      }
-    })
-    .filter(Boolean)
-
-  const dragItems = doDragItems(mouse, mode$, state$, resizer$)
-  const resizeItems = doResizeItems(mouse, mode$, selection$, resizer$)
-  const zoom = doZoom(mouse, mode$, state$, transform$, resizer$)
-  const drawRect = doDrawRect(mouse, mode$, shortcut)
-  const drawPolygon = doDrawPolygon(mouse, mode$, shortcut, transform$)
-  const drawLine = doDrawLine(mouse, mode$, shortcut)
+  const interactions: InteractionFn[] = [
+    commonInteraction,
+    dragItems,
+    resizeItems,
+    zoom,
+    drawRect,
+    drawPolygon,
+    drawLine,
+  ]
+  const sinksArray = interactions.map(fn =>
+    fn({
+      mode: mode$,
+      mouse,
+      resizer: resizer$,
+      shortcut,
+      state: state$,
+      selection: selection$,
+      transform: transform$,
+    }),
+  )
+  const addons = Object.assign({}, ...sinksArray.map(sinks => sinks.addons))
 
   // 目前正在绘制的元素 用于绘制预览
-  const drawingItem$ = xs
-    .merge(drawRect.drawingItem$, drawLine.drawingItem$, drawPolygon.drawingItem$)
-    .startWith(null)
+  const drawingItem$ = xs.merge(...sinksArray.map(sinks => sinks.drawingItem).filter(Boolean))
 
   // views
   const menubar = (isolate(Menubar, 'menubar') as typeof Menubar)({ DOM: domSource })
@@ -113,27 +102,28 @@ export default function App(sources: Sources): Sinks {
     drawingItem: drawingItem$,
     state: state$,
     transform: transform$,
-    addons: {
-      polygonCloseIndicator: drawPolygon.closeIndicator$,
-    },
+    addons,
   })
   const inspector = (isolate(Inspector, 'inspector') as typeof Inspector)({
     DOM: domSource,
     selection: selection$,
     state: state$,
   })
-
   const statusBar = (isolate(StatusBar, 'status-bar') as typeof StatusBar)({
     DOM: domSource,
     state: state$,
     mode: mode$,
   })
 
-  changeModeProxy$.imitate(
-    xs.merge(esc$, drawRect.changeMode$, drawLine.changeMode$, drawPolygon.changeMode$),
+  actionProxy$.imitate(
+    xs.merge(inspector.action, ...sinksArray.map(sinks => sinks.action).filter(Boolean)),
   )
+  nextModeProxy$.imitate(xs.merge(...sinksArray.map(sinks => sinks.nextMode).filter(Boolean)))
+  nextTransformProxy$.imitate(
+    xs.merge(...sinksArray.map(sinks => sinks.nextTransform).filter(Boolean)),
+  )
+
   nextResizerProxy$.imitate(svg.resizer)
-  nextTransformProxy$.imitate(zoom.nextTransform)
   mouse.rawDown$.imitate(svg.rawDown)
   mouse.down$.imitate(invertPos(svg.rawDown, transform$))
   mouse.rawClick$.imitate(svg.rawClick)
@@ -151,22 +141,10 @@ export default function App(sources: Sources): Sinks {
     })),
   )
 
-  actionProxy$.imitate(
-    xs.merge(
-      changeSidsAction$,
-      dragItems,
-      // interactions
-      drawRect.action$,
-      drawPolygon.action$,
-      drawLine.action$,
-      inspector.actions,
-      resizeItems.action$,
-    ),
-  )
-
   const vdom$ = xs
     .combine(menubar.DOM, structure.DOM, svg.DOM, inspector.DOM, statusBar.DOM)
     .map(components => h('div.app', components.filter(R.identity)))
+
   return {
     DOM: vdom$,
     title: xs.never(),

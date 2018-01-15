@@ -1,11 +1,10 @@
 import * as R from 'ramda'
 import xs, { Stream } from 'xstream'
 import actions from '../actions'
-import { Mouse, Point } from '../interfaces'
-import { ShortcutSource } from '../makeShortcutDriver'
+import { InteractionFn, Point } from '../interfaces'
 import PolygonItem from '../utils/PolygonItem'
 
-export default function drawingRect(mouse: Mouse, mode$: Stream<string>, shortcut: ShortcutSource) {
+const drawRect: InteractionFn = ({ mouse, mode: mode$, shortcut }) => {
   const { down$, move$, up$ } = mouse
   const start$ = shortcut.shortcut('r', 'rect.ready')
 
@@ -29,8 +28,10 @@ export default function drawingRect(mouse: Mouse, mode$: Stream<string>, shortcu
     .map(actions.addItem)
 
   return {
-    drawingItem$: drawingRect$,
-    action$: addItem$,
-    changeMode$: xs.merge(start$, addItem$.mapTo('idle'), startPos$.mapTo('rect.drawing')),
+    drawingItem: drawingRect$,
+    action: addItem$,
+    nextMode: xs.merge(start$, addItem$.mapTo('idle'), startPos$.mapTo('rect.drawing')),
   }
 }
+
+export default drawRect

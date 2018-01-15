@@ -1,20 +1,17 @@
-import xs, { Stream } from 'xstream'
-import { Mouse, Point } from '../interfaces'
-import peekFilter from '../utils/peekFilter'
 import * as R from 'ramda'
-import { ShortcutSource } from '../makeShortcutDriver'
-import sampleCombine from 'xstream/extra/sampleCombine'
+import xs, { Stream } from 'xstream'
 import actions from '../actions'
+import { InteractionFn, Point } from '../interfaces'
 import PolylineItem from '../utils/PolylineItem'
 
-export default function drawingLine(mouse: Mouse, mode$: Stream<string>, shortcut: ShortcutSource) {
+const drawLine: InteractionFn = ({ mouse, mode: mode$, shortcut }) => {
   const { down$, move$, up$ } = mouse
   const start$ = shortcut.shortcut('l', 'line.ready')
 
-  const startPos$: Stream<Point> = down$.compose(peekFilter(mode$, R.equals('line.ready')))
+  const startPos$: Stream<Point> = down$.peekFilter(mode$, R.equals('line.ready'))
 
   const movingPos$ = startPos$
-    .map(start => move$.compose(peekFilter(mode$, R.equals('line.drawing'))).startWith(start))
+    .map(start => move$.peekFilter(mode$, R.equals('line.drawing')).startWith(start))
     .flatten()
 
   const drawingLine$ = xs
@@ -22,15 +19,15 @@ export default function drawingLine(mouse: Mouse, mode$: Stream<string>, shortcu
     .map(([p1, p2, mode]) => (mode === 'line.drawing' ? PolylineItem.fromPoints([p1, p2]) : null))
 
   const addItem$ = up$
-    .compose(peekFilter(mode$, R.equals('line.drawing')))
-    .mapTo('idle')
-    .compose(sampleCombine(drawingLine$))
-    .map(([_, line]) => line)
+    .peekFilter(mode$, R.equals('line.drawing'))
+    .peek(drawingLine$)
     .map(actions.addItem)
 
   return {
-    drawingItem$: drawingLine$,
-    action$: addItem$,
-    changeMode$: xs.merge(start$, startPos$.mapTo('line.drawing'), addItem$.mapTo('idle')),
+    drawingItem: drawingLine$,
+    action: addItem$,
+    nextMode: xs.merge(start$, startPos$.mapTo('line.drawing'), addItem$.mapTo('idle')),
   }
 }
+
+export default drawLine

@@ -1,8 +1,8 @@
+import { OrderedMap } from 'immutable'
 import * as R from 'ramda'
 import xs, { Stream } from 'xstream'
-import { Item, ItemId, Mouse, Point, Rect, ResizeDirConfig, Selection } from '../interfaces'
 import { Action, State } from '../actions'
-import { OrderedMap } from 'immutable'
+import { InteractionFn, Item, ItemId, Point, Rect, ResizeDirConfig } from '../interfaces'
 import * as selectionUtils from '../utils/selectionUtils'
 
 // TODO 该文件还可以进行优化
@@ -15,12 +15,12 @@ export interface ResizingInfo {
   resizeDirConfig: ResizeDirConfig
 }
 
-export default function resizeItems(
-  mouse: Mouse,
-  mode$: Stream<string>,
-  selection$: Stream<Selection>,
-  resizer$: Stream<string>,
-) {
+const resizeItems: InteractionFn = ({
+  mouse,
+  mode: mode$,
+  selection: selection$,
+  resizer: resizer$,
+}) => {
   const startInfo$ = xs
     .merge(
       mouse.down$.map(pos => ({ type: 'down', pos })).peekFilter(resizer$, R.identity),
@@ -67,7 +67,7 @@ export default function resizeItems(
     )
 
   return {
-    action$: resizeAction$,
+    action: resizeAction$,
   }
 }
 
@@ -110,3 +110,5 @@ function resolveResizeDirConfig(resizer: string): ResizeDirConfig {
     throw new Error(`Invalid resizer: ${resizer}`)
   }
 }
+
+export default resizeItems
