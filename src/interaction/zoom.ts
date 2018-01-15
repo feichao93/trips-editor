@@ -1,8 +1,7 @@
 import * as d3 from 'd3'
 import * as R from 'ramda'
 import xs, { Stream } from 'xstream'
-import sampleCombine from 'xstream/extra/sampleCombine'
-import actions, { State } from '../actions'
+import { State } from '../actions'
 import { Mouse } from '../interfaces'
 import transition from '../utils/transition'
 
@@ -13,6 +12,7 @@ export default function zoom(
   mouse: Mouse,
   mode$: Stream<string>,
   state$: Stream<State>,
+  transform$: Stream<d3.ZoomTransform>,
   resizer$: Stream<string>,
 ) {
   const dragStart$ = xs
@@ -22,14 +22,14 @@ export default function zoom(
     )
     .peekFilter(mode$, R.identical('idle'))
     .peekFilter(resizer$, R.identical(null))
-    .sampleCombine(state$)
-    .map(([{ type, pos: rawPos }, state]) => {
-      const [x, y] = state.transform.invert([rawPos.x, rawPos.y])
+    .sampleCombine(state$, transform$)
+    .map(([{ type, pos: rawPos }, state, transform]) => {
+      const [x, y] = transform.invert([rawPos.x, rawPos.y])
       const pos = { x, y }
       if (type === 'down') {
         const clickedItems = state.items.filter(item => item.containsPoint(pos))
         if (clickedItems.every(item => item.locked)) {
-          return { pos: rawPos, transform: state.transform }
+          return { pos: rawPos, transform }
         }
       }
       return null
@@ -60,9 +60,9 @@ export default function zoom(
   }))
   const zoom$ = xs
     .merge(zoomFromDblclick$, zoomFromWheel$)
-    .compose(sampleCombine(state$))
-    .map(([{ pos: rawPos, delta, useTransition }, state]) => {
-      const { x, y, k } = state.transform
+    .sampleCombine(transform$)
+    .map(([{ pos: rawPos, delta, useTransition }, transform]) => {
+      const { x, y, k } = transform
       const nextK = R.clamp(MIN_SCALE, MAX_SCALE, k * delta)
       const factor = nextK / k // 实际的放大率
       const nextX = factor * (x - rawPos.x) + rawPos.x
@@ -76,5 +76,5 @@ export default function zoom(
     .flatten()
     .map(([x, y, k]) => d3.zoomIdentity.translate(x, y).scale(k))
 
-  return { action$: xs.merge(zoom$, drag$).map(actions.updateTransform) }
+  return { nextTransform: xs.merge(zoom$, drag$) }
 }

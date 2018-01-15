@@ -21,11 +21,13 @@ export default function dragItems(
       if (type === 'down') {
         const clickedItems = state.items.filter(item => item.containsPoint(pos))
         const targetItemId = state.zlist.findLast(itemId => clickedItems.has(itemId))
-        // TODO 目前仅支持单个元素的拖动
-        return { startPos: pos, startItems: state.items.filter(item => item.id === targetItemId) }
-      } else {
-        return null
+        const startItems = state.items.filter(item => item.id === targetItemId)
+        if (!startItems.isEmpty()) {
+          return { startPos: pos, startItems }
+        }
+        // TODO 支持多个元素的拖动
       }
+      return null
     })
     .startWith(null)
 

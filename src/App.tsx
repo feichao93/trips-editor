@@ -1,16 +1,17 @@
 import { DOMSource, h } from '@cycle/dom'
 import isolate from '@cycle/isolate'
+import * as d3 from 'd3'
 import * as R from 'ramda'
 import { VNode } from 'snabbdom/vnode'
 import xs, { Stream } from 'xstream'
 import actions, { Action, initState } from './actions'
 import Inspector from './components/Inspector'
-import Svg from './components/Svg'
 import StatusBar from './components/StatusBar'
+import Svg from './components/Svg'
 import doDragItems from './interaction/dragItems'
 import doDrawLine from './interaction/drawLine'
-import doDrawRect from './interaction/drawRect'
 import doDrawPolygon from './interaction/drawPolygon'
+import doDrawRect from './interaction/drawRect'
 import doResizeItems from './interaction/resizeItems'
 import doZoom from './interaction/zoom'
 import { Mouse } from './interfaces'
@@ -30,6 +31,7 @@ export interface Sources {
 }
 export interface Sinks {
   DOM: Stream<VNode>
+  title: Stream<string>
 }
 
 const initMode = 'idle'
@@ -41,9 +43,10 @@ export default function App(sources: Sources): Sinks {
   const changeModeProxy$ = xs.create<string>()
   const nextResizerProxy$ = xs.create<string>()
   const resizer$ = nextResizerProxy$.startWith(null)
+  const nextTransformProxy$ = xs.create<d3.ZoomTransform>()
 
   const state$ = actionProxy$.fold((s, updater) => updater(s), initState)
-  const transform$ = state$.map(R.prop('transform'))
+  const transform$ = nextTransformProxy$.startWith(d3.zoomIdentity)
 
   // 当前选中的元素集合
   const selection$ = state$.map(s => s.items.filter(item => s.sids.has(item.id)))
@@ -76,6 +79,10 @@ export default function App(sources: Sources): Sinks {
     .sampleCombine(state$)
     .map(([pos, state]) => {
       const clickedItems = state.items.filter(item => item.containsPoint(pos))
+      // 如果和目前选中的元素，则返回null
+      if (state.sids == clickedItems.keySeq().toOrderedSet()) {
+        return null
+      }
       const targetItemId = state.zlist.findLast(itemId => clickedItems.has(itemId))
       // const canMoveItem = !clickedItems.isEmpty() && !state.items.get(targetItemId).locked
       if (targetItemId != null) {
@@ -84,10 +91,11 @@ export default function App(sources: Sources): Sinks {
         return actions.clearSids()
       }
     })
+    .filter(Boolean)
 
   const dragItems = doDragItems(mouse, mode$, state$, resizer$)
   const resizeItems = doResizeItems(mouse, mode$, selection$, resizer$)
-  const zoom = doZoom(mouse, mode$, state$, resizer$)
+  const zoom = doZoom(mouse, mode$, state$, transform$, resizer$)
   const drawRect = doDrawRect(mouse, mode$, shortcut)
   const drawPolygon = doDrawPolygon(mouse, mode$, shortcut, transform$)
   const drawLine = doDrawLine(mouse, mode$, shortcut)
@@ -104,6 +112,7 @@ export default function App(sources: Sources): Sinks {
     DOM: domSource,
     drawingItem: drawingItem$,
     state: state$,
+    transform: transform$,
     addons: {
       polygonCloseIndicator: drawPolygon.closeIndicator$,
     },
@@ -124,6 +133,7 @@ export default function App(sources: Sources): Sinks {
     xs.merge(esc$, drawRect.changeMode$, drawLine.changeMode$, drawPolygon.changeMode$),
   )
   nextResizerProxy$.imitate(svg.resizer)
+  nextTransformProxy$.imitate(zoom.nextTransform)
   mouse.rawDown$.imitate(svg.rawDown)
   mouse.down$.imitate(invertPos(svg.rawDown, transform$))
   mouse.rawClick$.imitate(svg.rawClick)
@@ -150,7 +160,6 @@ export default function App(sources: Sources): Sinks {
       drawPolygon.action$,
       drawLine.action$,
       inspector.actions,
-      zoom.action$,
       resizeItems.action$,
     ),
   )
@@ -158,6 +167,8 @@ export default function App(sources: Sources): Sinks {
   const vdom$ = xs
     .combine(menubar.DOM, structure.DOM, svg.DOM, inspector.DOM, statusBar.DOM)
     .map(components => h('div.app', components.filter(R.identity)))
-
-  return { DOM: vdom$ }
+  return {
+    DOM: vdom$,
+    title: xs.never(),
+  }
 }

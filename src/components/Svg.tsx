@@ -11,6 +11,7 @@ export interface Sources {
   DOM: DOMSource
   drawingItem: Stream<Item>
   state: Stream<State>
+  transform: Stream<d3.ZoomTransform>
   addons: {
     polygonCloseIndicator: Stream<VNode>
   }
@@ -30,6 +31,7 @@ export default function Svg(sources: Sources): Sinks {
   const domSource = sources.DOM
   const svgdom = domSource.select('.svg')
   const state$ = sources.state
+  const transform$ = sources.transform
   const selectedItems$ = state$.map(s => s.items.filter(item => s.sids.has(item.id)))
   svgdom.events('dragover', { preventDefault: true }).addListener({
     next(e) {
@@ -44,8 +46,6 @@ export default function Svg(sources: Sources): Sinks {
 
   // TODO handle open file
   file$.debug('file').addListener({})
-
-  const transform$ = sources.state.map(s => s.transform)
 
   const rawDown$ = domSource.select('svg').events('mousedown')
   const rawClick$ = domSource.select('svg').events('click')
@@ -63,12 +63,13 @@ export default function Svg(sources: Sources): Sinks {
 
   const vdom$ = xs
     .combine(
-      sources.state,
+      state$,
+      transform$,
       sources.drawingItem,
       selectionIndicator.DOM,
       sources.addons.polygonCloseIndicator,
     )
-    .map(([{ items, zlist, transform }, drawingItem, selectionIndicator, polygonCloseIndicator]) =>
+    .map(([{ items, zlist }, transform, drawingItem, selectionIndicator, polygonCloseIndicator]) =>
       h('svg.svg', [
         h(
           'g',

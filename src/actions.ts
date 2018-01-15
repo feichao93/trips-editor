@@ -1,16 +1,11 @@
-import * as d3 from 'd3'
 import { List, Map, OrderedMap, OrderedSet, Record } from 'immutable'
 import { Item, ItemId, Selection } from './interfaces'
 import { getNextId } from './utils/common'
-
-export type Cursor = 'default' | 'cross' | 'pointer'
 
 export const StateRecord = Record({
   items: Map<ItemId, Item>(),
   sids: OrderedSet<ItemId>(),
   zlist: List<ItemId>(),
-  cursor: 'default' as Cursor,
-  transform: d3.zoomIdentity,
 })
 
 export const initState = StateRecord()
@@ -21,9 +16,6 @@ export interface Action {
 export type ZIndexOp = 'z-inc' | 'z-dec' | 'z-top' | 'z-bottom'
 
 export default {
-  updateTransform(transform: d3.ZoomTransform): Action {
-    return state => state.set('transform', transform)
-  },
   moveItems(movedItems: OrderedMap<ItemId, Item>): Action {
     return state => state.mergeIn(['items'], movedItems)
   },
