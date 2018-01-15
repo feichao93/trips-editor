@@ -11,12 +11,16 @@ export interface Sources {
   DOM: DOMSource
   drawingItem: Stream<Item>
   state: Stream<State>
+  addons: {
+    polygonCloseIndicator: Stream<VNode>
+  }
 }
 
 export interface Sinks {
   DOM: Stream<VNode>
   svg: Stream<SVGSVGElement>
   rawDown: Stream<Point>
+  rawClick: Stream<Point>
   rawDblclick: Stream<Point>
   rawWheel: Stream<{ pos: Point; deltaY: number }>
   resizer: Stream<string>
@@ -43,9 +47,13 @@ export default function Svg(sources: Sources): Sinks {
 
   const transform$ = sources.state.map(s => s.transform)
 
-  const rawDown$ = domSource.events('mousedown')
-  const rawDblclick$ = domSource.events('dblclick')
-  const rawWheel$ = domSource.events('wheel').map(e => ({ pos: e, deltaY: e.deltaY }))
+  const rawDown$ = domSource.select('svg').events('mousedown')
+  const rawClick$ = domSource.select('svg').events('click')
+  const rawDblclick$ = domSource.select('svg').events('dblclick')
+  const rawWheel$ = domSource
+    .select('svg')
+    .events('wheel')
+    .map(e => ({ pos: e, deltaY: e.deltaY }))
 
   const selectionIndicator = SelectionIndicator({
     DOM: domSource,
@@ -54,8 +62,13 @@ export default function Svg(sources: Sources): Sinks {
   })
 
   const vdom$ = xs
-    .combine(sources.state, sources.drawingItem, selectionIndicator.DOM)
-    .map(([{ items, zlist, transform }, drawingItem, selectionIndicator]) =>
+    .combine(
+      sources.state,
+      sources.drawingItem,
+      selectionIndicator.DOM,
+      sources.addons.polygonCloseIndicator,
+    )
+    .map(([{ items, zlist, transform }, drawingItem, selectionIndicator, polygonCloseIndicator]) =>
       h('svg.svg', [
         h(
           'g',
@@ -73,6 +86,7 @@ export default function Svg(sources: Sources): Sinks {
             ),
             drawingItem && drawingItem.render(),
             selectionIndicator,
+            polygonCloseIndicator,
           ].filter(R.identity),
         ),
       ]),
@@ -82,6 +96,7 @@ export default function Svg(sources: Sources): Sinks {
     svg: svgdom.element() as any,
     rawDown: rawDown$,
     rawDblclick: rawDblclick$,
+    rawClick: rawClick$,
     rawWheel: rawWheel$,
     resizer: selectionIndicator.resizer,
   }

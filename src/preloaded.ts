@@ -1,7 +1,8 @@
 import xs, { Stream } from 'xstream'
+import dropRepeats from 'xstream/extra/dropRepeats'
+import sampleCombine from 'xstream/extra/sampleCombine'
 import peek from './utils/peek'
 import peekFilter from './utils/peekFilter'
-import sampleCombine from 'xstream/extra/sampleCombine'
 
 declare global {
   interface Event {
@@ -25,6 +26,16 @@ Stream.prototype.sampleCombine = function(...args: any[]) {
 Stream.prototype.combine = function(...args: any[]) {
   return xs.combine(this, ...args) as any
 }
+Stream.prototype.dropRepeats = function(isEqual) {
+  return this.compose(dropRepeats(isEqual))
+}
+Stream.prototype.checkedFlatMap = function(checkFn: any, mapFn: any) {
+  if (mapFn === undefined) {
+    mapFn = checkFn
+    checkFn = Boolean
+  }
+  return this.map((t: any) => (checkFn(t) ? mapFn(t) : xs.of(null))).flatten()
+} as any
 
 interface InlineCombineSignature<T> {
   (): Stream<[T]>
@@ -46,8 +57,16 @@ interface InlineCombineSignature<T> {
 declare module 'xstream' {
   interface Stream<T> {
     peek<U>(peekStream: Stream<U>): Stream<U>
-    peekFilter<U>(peekStream: Stream<U>, filterFn: (u: U) => boolean): Stream<T>
+    peekFilter<U>(peekStream: Stream<U>, filterFn: (u: U) => boolean): this
     combine: InlineCombineSignature<T>
     sampleCombine: InlineCombineSignature<T>
+    dropRepeats(isEqual?: ((x: T, y: T) => boolean)): this
+
+    /** Like flatMap, but will check the value using `checkFn` before call `mapFn`.
+     * If `checkFn(t)` returns false, then the result stream will just emit **one null** for this `t`,
+     * else the result stream will emit `mapFn(t)`.
+     */
+    checkedFlatMap<U>(checkFn: (t: T) => boolean, mapFn: (t: T) => Stream<U>): Stream<U>
+    checkedFlatMap<U>(/* checkFn = Boolean */ mapFn: (t: T) => Stream<U>): Stream<U>
   }
 }

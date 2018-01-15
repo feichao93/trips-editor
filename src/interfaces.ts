@@ -16,6 +16,10 @@ export interface Rect {
   height: number
 }
 
+export interface Updater<T> {
+  (t: T): T
+}
+
 export type ItemId = number
 
 export type Item = PolygonItem | PolylineItem
@@ -29,6 +33,8 @@ export interface Mouse {
   rawDown$: Stream<Point>
   up$: Stream<Point>
   rawUp$: Stream<Point>
+  click$: Stream<Point>
+  rawClick$: Stream<Point>
   dblclick$: Stream<Point>
   rawDblclick$: Stream<Point>
   wheel$: Stream<{ pos: Point; deltaY: number }>

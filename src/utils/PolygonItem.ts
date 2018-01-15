@@ -27,6 +27,14 @@ const PolygonItem = ItemRecord(
       })
     },
 
+    fromPoints(points: List<Point>) {
+      return PolygonItem({ points })
+    },
+
+    preview([movingPos, points]: [Point, List<Point>]) {
+      return PolygonItem({ points: points.push(movingPos) })
+    },
+
     isRect(item: any) {
       if (!(item instanceof PolygonItem) || item.points.count() !== 4) {
         return false

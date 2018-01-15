@@ -75,6 +75,14 @@ class PeekFilterOperator<T, U> implements Operator<T, T> {
   }
 }
 
+/**
+ *  `a$.peekFilter($b, fn)` is equivalent to
+ *  ```
+ *  a$.compose(sampleCombine($b))
+ *    .filter(([a, b]) => fn(b))
+ *    .map(([a, b]) => a)
+ *  ```
+ */
 export default function peekFilter<T, U>(peekStream: Stream<U>, filterFn: (u: U) => boolean) {
   return function peekFilterOperator(ins: Stream<T>) {
     return new Stream<T>(new PeekFilterOperator<T, U>(ins, peekStream, filterFn))

@@ -10,6 +10,7 @@ import StatusBar from './components/StatusBar'
 import doDragItems from './interaction/dragItems'
 import doDrawLine from './interaction/drawLine'
 import doDrawRect from './interaction/drawRect'
+import doDrawPolygon from './interaction/drawPolygon'
 import doResizeItems from './interaction/resizeItems'
 import doZoom from './interaction/zoom'
 import { Mouse } from './interfaces'
@@ -58,6 +59,8 @@ export default function App(sources: Sources): Sinks {
     rawMove$: sources.mousemove,
     up$: invertPos(sources.mouseup, transform$),
     rawUp$: sources.mouseup,
+    click$: xs.create(),
+    rawClick$: xs.create(),
     dblclick$: xs.create(),
     rawDblclick$: xs.create(),
     wheel$: xs.empty(),
@@ -86,10 +89,13 @@ export default function App(sources: Sources): Sinks {
   const resizeItems = doResizeItems(mouse, mode$, selection$, resizer$)
   const zoom = doZoom(mouse, mode$, state$, resizer$)
   const drawRect = doDrawRect(mouse, mode$, shortcut)
+  const drawPolygon = doDrawPolygon(mouse, mode$, shortcut, transform$)
   const drawLine = doDrawLine(mouse, mode$, shortcut)
 
   // 目前正在绘制的元素 用于绘制预览
-  const drawingItem$ = xs.merge(drawRect.drawingItem$, drawLine.drawingItem$).startWith(null)
+  const drawingItem$ = xs
+    .merge(drawRect.drawingItem$, drawLine.drawingItem$, drawPolygon.drawingItem$)
+    .startWith(null)
 
   // views
   const menubar = (isolate(Menubar, 'menubar') as typeof Menubar)({ DOM: domSource })
@@ -98,6 +104,9 @@ export default function App(sources: Sources): Sinks {
     DOM: domSource,
     drawingItem: drawingItem$,
     state: state$,
+    addons: {
+      polygonCloseIndicator: drawPolygon.closeIndicator$,
+    },
   })
   const inspector = (isolate(Inspector, 'inspector') as typeof Inspector)({
     DOM: domSource,
@@ -111,10 +120,14 @@ export default function App(sources: Sources): Sinks {
     mode: mode$,
   })
 
-  changeModeProxy$.imitate(xs.merge(esc$, drawRect.changeMode$, drawLine.changeMode$))
+  changeModeProxy$.imitate(
+    xs.merge(esc$, drawRect.changeMode$, drawLine.changeMode$, drawPolygon.changeMode$),
+  )
   nextResizerProxy$.imitate(svg.resizer)
   mouse.rawDown$.imitate(svg.rawDown)
   mouse.down$.imitate(invertPos(svg.rawDown, transform$))
+  mouse.rawClick$.imitate(svg.rawClick)
+  mouse.click$.imitate(invertPos(svg.rawClick, transform$))
   mouse.rawDblclick$.imitate(svg.rawDblclick)
   mouse.dblclick$.imitate(invertPos(svg.rawDblclick, transform$))
   mouse.rawWheel$.imitate(svg.rawWheel)
@@ -134,6 +147,7 @@ export default function App(sources: Sources): Sinks {
       dragItems,
       // interactions
       drawRect.action$,
+      drawPolygon.action$,
       drawLine.action$,
       inspector.actions,
       zoom.action$,
