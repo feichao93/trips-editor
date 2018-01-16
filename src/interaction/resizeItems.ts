@@ -1,5 +1,5 @@
 import { Map } from 'immutable'
-import * as R from 'ramda'
+import { identical } from 'ramda'
 import xs, { Stream } from 'xstream'
 import { Action, State } from '../actions'
 import { InteractionFn, Item, ItemId, Point, Rect, ResizeDirConfig } from '../interfaces'
@@ -26,7 +26,7 @@ const resizeItems: InteractionFn = ({
       mouse.down$.map(pos => ({ type: 'down', pos })).when(resizer$, Boolean),
       mouse.up$.map(pos => ({ type: 'up', pos })),
     )
-    .when(mode$, R.identical('idle'))
+    .when(mode$, identical('idle'))
     .sampleCombine(resizer$, state$, selection$)
     .map(([{ type, pos }, resizer, state, selection]) => {
       const startItems = selection.selectedItems(state)

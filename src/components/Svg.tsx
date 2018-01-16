@@ -1,6 +1,5 @@
 import { DOMSource, h } from '@cycle/dom'
 import isolate from '@cycle/isolate'
-import * as R from 'ramda'
 import { VNode } from 'snabbdom/vnode'
 import xs, { Stream } from 'xstream'
 import SelectionIndicator from './SelectionIndicator'
@@ -47,7 +46,7 @@ export default function Svg(sources: Sources): Sinks {
   const file$ = svgdom
     .events('drop', { preventDefault: true })
     .map(e => e.dataTransfer.files[0])
-    .filter(R.identity)
+    .filter(Boolean)
 
   // TODO handle open file
   file$.debug('file').addListener({})

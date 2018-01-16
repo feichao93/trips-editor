@@ -1,4 +1,4 @@
-import * as R from 'ramda'
+import { complement } from 'ramda'
 import xs, { Stream } from 'xstream'
 import dropRepeats from 'xstream/extra/dropRepeats'
 import sampleCombine from 'xstream/extra/sampleCombine'
@@ -26,7 +26,7 @@ Stream.prototype.whenNot = function<T, U>(
   peekStream: Stream<U>,
   filterFn: (u: U) => boolean = Boolean,
 ) {
-  return this.when(peekStream, R.complement(filterFn))
+  return this.when(peekStream, complement(filterFn))
 }
 Stream.prototype.sampleCombine = function(...args: any[]) {
   return this.compose(sampleCombine(...args))

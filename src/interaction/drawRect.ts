@@ -1,26 +1,26 @@
-import * as R from 'ramda'
-import xs, { Stream } from 'xstream'
+import { OrderedSet } from 'immutable'
+import { identical } from 'ramda'
+import xs from 'xstream'
 import actions from '../actions'
-import { InteractionFn, Point } from '../interfaces'
+import { InteractionFn } from '../interfaces'
 import { injectItemId } from '../utils/common'
 import PolygonItem from '../utils/PolygonItem'
-import { OrderedSet } from 'immutable'
 
 const drawRect: InteractionFn = ({ mouse, mode: mode$, shortcut, selection: sel$ }) => {
   const start$ = shortcut.shortcut('r', 'rect.ready')
-  const startPos$ = mouse.down$.when(mode$, R.equals('rect.ready')).remember()
+  const startPos$ = mouse.down$.when(mode$, identical('rect.ready')).remember()
   const movingPos$ = startPos$
-    .map(start => mouse.move$.when(mode$, R.equals('rect.drawing')).startWith(start))
+    .map(start => mouse.move$.when(mode$, identical('rect.drawing')).startWith(start))
     .flatten()
 
   const drawingRect$ = mode$
-    .checkedFlatMap(R.identical('rect.drawing'), () =>
+    .checkedFlatMap(identical('rect.drawing'), () =>
       xs.combine(startPos$, movingPos$).map(PolygonItem.rectFromPoints),
     )
     .filter(Boolean)
 
   const newItem$ = mouse.up$
-    .when(mode$, R.equals('rect.drawing'))
+    .when(mode$, identical('rect.drawing'))
     .peek(drawingRect$)
     .map(injectItemId)
 

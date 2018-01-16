@@ -1,7 +1,7 @@
 const webpack = require('webpack')
 const path = require('path')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
-const MinifyPlugin = require('babel-minify-webpack-plugin')
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
 
 module.exports = env => {
   env = env || {}
@@ -39,11 +39,7 @@ module.exports = env => {
       new webpack.ProvidePlugin({
         Snabbdom: 'snabbdom-pragma',
       }),
-    ].concat(
-      isProduction
-        ? [new MinifyPlugin({}, { comments: false })]
-        : [new webpack.HotModuleReplacementPlugin()],
-    ),
+    ].concat(isProduction ? [new UglifyJsPlugin()] : [new webpack.HotModuleReplacementPlugin()]),
 
     devServer: {
       port: 8080,

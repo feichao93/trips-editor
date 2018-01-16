@@ -1,4 +1,4 @@
-import * as R from 'ramda'
+import { identical } from 'ramda'
 import xs from 'xstream'
 import actions from '../actions'
 import { InteractionFn } from '../interfaces'
@@ -9,9 +9,9 @@ const dragItems: InteractionFn = ({ mouse, mode: mode$, state: state$ }) => {
       mouse.down$.map(pos => ({ type: 'down', pos })),
       mouse.up$.map(pos => ({ type: 'up', pos })),
     )
-    .when(mouse.resizer$, R.identical(null))
-    .when(mouse.vertexIndex$, R.identical(-1))
-    .when(mode$, R.equals('idle'))
+    .when(mouse.resizer$, identical(null))
+    .when(mouse.vertexIndex$, identical(-1))
+    .when(mode$, identical('idle'))
     .sampleCombine(state$)
     .map(([{ type, pos }, state]) => {
       if (type === 'down') {
@@ -36,7 +36,7 @@ const dragItems: InteractionFn = ({ mouse, mode: mode$, state: state$ }) => {
         return actions.moveItems(movedItems)
       }),
     )
-    .filter(R.identity)
+    .filter(Boolean)
 
   return { action: dragItems$ }
 }

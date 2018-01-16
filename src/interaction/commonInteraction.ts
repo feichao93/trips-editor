@@ -1,5 +1,5 @@
 import { is, OrderedSet } from 'immutable'
-import * as R from 'ramda'
+import { identical } from 'ramda'
 import actions from '../actions'
 import { InteractionFn } from '../interfaces'
 
@@ -11,8 +11,8 @@ const commonInteraction: InteractionFn = ({
   selection: selection$,
 }) => {
   const changeSids$ = mouse.down$
-    .when(mode$, R.identical('idle'))
-    .when(mouse.resizer$, R.identical(null))
+    .when(mode$, identical('idle'))
+    .when(mouse.resizer$, identical(null))
     .when(mouse.vertexIndex$, i => i === -1)
     .sampleCombine(state$, selection$)
     .map(([pos, state, sel]) => {

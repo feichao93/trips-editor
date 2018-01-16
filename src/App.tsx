@@ -2,7 +2,6 @@ import { DOMSource, h, VNode } from '@cycle/dom'
 import isolate from '@cycle/isolate'
 import * as d3 from 'd3'
 import { is } from 'immutable'
-import * as R from 'ramda'
 import xs, { Stream } from 'xstream'
 import { Action, initState } from './actions'
 import Inspector from './components/Inspector'
@@ -127,7 +126,7 @@ export default function App(sources: Sources): Sinks {
 
   const vdom$ = xs
     .combine(menubar.DOM, structure.DOM, svg.DOM, inspector.DOM, statusBar.DOM)
-    .map(components => h('div.app', components.filter(R.identity)))
+    .map(components => h('div.app', components.filter(Boolean)))
 
   return {
     DOM: vdom$,

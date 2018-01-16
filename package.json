@@ -23,7 +23,6 @@
     "@types/ramda": "^0.25.13",
     "d3": "^4.12.2",
     "immutable": "4.0.0-rc.9",
-    "moment": "^2.20.1",
     "mousetrap": "^1.6.1",
     "normalize.css": "^7.0.0",
     "ramda": "^0.25.0",
@@ -33,7 +32,6 @@
   },
   "devDependencies": {
     "@types/node": "^8.5.5",
-    "babel-minify-webpack-plugin": "^0.2.0",
     "css-loader": "^0.28.7",
     "cycle-restart": "^0.2.2",
     "html-webpack-plugin": "^2.30.1",
@@ -43,6 +41,7 @@
     "stylus-loader": "^3.0.1",
     "ts-loader": "^3.2.0",
     "typescript": "^2.6.2",
+    "uglifyjs-webpack-plugin": "^1.1.6",
     "webpack": "^3.10.0",
     "webpack-dev-server": "^2.9.7"
   }

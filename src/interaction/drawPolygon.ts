@@ -1,6 +1,6 @@
 import { h, VNode } from '@cycle/dom'
 import { List, OrderedSet } from 'immutable'
-import * as R from 'ramda'
+import { always, identical } from 'ramda'
 import xs, { Stream } from 'xstream'
 import actions from '../actions'
 import { SENSE_RANGE } from '../constants'
@@ -20,7 +20,7 @@ const drawPolygon: InteractionFn = ({
 
   const changePoints$: Stream<Updater<List<Point>>> = xs.merge(
     addPointProxy$.map(p => (points: List<Point>) => points.push(p)),
-    resetPointsProxy$.mapTo(R.always(List<Point>())),
+    resetPointsProxy$.mapTo(always(List<Point>())),
   )
 
   // 记录当前绘制的点
@@ -39,7 +39,7 @@ const drawPolygon: InteractionFn = ({
     .startWith(false)
 
   // 绘制一个点
-  const addPoint$ = mouse.click$.when(mode$, R.identical('polygon')).whenNot(canClose$)
+  const addPoint$ = mouse.click$.when(mode$, identical('polygon')).whenNot(canClose$)
   addPointProxy$.imitate(addPoint$)
   addPoint$.addListener({})
 
@@ -61,7 +61,7 @@ const drawPolygon: InteractionFn = ({
   // 记录当前正在绘制的多边形的预览
   const drawingPolygon$ = mode$
     .checkedFlatMap(
-      R.identical('polygon'),
+      identical('polygon'),
       // () => mouse.move$.sampleCombine(points$).map(PolygonItem.preview),
       () =>
         mouse.move$

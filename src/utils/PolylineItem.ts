@@ -1,6 +1,6 @@
 import { h } from '@cycle/dom'
 import { List } from 'immutable'
-import * as R from 'ramda'
+import { identity } from 'ramda'
 import { distanceBetweenPointAndSegment, getCoordinateUpdater } from './common'
 import { ItemRecord } from './Item'
 import { Point, ResizeDirConfig } from '../interfaces'
@@ -44,8 +44,8 @@ PolylineItem.prototype.resize = function resize(
   if (this.locked) {
     return this
   }
-  const xUpdater = h ? getCoordinateUpdater(anchor.x, startPos.x, endPos.x) : R.identity
-  const yUpdater = v ? getCoordinateUpdater(anchor.y, startPos.y, endPos.y) : R.identity
+  const xUpdater = h ? getCoordinateUpdater(anchor.x, startPos.x, endPos.x) : identity
+  const yUpdater = v ? getCoordinateUpdater(anchor.y, startPos.y, endPos.y) : identity
   return this.update('points', ps => ps.map(p => ({ x: xUpdater(p.x), y: yUpdater(p.y) })))
 }
 
