@@ -1,11 +1,12 @@
-import { OrderedMap } from 'immutable'
 import { MemoryStream, Stream } from 'xstream'
 import { Action, State } from './actions'
 import { ShortcutSource } from './makeShortcutDriver'
 import PolygonItem from './utils/PolygonItem'
 import PolylineItem from './utils/PolylineItem'
+import Selection from './utils/Selection'
+import Mouse from './utils/Mouse'
 
-export { PolygonItem, PolylineItem }
+export { PolygonItem, PolylineItem, Selection }
 
 export interface Point {
   x: number
@@ -26,23 +27,6 @@ export type ItemId = number
 
 export type Item = PolygonItem | PolylineItem
 
-export type Selection = OrderedMap<ItemId, Item>
-
-export interface Mouse {
-  move$: Stream<Point>
-  rawMove$: Stream<Point>
-  down$: Stream<Point>
-  rawDown$: Stream<Point>
-  up$: Stream<Point>
-  rawUp$: Stream<Point>
-  click$: Stream<Point>
-  rawClick$: Stream<Point>
-  dblclick$: Stream<Point>
-  rawDblclick$: Stream<Point>
-  wheel$: Stream<{ pos: Point; deltaY: number }>
-  rawWheel$: Stream<{ pos: Point; deltaY: number }>
-}
-
 export interface ResizeDirConfig {
   h: boolean
   v: boolean
@@ -54,7 +38,6 @@ export interface InterfaceFnSources {
   state: MemoryStream<State>
   selection: MemoryStream<Selection>
   transform: MemoryStream<d3.ZoomTransform>
-  resizer: MemoryStream<string>
   shortcut: ShortcutSource
 }
 
@@ -62,6 +45,7 @@ export interface InteractionFnSinks {
   action: Stream<Action>
   nextMode: Stream<string>
   nextTransform: Stream<d3.ZoomTransform>
+  nextSelection: Stream<Selection>
   drawingItem: Stream<Item>
   addons: { [key: string]: Stream<any> }
 }

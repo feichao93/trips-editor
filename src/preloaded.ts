@@ -1,8 +1,9 @@
+import * as R from 'ramda'
 import xs, { Stream } from 'xstream'
 import dropRepeats from 'xstream/extra/dropRepeats'
 import sampleCombine from 'xstream/extra/sampleCombine'
 import peek from './utils/peek'
-import peekFilter from './utils/peekFilter'
+import when from './utils/when-operator'
 
 declare global {
   interface Event {
@@ -13,12 +14,19 @@ declare global {
 Stream.prototype.peek = function<T, U>(this: Stream<T>, peekStream: Stream<U>) {
   return this.compose(peek(peekStream))
 }
-Stream.prototype.peekFilter = function<T, U>(
+Stream.prototype.when = function<T, U>(
   this: Stream<T>,
   peekStream: Stream<U>,
-  filterFn: (u: U) => boolean,
+  filterFn: (u: U) => boolean = Boolean,
 ) {
-  return this.compose(peekFilter(peekStream, filterFn))
+  return this.compose(when(peekStream, filterFn))
+}
+Stream.prototype.whenNot = function<T, U>(
+  this: Stream<T>,
+  peekStream: Stream<U>,
+  filterFn: (u: U) => boolean = Boolean,
+) {
+  return this.when(peekStream, R.complement(filterFn))
 }
 Stream.prototype.sampleCombine = function(...args: any[]) {
   return this.compose(sampleCombine(...args))
@@ -41,9 +49,9 @@ interface InlineCombineSignature<T> {
   (): Stream<[T]>
   <T1>(s1: Stream<T1>): Stream<[T, T1]>
   <T1, T2>(s1: Stream<T1>, s2: Stream<T2>): Stream<[T, T1, T2]>
-  <T1, T2, T3>(s1: Stream<T1>, s2: Stream<T2>, s3: Stream<T3>): Stream<[T1, T2, T3]>
+  <T1, T2, T3>(s1: Stream<T1>, s2: Stream<T2>, s3: Stream<T3>): Stream<[T, T1, T2, T3]>
   <T1, T2, T3, T4>(s1: Stream<T1>, s2: Stream<T2>, s3: Stream<T3>, s4: Stream<T4>): Stream<
-    [T1, T2, T3, T4]
+    [T, T1, T2, T3, T4]
   >
   <T1, T2, T3, T4, T5>(
     s1: Stream<T1>,
@@ -51,13 +59,14 @@ interface InlineCombineSignature<T> {
     s3: Stream<T3>,
     s4: Stream<T4>,
     s5: Stream<T5>,
-  ): Stream<[T1, T2, T3, T4, T5]>
+  ): Stream<[T, T1, T2, T3, T4, T5]>
 }
 
 declare module 'xstream' {
   interface Stream<T> {
     peek<U>(peekStream: Stream<U>): Stream<U>
-    peekFilter<U>(peekStream: Stream<U>, filterFn: (u: U) => boolean): this
+    when<U>(peekStream: Stream<U>, filterFn?: (u: U) => boolean): this
+    whenNot<U>(peekStream: Stream<U>, filterFn?: (u: U) => boolean): this
     combine: InlineCombineSignature<T>
     sampleCombine: InlineCombineSignature<T>
     dropRepeats(isEqual?: ((x: T, y: T) => boolean)): this

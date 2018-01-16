@@ -7,20 +7,15 @@ import transition from '../utils/transition'
 const MIN_SCALE = 0.5
 const MAX_SCALE = 4
 
-const zoom: InteractionFn = ({
-  mouse,
-  mode: mode$,
-  state: state$,
-  transform: transform$,
-  resizer: resizer$,
-}) => {
+const zoom: InteractionFn = ({ mouse, mode: mode$, state: state$, transform: transform$ }) => {
   const dragStart$ = xs
     .merge(
       mouse.rawDown$.map(pos => ({ type: 'down', pos })),
       mouse.rawUp$.map(pos => ({ type: 'up', pos })),
     )
-    .peekFilter(mode$, R.identical('idle'))
-    .peekFilter(resizer$, R.identical(null))
+    .when(mode$, R.identical('idle'))
+    .when(mouse.resizer$, R.identical(null))
+    .when(mouse.vertexIndex$, R.identical(-1))
     .sampleCombine(state$, transform$)
     .map(([{ type, pos: rawPos }, state, transform]) => {
       const [x, y] = transform.invert([rawPos.x, rawPos.y])

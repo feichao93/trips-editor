@@ -1,16 +1,15 @@
-import { OrderedMap } from 'immutable'
+import { Map } from 'immutable'
 import * as R from 'ramda'
 import xs, { Stream } from 'xstream'
 import { Action, State } from '../actions'
 import { InteractionFn, Item, ItemId, Point, Rect, ResizeDirConfig } from '../interfaces'
-import * as selectionUtils from '../utils/selectionUtils'
 
 // TODO 该文件还可以进行优化
 
 export interface ResizingInfo {
   movingPos: Point
   startPos: Point
-  selection: OrderedMap<ItemId, Item>
+  startItems: Map<ItemId, Item>
   anchor: Point
   resizeDirConfig: ResizeDirConfig
 }
@@ -18,22 +17,24 @@ export interface ResizingInfo {
 const resizeItems: InteractionFn = ({
   mouse,
   mode: mode$,
+  state: state$,
   selection: selection$,
-  resizer: resizer$,
 }) => {
+  const resizer$ = mouse.resizer$
   const startInfo$ = xs
     .merge(
-      mouse.down$.map(pos => ({ type: 'down', pos })).peekFilter(resizer$, R.identity),
+      mouse.down$.map(pos => ({ type: 'down', pos })).when(resizer$, Boolean),
       mouse.up$.map(pos => ({ type: 'up', pos })),
     )
-    .peekFilter(mode$, R.identical('idle'))
-    .sampleCombine(resizer$, selection$)
-    .map(([{ type, pos }, resizer, selection]) => {
-      const bbox = selectionUtils.getBBox(selection)
+    .when(mode$, R.identical('idle'))
+    .sampleCombine(resizer$, state$, selection$)
+    .map(([{ type, pos }, resizer, state, selection]) => {
+      const startItems = selection.selectedItems(state)
+      const bbox = selection.getBBox(state)
       if (bbox != null && type === 'down') {
         return {
           startPos: pos,
-          selection,
+          startItems,
           anchor: resolveAnchor(resizer, bbox),
           resizeDirConfig: resolveResizeDirConfig(resizer),
         }
@@ -42,29 +43,18 @@ const resizeItems: InteractionFn = ({
       }
     })
 
-  const resizingInfo$ = startInfo$
-    .map(startInfo => {
-      if (startInfo == null) {
-        return xs.of<ResizingInfo>(null)
-      }
-      return mouse.move$.map(movingPos => ({
-        movingPos,
-        startPos: startInfo.startPos,
-        selection: startInfo.selection,
-        anchor: startInfo.anchor,
-        resizeDirConfig: startInfo.resizeDirConfig,
-      }))
-    })
-    .flatten()
+  const resizingInfo$: Stream<ResizingInfo> = startInfo$.checkedFlatMap(startInfo =>
+    mouse.move$.map(movingPos => ({ movingPos, ...startInfo })),
+  )
 
   const resizeAction$: Stream<Action> = resizingInfo$
-    .filter(R.identity)
-    .map(({ selection, anchor, resizeDirConfig, startPos, movingPos }) => (state: State) =>
-      state.mergeIn(
-        ['items'],
-        selection.map(item => item.resize(anchor, resizeDirConfig, startPos, movingPos)),
-      ),
-    )
+    .filter(Boolean)
+    .map(({ startItems, anchor, resizeDirConfig, startPos, movingPos }) => (state: State) => {
+      const resizedItems = startItems.map(item =>
+        item.resize(anchor, resizeDirConfig, startPos, movingPos),
+      )
+      return state.mergeIn(['items'], resizedItems)
+    })
 
   return {
     action: resizeAction$,

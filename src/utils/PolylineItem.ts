@@ -17,6 +17,9 @@ const PolylineItem = ItemRecord(
     fill: 'none',
   },
   {
+    lineFromPoints([p1, p2]: [Point, Point]) {
+      return PolylineItem({ points: List([p1, p2]) })
+    },
     fromPoints(points: Point[]) {
       return PolylineItem({ points: List(points) })
     },

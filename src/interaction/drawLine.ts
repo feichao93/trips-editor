@@ -1,32 +1,39 @@
+import { OrderedSet } from 'immutable'
 import * as R from 'ramda'
-import xs, { Stream } from 'xstream'
+import xs from 'xstream'
 import actions from '../actions'
-import { InteractionFn, Point } from '../interfaces'
+import { InteractionFn } from '../interfaces'
+import { injectItemId } from '../utils/common'
 import PolylineItem from '../utils/PolylineItem'
 
-const drawLine: InteractionFn = ({ mouse, mode: mode$, shortcut }) => {
-  const { down$, move$, up$ } = mouse
+const drawLine: InteractionFn = ({ mouse, mode: mode$, shortcut, selection: sel$ }) => {
   const start$ = shortcut.shortcut('l', 'line.ready')
-
-  const startPos$: Stream<Point> = down$.peekFilter(mode$, R.equals('line.ready'))
+  const startPos$ = mouse.down$.when(mode$, R.equals('line.ready')).remember()
 
   const movingPos$ = startPos$
-    .map(start => move$.peekFilter(mode$, R.equals('line.drawing')).startWith(start))
+    .map(start => mouse.move$.when(mode$, R.equals('line.drawing')).startWith(start))
     .flatten()
 
-  const drawingLine$ = xs
-    .combine(startPos$, movingPos$, mode$)
-    .map(([p1, p2, mode]) => (mode === 'line.drawing' ? PolylineItem.fromPoints([p1, p2]) : null))
+  const drawingLine$ = mode$
+    .checkedFlatMap(R.identical('line.drawing'), () =>
+      xs.combine(startPos$, movingPos$).map(PolylineItem.lineFromPoints),
+    )
+    .filter(Boolean)
 
-  const addItem$ = up$
-    .peekFilter(mode$, R.equals('line.drawing'))
+  const newItem$ = mouse.up$
+    .when(mode$, R.equals('line.drawing'))
     .peek(drawingLine$)
-    .map(actions.addItem)
+    .map(injectItemId)
+
+  const nextSelection$ = newItem$
+    .sampleCombine(sel$)
+    .map(([newItem, sel]) => sel.set('sids', OrderedSet([newItem.id])))
 
   return {
     drawingItem: drawingLine$,
-    action: addItem$,
-    nextMode: xs.merge(start$, startPos$.mapTo('line.drawing'), addItem$.mapTo('idle')),
+    action: newItem$.map(actions.addItem),
+    nextMode: xs.merge(start$, startPos$.mapTo('line.drawing'), newItem$.mapTo('idle')),
+    nextSelection: nextSelection$,
   }
 }
 

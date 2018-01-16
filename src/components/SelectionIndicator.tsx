@@ -1,9 +1,8 @@
-import { VNode, DOMSource, h } from '@cycle/dom'
-import { OrderedMap } from 'immutable'
-import { INDICATOR_RECT_SIZE } from '../constants'
-import { Item, ItemId } from '../interfaces'
-import { getBoundingBoxOfPoints } from '../utils/common'
+import { DOMSource, h, VNode } from '@cycle/dom'
 import xs, { Stream } from 'xstream'
+import { INDICATOR_RECT_SIZE } from '../constants'
+import { Selection } from '../interfaces'
+import { State } from '../actions'
 
 const SmallCross = ({ x, y, k }: { x: number; y: number; k: number; cursor?: string }) =>
   h('g', { attrs: { transform: `translate(${x}, ${y})` } }, [
@@ -67,7 +66,8 @@ const BorderLine = ({ k, x1, y1, x2, y2 }: BorderLineProps) =>
 
 export interface Sources {
   DOM: DOMSource
-  selectedItems: Stream<OrderedMap<ItemId, Item>>
+  state: Stream<State>
+  selection: Stream<Selection>
   transform: Stream<d3.ZoomTransform>
 }
 
@@ -76,8 +76,12 @@ export interface Sinks {
   resizer: Stream<string>
 }
 
-export default function SelectedItemsIndicator(sources: Sources): Sinks {
-  const { DOM: domSource, selectedItems: selectedItems$, transform: transform$ } = sources
+export default function SelectedItemsIndicator({
+  DOM: domSource,
+  selection: selection$,
+  transform: transform$,
+  state: state$,
+}: Sources): Sinks {
   const resizerSource = domSource.select('*[data-resizer]')
 
   const enter$ = resizerSource
@@ -87,19 +91,19 @@ export default function SelectedItemsIndicator(sources: Sources): Sinks {
 
   const resizer$ = xs.merge(enter$, exit$)
 
-  const vdom$ = xs.combine(selectedItems$, transform$).map(([selectedItems, transform]) => {
-    const points = selectedItems.toList().flatMap(item => item.getPoints())
-    if (points.isEmpty()) {
+  const vdom$ = xs.combine(selection$, state$, transform$).map(([sel, state, transform]) => {
+    const bbox = sel.getBBox(state)
+    if (bbox == null) {
       return null
     }
-    const { x, y, width, height } = getBoundingBoxOfPoints(points)
+    const { x, y, width, height } = bbox
 
     const k = transform.k
     const x0 = x - INDICATOR_RECT_SIZE / 2 / k
     const y0 = y - INDICATOR_RECT_SIZE / 2 / k
 
     // TODO 目前选中元素总是一个, 所以用.first()即可
-    const SmallShape = selectedItems.first().locked ? SmallCross : SmallRect
+    const SmallShape = sel.item(state).locked ? SmallCross : SmallRect
 
     return (
       <g role="selected-items-indicator">
@@ -107,14 +111,20 @@ export default function SelectedItemsIndicator(sources: Sources): Sinks {
         <BorderLine k={k} x1={x + width} y1={y} x2={x + width} y2={y + height} />
         <BorderLine k={k} x1={x + width} y1={y + height} x2={x} y2={y + height} />
         <BorderLine k={k} x1={x} y1={y + height} x2={x} y2={y} />
-        <SmallShape cursor="nw-resize" k={k} x={x0} y={y0} />
-        <SmallShape cursor="n-resize" k={k} x={x0 + width / 2} y={y0} />
-        <SmallShape cursor="ne-resize" k={k} x={x0 + width} y={y0} />
-        <SmallShape cursor="w-resize" k={k} x={x0} y={y0 + height / 2} />
-        <SmallShape cursor="e-resize" k={k} x={x0 + width} y={y0 + height / 2} />
-        <SmallShape cursor="sw-resize" k={k} x={x0} y={y0 + height} />
-        <SmallShape cursor="s-resize" k={k} x={x0 + width / 2} y={y0 + height} />
-        <SmallShape cursor="se-resize" k={k} x={x0 + width} y={y0 + height} />
+        {sel.mode === 'bbox' ? (
+          <g>
+            <SmallShape cursor="nw-resize" k={k} x={x0} y={y0} />
+            <SmallShape cursor="n-resize" k={k} x={x0 + width / 2} y={y0} />
+            <SmallShape cursor="ne-resize" k={k} x={x0 + width} y={y0} />
+            <SmallShape cursor="w-resize" k={k} x={x0} y={y0 + height / 2} />
+            <SmallShape cursor="e-resize" k={k} x={x0 + width} y={y0 + height / 2} />
+            <SmallShape cursor="sw-resize" k={k} x={x0} y={y0 + height} />
+            <SmallShape cursor="s-resize" k={k} x={x0 + width / 2} y={y0 + height} />
+            <SmallShape cursor="se-resize" k={k} x={x0 + width} y={y0 + height} />
+          </g>
+        ) : (
+          <g />
+        )}
       </g>
     )
   })

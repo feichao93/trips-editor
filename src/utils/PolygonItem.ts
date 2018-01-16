@@ -17,7 +17,7 @@ const PolygonItem = ItemRecord(
     fill: '#888888',
   },
   {
-    rectFromPoints(startPos: Point, endPos: Point) {
+    rectFromPoints([startPos, endPos]: [Point, Point]) {
       const x1 = startPos.x
       const y1 = startPos.y
       const x2 = endPos.x

@@ -9,7 +9,6 @@ import '../styles/inspector.styl'
 import { round3 } from '../utils/common'
 import PolygonItem from '../utils/PolygonItem'
 import PolylineItem from '../utils/PolylineItem'
-import * as selectionUtils from '../utils/selectionUtils'
 
 export interface Sources {
   DOM: DOMSource
@@ -40,9 +39,8 @@ function EditableField({ label, type, value, field, ...otherProps }: EditableFie
   ])
 }
 
-function PositionAndSize({ sids, items }: State) {
-  const selectedItems = items.filter(item => sids.has(item.id))
-  const bbox = selectionUtils.getBBox(selectedItems)
+function PositionAndSize(state: State, selection: Selection) {
+  const bbox = selection.getBBox(state)
   if (bbox == null) {
     return null
   }
@@ -120,16 +118,16 @@ function Opacity(sitem: Item) {
   ])
 }
 
-function Z({ sids, zlist }: State) {
-  if (sids.isEmpty()) {
+function Z({ items, zlist }: State, selection: Selection) {
+  if (selection.isEmpty()) {
     return null
   }
-  const sidsList = sids.toList()
-  const sidsCount = sids.count()
+  const sidsList = selection.sids.toList()
+  const sidsCount = selection.sids.count()
   const isAtBottom = is(sidsList.sort(), zlist.take(sidsCount).sort())
   const isAtTop = is(sidsList.sort(), zlist.takeLast(sidsCount).sort())
 
-  const zIndex = zlist.indexOf(sids.first())
+  const zIndex = zlist.indexOf(selection.sids.first())
 
   return Row({ label: 'Z-index', key: 'z' }, [
     h('p', String(zIndex)),
@@ -163,7 +161,10 @@ export default function Inspector(sources: Sources): Sinks {
   const zIndexAction$ = domSource
     .select('*[data-action]')
     .events('click')
-    .map(e => actions.updateZIndex((e.ownerTarget as HTMLButtonElement).dataset.action as ZIndexOp))
+    .sampleCombine(selection$)
+    .map(([e, sel]) =>
+      actions.updateZIndex(sel, (e.ownerTarget as HTMLButtonElement).dataset.action as ZIndexOp),
+    )
 
   const lockAction$ = domSource
     .select('*[data-action=lock]')
@@ -180,29 +181,28 @@ export default function Inspector(sources: Sources): Sinks {
   const editAction$ = domSource
     .select('.field input')
     .events('input')
-    .compose(sampleCombine(state$))
-    .map(([e, state]) => {
+    .compose(sampleCombine(state$, selection$))
+    .map(([e, state, selection]) => {
       const input = e.ownerTarget as HTMLInputElement
       const field = input.dataset.field as any
       const value = input.type === 'number' ? Number(input.value) : input.value
-      const sitems = state.items.filter(item => state.sids.has(item.id))
+      const sitems = state.items.filter(item => selection.sids.has(item.id))
       const updatedItems = sitems.map(item => item.set(field, value))
       return actions.updateItems(updatedItems)
     })
 
-  const sitem$ = selection$.map(sel => sel.first() || null)
-  const vdom$ = state$
-    .sampleCombine(sitem$)
-    .map(([state, sitem]) =>
-      h('div.inspector', { style: { display: sitem == null ? 'none' : 'block' } }, [
-        PositionAndSize(state),
-        Fill(sitem),
-        Stroke(sitem),
-        Opacity(sitem),
-        Z(state),
-        LockInfo(sitem),
-      ]),
-    )
+  const vdom$ = xs.combine(state$, selection$).map(([state, sel]) => {
+    const sitem = sel.item(state)
+    return h('div.inspector', { style: { display: sitem == null ? 'none' : 'block' } }, [
+      PositionAndSize(state, sel),
+      Fill(sitem),
+      Stroke(sitem),
+      Opacity(sitem),
+      Z(state, sel),
+      LockInfo(sitem),
+    ])
+  })
+
   return {
     DOM: vdom$,
     action: xs.merge(editAction$, zIndexAction$, lockAction$, unlockAction$),

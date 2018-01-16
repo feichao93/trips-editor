@@ -1,8 +1,8 @@
-import { DOMSource, h } from '@cycle/dom'
+import { DOMSource, h, VNode } from '@cycle/dom'
 import isolate from '@cycle/isolate'
 import * as d3 from 'd3'
+import { is } from 'immutable'
 import * as R from 'ramda'
-import { VNode } from 'snabbdom/vnode'
 import xs, { Stream } from 'xstream'
 import { Action, initState } from './actions'
 import Inspector from './components/Inspector'
@@ -13,12 +13,14 @@ import dragItems from './interaction/dragItems'
 import drawLine from './interaction/drawLine'
 import drawPolygon from './interaction/drawPolygon'
 import drawRect from './interaction/drawRect'
+import editPoints from './interaction/editPoints'
 import resizeItems from './interaction/resizeItems'
 import zoom from './interaction/zoom'
-import { InteractionFn, Mouse } from './interfaces'
+import { InteractionFn } from './interfaces'
 import { ShortcutSource } from './makeShortcutDriver'
 import './styles/app.styl'
-import { invertPos } from './utils/common'
+import Mouse from './utils/Mouse'
+import Selection, { selectionRecord } from './utils/Selection'
 
 const EmptyComponent = (sources: { DOM: DOMSource }) => ({ DOM: xs.of(null) as any })
 const Menubar = EmptyComponent
@@ -43,31 +45,23 @@ export default function App(sources: Sources): Sinks {
 
   const actionProxy$ = xs.create<Action>()
   const nextModeProxy$ = xs.create<string>()
+  const nextSelectionProxy$ = xs.create<Selection>()
   const nextResizerProxy$ = xs.create<string>()
+  const nextVertexIndexProxy$ = xs.create<number>()
   const nextTransformProxy$ = xs.create<d3.ZoomTransform>()
 
-  const resizer$ = nextResizerProxy$.startWith(null)
   const state$ = actionProxy$.fold((s, updater) => updater(s), initState)
   const transform$ = nextTransformProxy$.startWith(d3.zoomIdentity)
   const mode$ = nextModeProxy$.startWith(initMode)
+  const selection$ = nextSelectionProxy$.dropRepeats(is).startWith(selectionRecord)
 
-  // 当前选中的元素集合
-  const selection$ = state$.map(s => s.items.filter(item => s.sids.has(item.id)))
-
-  const mouse: Mouse = {
-    down$: xs.create(),
-    rawDown$: xs.create(),
-    move$: invertPos(sources.mousemove, transform$),
-    rawMove$: sources.mousemove,
-    up$: invertPos(sources.mouseup, transform$),
-    rawUp$: sources.mouseup,
-    click$: xs.create(),
-    rawClick$: xs.create(),
-    dblclick$: xs.create(),
-    rawDblclick$: xs.create(),
-    wheel$: xs.create(),
-    rawWheel$: xs.create(),
-  }
+  const mouse = new Mouse(
+    transform$,
+    sources.mousemove,
+    sources.mouseup,
+    nextResizerProxy$.startWith(null),
+    nextVertexIndexProxy$.startWith(-1),
+  )
 
   const interactions: InteractionFn[] = [
     commonInteraction,
@@ -77,12 +71,12 @@ export default function App(sources: Sources): Sinks {
     drawRect,
     drawPolygon,
     drawLine,
+    editPoints,
   ]
   const sinksArray = interactions.map(fn =>
     fn({
       mode: mode$,
       mouse,
-      resizer: resizer$,
       shortcut,
       state: state$,
       selection: selection$,
@@ -101,6 +95,7 @@ export default function App(sources: Sources): Sinks {
     DOM: domSource,
     drawingItem: drawingItem$,
     state: state$,
+    selection: selection$,
     transform: transform$,
     addons,
   })
@@ -122,24 +117,13 @@ export default function App(sources: Sources): Sinks {
   nextTransformProxy$.imitate(
     xs.merge(...sinksArray.map(sinks => sinks.nextTransform).filter(Boolean)),
   )
+  nextSelectionProxy$.imitate(
+    xs.merge(...sinksArray.map(sinks => sinks.nextSelection).filter(Boolean)),
+  )
 
   nextResizerProxy$.imitate(svg.resizer)
-  mouse.rawDown$.imitate(svg.rawDown)
-  mouse.down$.imitate(invertPos(svg.rawDown, transform$))
-  mouse.rawClick$.imitate(svg.rawClick)
-  mouse.click$.imitate(invertPos(svg.rawClick, transform$))
-  mouse.rawDblclick$.imitate(svg.rawDblclick)
-  mouse.dblclick$.imitate(invertPos(svg.rawDblclick, transform$))
-  mouse.rawWheel$.imitate(svg.rawWheel)
-  mouse.wheel$.imitate(
-    svg.rawWheel.sampleCombine(transform$).map(([{ deltaY, pos }, transform]) => ({
-      deltaY,
-      pos: {
-        x: transform.invertX(pos.x),
-        y: transform.invertY(pos.y),
-      },
-    })),
-  )
+  nextVertexIndexProxy$.imitate(svg.vertexIndex)
+  mouse.imitate(svg.rawDown, svg.rawClick, svg.rawDblclick, svg.rawWheel)
 
   const vdom$ = xs
     .combine(menubar.DOM, structure.DOM, svg.DOM, inspector.DOM, statusBar.DOM)

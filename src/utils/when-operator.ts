@@ -2,8 +2,8 @@ import { Operator, Stream, InternalListener } from 'xstream'
 
 const NO = {}
 
-class PeekFilterListener<T, U> implements InternalListener<U> {
-  constructor(private p: PeekFilterOperator<T, U>) {}
+class WhenOperatorListener<T, U> implements InternalListener<U> {
+  constructor(private p: WhenOperator<T, U>) {}
 
   _n(u: U) {
     const p = this.p
@@ -22,13 +22,13 @@ class PeekFilterListener<T, U> implements InternalListener<U> {
   }
 }
 
-class PeekFilterOperator<T, U> implements Operator<T, T> {
-  public type = 'peekFilter'
+class WhenOperator<T, U> implements Operator<T, T> {
+  public type = 'when'
   ins: Stream<T>
   out: Stream<T> = NO as any
   lastVal = NO as U
   peekStream: Stream<U> = NO as any
-  il: PeekFilterListener<T, U>
+  il: WhenOperatorListener<T, U>
   filterFn: (u: U) => boolean
 
   constructor(ins: Stream<T>, peekStream: Stream<U>, filterFn: (u: U) => boolean) {
@@ -39,7 +39,7 @@ class PeekFilterOperator<T, U> implements Operator<T, T> {
 
   _start(out: Stream<T>): void {
     this.out = out
-    this.il = new PeekFilterListener(this)
+    this.il = new WhenOperatorListener(this)
     this.peekStream._add(this.il)
     this.ins._add(this)
   }
@@ -76,15 +76,15 @@ class PeekFilterOperator<T, U> implements Operator<T, T> {
 }
 
 /**
- *  `a$.peekFilter($b, fn)` is equivalent to
+ *  `a$.when($b, fn)` is equivalent to
  *  ```
  *  a$.compose(sampleCombine($b))
  *    .filter(([a, b]) => fn(b))
  *    .map(([a, b]) => a)
  *  ```
  */
-export default function peekFilter<T, U>(peekStream: Stream<U>, filterFn: (u: U) => boolean) {
-  return function peekFilterOperator(ins: Stream<T>) {
-    return new Stream<T>(new PeekFilterOperator<T, U>(ins, peekStream, filterFn))
+export default function when<T, U>(peekStream: Stream<U>, filterFn: (u: U) => boolean) {
+  return function whenOperator(ins: Stream<T>) {
+    return new Stream<T>(new WhenOperator<T, U>(ins, peekStream, filterFn))
   }
 }

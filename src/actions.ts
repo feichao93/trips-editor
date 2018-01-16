@@ -1,10 +1,8 @@
-import { List, Map, OrderedMap, OrderedSet, Record } from 'immutable'
+import { List, Map, OrderedMap, Record } from 'immutable'
 import { Item, ItemId, Selection } from './interfaces'
-import { getNextId } from './utils/common'
 
 export const StateRecord = Record({
   items: Map<ItemId, Item>(),
-  sids: OrderedSet<ItemId>(),
   zlist: List<ItemId>(),
 })
 
@@ -16,9 +14,9 @@ export interface Action {
 export type ZIndexOp = 'z-inc' | 'z-dec' | 'z-top' | 'z-bottom'
 
 export default {
-  deleteSelection(): Action {
+  deleteSelection(sel: Selection): Action {
     return state => {
-      const sids = state.sids
+      const sids = sel.sids
       if (sids.isEmpty()) {
         return state
       }
@@ -30,26 +28,16 @@ export default {
   moveItems(movedItems: OrderedMap<ItemId, Item>): Action {
     return state => state.mergeIn(['items'], movedItems)
   },
-  updateSids(sids: Iterable<number>): Action {
-    return state => state.set('sids', OrderedSet(sids))
-  },
-  clearSids(): Action {
-    return state => state.set('sids', OrderedSet())
-  },
   addItem(item: Item): Action {
-    const id = getNextId('item')
     return state =>
-      state
-        .setIn(['items', id], item.set('id', id))
-        .set('sids', OrderedSet([id]))
-        .update('zlist', zlist => zlist.push(id))
+      state.setIn(['items', item.id], item).update('zlist', zlist => zlist.push(item.id))
   },
   updateItems(updateItems: OrderedMap<ItemId, Item>): Action {
     return state => state.mergeIn(['items'], updateItems)
   },
-  updateZIndex(op: ZIndexOp): Action {
+  updateZIndex(sel: Selection, op: ZIndexOp): Action {
     return state => {
-      const sids = state.sids
+      const sids = sel.sids
       if (sids.count() !== 1) {
         return state
       } else {
@@ -70,10 +58,27 @@ export default {
       }
     }
   },
-  lockItems(selection: Selection): Action {
-    return state => state.mergeIn(['items'], selection.map(item => item.set('locked', true)))
+  lockItems(sel: Selection): Action {
+    return state => {
+      const lockedItems = state.items
+        .filter(item => sel.sids.has(item.id))
+        .map(item => item.set('locked', true))
+      return state.mergeIn(['items'], lockedItems)
+    }
   },
-  unlockItems(selection: Selection): Action {
-    return state => state.mergeIn(['items'], selection.map(item => item.set('locked', false)))
+  unlockItems(sel: Selection): Action {
+    return state => {
+      const unlockedItems = state.items
+        .filter(item => sel.sids.has(item.id))
+        .map(item => item.set('locked', false))
+      return state.mergeIn(['items'], unlockedItems)
+    }
+  },
+  movePoint([item, pointIndex, dx, dy]: [Item, number, number, number]): Action {
+    return state =>
+      state.updateIn(['items', item.id, 'points', pointIndex], p => ({
+        x: item.points.get(pointIndex).x + dx,
+        y: item.points.get(pointIndex).y + dy,
+      }))
   },
 }

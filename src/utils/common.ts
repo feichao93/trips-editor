@@ -1,7 +1,5 @@
 import { List } from 'immutable'
-import { Stream } from 'xstream'
-import sampleCombine from 'xstream/extra/sampleCombine'
-import { Point, Rect } from '../interfaces'
+import { Item, Point, Rect } from '../interfaces'
 
 const nextIdMap = new Map<string, number>()
 
@@ -14,6 +12,10 @@ export function getNextId(tag = '') {
     nextIdMap.set(tag, 2)
     return 1
   }
+}
+
+export function injectItemId(item: Item) {
+  return item.set('id', getNextId('item'))
 }
 
 export function getBoundingBoxOfPoints(points: List<Point>): Rect {
@@ -51,17 +53,6 @@ export function containsPoint(vs: Point[], p: Point) {
     if (intersect) inside = !inside
   }
   return inside
-}
-
-// TODO refactor
-export function invertPos(
-  mouseEvent$: Stream<Point>,
-  transform$: Stream<d3.ZoomTransform>,
-): Stream<Point> {
-  return mouseEvent$.compose(sampleCombine(transform$)).map(([event, transform]) => {
-    const [x, y] = transform.invert([event.x, event.y])
-    return { x, y }
-  })
 }
 
 // 在resize元素的时候, 该函数用来获取点坐标的更新函数

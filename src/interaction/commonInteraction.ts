@@ -1,5 +1,5 @@
+import { is, OrderedSet } from 'immutable'
 import * as R from 'ramda'
-import xs from 'xstream'
 import actions from '../actions'
 import { InteractionFn } from '../interfaces'
 
@@ -7,35 +7,35 @@ const commonInteraction: InteractionFn = ({
   mouse,
   shortcut,
   mode: mode$,
-  resizer: resizer$,
   state: state$,
+  selection: selection$,
 }) => {
-  const changeSidsAction$ = mouse.down$
-    .peekFilter(mode$, R.identical('idle'))
-    .peekFilter(resizer$, R.identical(null))
-    .sampleCombine(state$)
-    .map(([pos, state]) => {
+  const changeSids$ = mouse.down$
+    .when(mode$, R.identical('idle'))
+    .when(mouse.resizer$, R.identical(null))
+    .when(mouse.vertexIndex$, i => i === -1)
+    .sampleCombine(state$, selection$)
+    .map(([pos, state, sel]) => {
       const clickedItems = state.items.filter(item => item.containsPoint(pos))
-      // 如果和目前选中的元素，则返回null
-      if (state.sids == clickedItems.keySeq().toOrderedSet()) {
-        return null
-      }
       const targetItemId = state.zlist.findLast(itemId => clickedItems.has(itemId))
-      // const canMoveItem = !clickedItems.isEmpty() && !state.items.get(targetItemId).locked
       if (targetItemId != null) {
-        return actions.updateSids([targetItemId])
+        return sel.set('sids', OrderedSet([targetItemId]))
       } else {
-        return actions.clearSids()
+        return sel.set('sids', OrderedSet())
       }
     })
-    .filter(Boolean)
+    .dropRepeats(is)
 
   const esc$ = shortcut.shortcut('esc', 'idle')
-  const deleteSelection$ = shortcut.shortcut('d').mapTo(actions.deleteSelection())
+  const deleteSelection$ = shortcut
+    .shortcut('d')
+    .peek(selection$)
+    .map(actions.deleteSelection)
 
   return {
-    action: xs.merge(changeSidsAction$, deleteSelection$),
+    action: deleteSelection$,
     nextMode: esc$,
+    nextSelection: changeSids$,
   }
 }
 
