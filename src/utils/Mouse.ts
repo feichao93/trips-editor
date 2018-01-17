@@ -30,6 +30,7 @@ export default class Mouse {
   // These two streams indicating whether the mouse is over specific triggers/areas
   resizer$: MemoryStream<string>
   vertexIndex$: MemoryStream<number>
+  vertexAddIndex$: MemoryStream<number>
 
   private transform$: MemoryStream<d3.ZoomTransform>
   constructor(
@@ -38,6 +39,7 @@ export default class Mouse {
     rawUp$: Stream<Point>,
     nextResizer$: Stream<string>,
     nextVertexIndex$: Stream<number>,
+    nextVertexAddIndex$: Stream<number>,
   ) {
     this.transform$ = transform$
     this.rawMove$ = rawMove$
@@ -46,6 +48,7 @@ export default class Mouse {
     this.up$ = this.convert(rawUp$)
     this.resizer$ = nextResizer$.dropRepeats().startWith(null)
     this.vertexIndex$ = nextVertexIndex$.dropRepeats().startWith(-1)
+    this.vertexAddIndex$ = nextVertexAddIndex$.dropRepeats().startWith(-1)
 
     // Calculate other streams
     this.pressing$ = xs.merge(this.rawDown$.mapTo(true), this.rawUp$.mapTo(false)).startWith(false)

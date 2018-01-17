@@ -4,6 +4,7 @@ import { VNode } from 'snabbdom/vnode'
 import xs, { Stream } from 'xstream'
 import SelectionIndicator from './SelectionIndicator'
 import VerticesIndicator from './VerticesIndicator'
+import VertexAddIndicator from './VertexAddIndicator'
 import { State } from '../actions'
 import { Item, Point, Selection } from '../interfaces'
 import '../styles/svg.styl'
@@ -29,6 +30,7 @@ export interface Sinks {
   rawWheel: Stream<{ pos: Point; deltaY: number }>
   whichVertex: Stream<(p: Point) => number>
   whichResizer: Stream<(p: Point) => string>
+  vertexAddIndex: Stream<number>
 }
 
 export default function Svg(sources: Sources): Sinks {
@@ -76,13 +78,22 @@ export default function Svg(sources: Sources): Sinks {
     transform: transform$,
   })
 
+  const vertexAddIndicator = VertexAddIndicator({
+    DOM: domSource,
+    state: state$,
+    mouse,
+    selection: selection$,
+    transform: transform$,
+  })
+
   const vdom$ = xs
     .combine(
       state$,
       mouse.cursor$,
       transform$,
       sources.drawingItem,
-      // TODO why the following two streams need `startWith`
+      // TODO why the following streams need `startWith`
+      vertexAddIndicator.DOM.startWith(null),
       selectionIndicator.DOM.startWith(null),
       verticesIndicator.DOM.startWith(null),
       sources.addons.polygonCloseIndicator,
@@ -93,6 +104,7 @@ export default function Svg(sources: Sources): Sinks {
         cursor,
         transform,
         drawingItem,
+        addPointIndicator,
         selectionIndicator,
         verticesIndicator,
         polygonCloseIndicator,
@@ -113,8 +125,9 @@ export default function Svg(sources: Sources): Sinks {
                   .toArray(),
               ),
               drawingItem && drawingItem.render(),
-              verticesIndicator,
+              addPointIndicator,
               selectionIndicator,
+              verticesIndicator,
               polygonCloseIndicator,
             ].filter(Boolean),
           ),
@@ -128,5 +141,6 @@ export default function Svg(sources: Sources): Sinks {
     rawWheel: rawWheel$,
     whichResizer: selectionIndicator.whichResizer,
     whichVertex: verticesIndicator.whichVertex,
+    vertexAddIndex: vertexAddIndicator.vertexAddIndex,
   }
 }

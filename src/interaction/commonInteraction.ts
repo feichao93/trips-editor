@@ -16,6 +16,7 @@ const commonInteraction: InteractionFn = ({
     .when(mode$, identical('idle'))
     .when(mouse.resizer$, identical(null))
     .when(mouse.vertexIndex$, identical(-1))
+    .when(mouse.vertexAddIndex$, identical(-1))
     .sampleCombine(state$)
     .map(([pos, state]) => {
       const clickedItems = state.items.filter(item => item.containsPoint(pos))

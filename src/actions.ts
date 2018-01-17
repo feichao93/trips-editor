@@ -1,5 +1,5 @@
 import { List, Map, OrderedMap, Record } from 'immutable'
-import { Item, ItemId, Selection } from './interfaces'
+import { Item, ItemId, Point, Selection } from './interfaces'
 
 export const StateRecord = Record({
   items: Map<ItemId, Item>(),
@@ -84,5 +84,11 @@ export default {
         x: item.points.get(pointIndex).x + dx,
         y: item.points.get(pointIndex).y + dy,
       }))
+  },
+  addPoint([pos, sel, addIndex]: [Point, Selection, number]): Action {
+    return state =>
+      state.updateIn(['items', sel.sids.first(), 'points'], (points: List<Point>) =>
+        points.insert(addIndex + 1, pos),
+      )
   },
 }

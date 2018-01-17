@@ -6,6 +6,7 @@ const dragItems: InteractionFn = ({ mouse, mode: mode$, state: state$ }) => {
   const dragStart$ = mouse.down$
     .when(mouse.resizer$, identical(null))
     .when(mouse.vertexIndex$, identical(-1))
+    .when(mouse.vertexAddIndex$, identical(-1))
     .when(mode$, identical('idle'))
     .sampleCombine(state$)
     .map(([pos, state]) => {

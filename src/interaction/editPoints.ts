@@ -18,17 +18,36 @@ const editPoints: InteractionFn = ({
 }) => {
   const start$ = shortcut.shortcut('e').when(sel$, sel => !sel.isEmpty())
 
-  const startInfo$: Stream<EditPointStartInfo> = xs
+  const addPointConfig$ = mouse.down$
+    .when(mouse.vertexAddIndex$, i => i !== -1)
+    .sampleCombine(sel$, mouse.vertexAddIndex$)
+
+  const startFromAdd$ = addPointConfig$
+    .map(([pos, sel, vertexAddIndex]) =>
+      state$
+        .drop(1) // state$ is a memory-stream, so we drop the current state
+        .take(1) // Use the next state (state that contains the added-point)
+        .map(state => {
+          return {
+            startPos: pos,
+            item: sel.item(state),
+            vertexIndex: vertexAddIndex + 1,
+          }
+        }),
+    )
+    .flatten()
+
+  const startFromMouseDown$: Stream<EditPointStartInfo> = xs
     .combine(mode$, mouse.vertexIndex$, sel$)
     .checkedFlatMap(
       ([mode, vertexIndex, sel]) =>
         mode === 'idle' && vertexIndex !== -1 && sel.mode === 'vertices',
       ([mode, vertexIndex, sel]) =>
-        mouse.down$.sampleCombine(state$).map(([pos, state]) => {
-          const item = state.items.get(sel.sids.first())
-          return { startPos: pos, item, vertexIndex }
-        }),
+        mouse.down$
+          .sampleCombine(state$)
+          .map(([pos, state]) => ({ startPos: pos, item: sel.item(state), vertexIndex })),
     )
+  const startInfo$ = xs.merge(startFromAdd$, startFromMouseDown$)
 
   const movingInfo$ = startInfo$.checkedFlatMap(({ item, startPos, vertexIndex }) =>
     mouse.move$
@@ -43,7 +62,7 @@ const editPoints: InteractionFn = ({
 
   return {
     changeSelection: start$.mapTo(selectionUtils.toggleMode()),
-    action: movePoint$,
+    action: xs.merge(movePoint$, addPointConfig$.map(actions.addPoint)),
   }
 }
 

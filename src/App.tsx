@@ -47,6 +47,7 @@ export default function App(sources: Sources): Sinks {
   const changeSelectionProxy$ = xs.create<Updater<Selection>>()
   const nextResizerProxy$ = xs.create<string>()
   const nextVertexIndexProxy$ = xs.create<number>()
+  const nextVertexAddIndexProxy$ = xs.create<number>()
   const nextTransformProxy$ = xs.create<d3.ZoomTransform>()
 
   const state$ = actionProxy$.fold((s, updater) => updater(s), initState)
@@ -60,6 +61,7 @@ export default function App(sources: Sources): Sinks {
     sources.mouseup,
     nextResizerProxy$,
     nextVertexIndexProxy$,
+    nextVertexAddIndexProxy$,
   )
 
   const interactions: InteractionFn[] = [
@@ -128,18 +130,17 @@ export default function App(sources: Sources): Sinks {
       .whenNot(mouse.pressing$)
       .map(([pos, which]) => which(pos)),
   )
-  const resetVertexIndex$ = xs.merge(
-    ...sinksArray.map(sinks => sinks.resetVertexIndex).filter(Boolean),
-  )
+
   nextVertexIndexProxy$.imitate(
     xs.merge(
-      resetVertexIndex$.mapTo(-1),
+      xs.merge(...sinksArray.map(sinks => sinks.resetVertexIndex).filter(Boolean)).mapTo(-1),
       xs
         .combine(mouse.move$, svg.whichVertex)
         .whenNot(mouse.pressing$)
         .map(([pos, which]) => which(pos)),
     ),
   )
+  nextVertexAddIndexProxy$.imitate(svg.vertexAddIndex)
 
   const vdom$ = xs
     .combine(menubar.DOM, structure.DOM, svg.DOM, inspector.DOM, statusBar.DOM)
