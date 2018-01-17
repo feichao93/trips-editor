@@ -30,8 +30,6 @@ const SelectionRecord = makeSelectionRecord({
   /** Ordered set of selected item id */
   sids: OrderedSet<ItemId>(),
   mode: 'bbox' as SelectionMode,
-  /** Selected vertex index */
-  svi: -1,
 })
 SelectionRecord.prototype.selectedItems = function selectedItems(
   this: SelectionRecord,
@@ -83,11 +81,5 @@ export const selectionUtils = {
   },
   selectItem(item: Item): Updater<Selection> {
     return sel => sel.set('sids', OrderedSet([item.id]))
-  },
-  setSVI(svi: number): Updater<Selection> {
-    return sel => sel.set('svi', svi)
-  },
-  clearSVI(): Updater<Selection> {
-    return sel => sel.set('svi', -1)
   },
 }

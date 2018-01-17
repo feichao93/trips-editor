@@ -29,22 +29,22 @@ const commonInteraction: InteractionFn = ({
     .dropRepeats(is)
 
   const esc$ = shortcut.shortcut('esc', 'idle')
-  const deleteSelection$ = shortcut
-    .shortcut('d')
+  const shortcutDelete$ = shortcut.shortcut('d')
+  const deleteSelection$ = shortcutDelete$
     .when(sel$, sel => !sel.isEmpty() && sel.mode === 'bbox')
     .peek(sel$)
     .map(actions.deleteSelection)
 
-  const deletePoint$ = shortcut
-    .shortcut('d')
-    .when(sel$, sel => !sel.isEmpty() && sel.mode === 'vertices' && sel.svi !== -1)
-    .peek(sel$)
-    .map(actions.deletePoint)
+  const deletePoint$ = shortcutDelete$
+    .whenNot(mouse.vertexIndex$, identical(-1))
+    .sampleCombine(sel$, mouse.vertexIndex$)
+    .map(([_, sel, vertexIndex]) => actions.deletePoint(sel, vertexIndex))
 
   return {
     action: xs.merge(deleteSelection$, deletePoint$),
     nextMode: esc$,
-    changeSelection: xs.merge(changeSids$, deletePoint$.mapTo(selectionUtils.clearSVI())),
+    changeSelection: xs.merge(changeSids$),
+    resetVertexIndex: deletePoint$,
   }
 }
 

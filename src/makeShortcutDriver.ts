@@ -20,6 +20,7 @@ export class ShortcutSource {
   private makeStream<T>(key: string | string[], type: string, t: T) {
     return xs.create<T>({
       start(listener) {
+        // TODO BUG: later bound callback will replace previous callbacks
         MouseTrap.bind(key, () => listener.next(t), type)
       },
       stop() {

@@ -35,6 +35,7 @@ export default function Svg(sources: Sources): Sinks {
   const domSource = sources.DOM
   const svgdom = domSource.select('.svg')
   const state$ = sources.state
+  const mouse = sources.mouse
   const transform$ = sources.transform
   const selection$ = sources.selection
 
@@ -70,6 +71,7 @@ export default function Svg(sources: Sources): Sinks {
   const verticesIndicator = (isolate(VerticesIndicator) as typeof VerticesIndicator)({
     DOM: domSource,
     state: state$,
+    mouse,
     selection: selection$,
     transform: transform$,
   })
@@ -77,7 +79,7 @@ export default function Svg(sources: Sources): Sinks {
   const vdom$ = xs
     .combine(
       state$,
-      sources.mouse.cursor$,
+      mouse.cursor$,
       transform$,
       sources.drawingItem,
       // TODO why the following two streams need `startWith`

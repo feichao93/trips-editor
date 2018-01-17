@@ -21,17 +21,14 @@ const resizeItems: InteractionFn = ({
   selection: selection$,
 }) => {
   const resizer$ = mouse.resizer$
-  const startInfo$ = xs
-    .merge(
-      mouse.down$.map(pos => ({ type: 'down', pos })).when(resizer$, Boolean),
-      mouse.up$.map(pos => ({ type: 'up', pos })),
-    )
+  const startInfo$ = mouse.down$
+    .when(resizer$)
     .when(mode$, identical('idle'))
     .sampleCombine(resizer$, state$, selection$)
-    .map(([{ type, pos }, resizer, state, selection]) => {
+    .map(([pos, resizer, state, selection]) => {
       const startItems = selection.selectedItems(state)
       const bbox = selection.getBBox(state)
-      if (bbox != null && type === 'down') {
+      if (bbox != null) {
         return {
           startPos: pos,
           startItems,
@@ -44,7 +41,7 @@ const resizeItems: InteractionFn = ({
     })
 
   const resizingInfo$: Stream<ResizingInfo> = startInfo$.checkedFlatMap(startInfo =>
-    mouse.move$.map(movingPos => ({ movingPos, ...startInfo })),
+    mouse.move$.map(movingPos => ({ movingPos, ...startInfo })).endWhen(mouse.up$),
   )
 
   const resizeAction$: Stream<Action> = resizingInfo$

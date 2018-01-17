@@ -128,11 +128,17 @@ export default function App(sources: Sources): Sinks {
       .whenNot(mouse.pressing$)
       .map(([pos, which]) => which(pos)),
   )
+  const resetVertexIndex$ = xs.merge(
+    ...sinksArray.map(sinks => sinks.resetVertexIndex).filter(Boolean),
+  )
   nextVertexIndexProxy$.imitate(
-    xs
-      .combine(mouse.move$, svg.whichVertex)
-      .whenNot(mouse.pressing$)
-      .map(([pos, which]) => which(pos)),
+    xs.merge(
+      resetVertexIndex$.mapTo(-1),
+      xs
+        .combine(mouse.move$, svg.whichVertex)
+        .whenNot(mouse.pressing$)
+        .map(([pos, which]) => which(pos)),
+    ),
   )
 
   const vdom$ = xs
