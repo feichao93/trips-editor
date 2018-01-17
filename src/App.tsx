@@ -123,10 +123,16 @@ export default function App(sources: Sources): Sinks {
 
   mouse.imitate(svg.rawDown, svg.rawClick, svg.rawDblclick, svg.rawWheel)
   nextResizerProxy$.imitate(
-    xs.combine(mouse.move$, svg.whichResizer).map(([pos, which]) => which(pos)),
+    xs
+      .combine(mouse.move$, svg.whichResizer)
+      .whenNot(mouse.pressing$)
+      .map(([pos, which]) => which(pos)),
   )
   nextVertexIndexProxy$.imitate(
-    xs.combine(mouse.move$, svg.whichVertex).map(([pos, which]) => which(pos)),
+    xs
+      .combine(mouse.move$, svg.whichVertex)
+      .whenNot(mouse.pressing$)
+      .map(([pos, which]) => which(pos)),
   )
 
   const vdom$ = xs

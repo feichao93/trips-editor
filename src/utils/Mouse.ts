@@ -21,6 +21,12 @@ export default class Mouse {
   wheel$: Stream<SimpleWheelEvent> = xs.create()
   rawWheel$: Stream<SimpleWheelEvent> = xs.create()
 
+  /** Indicates whether the mouse is being pressed */
+  pressing$: MemoryStream<boolean>
+
+  /** Cursor style for SVG */
+  cursor$: MemoryStream<string>
+
   // These two streams indicating whether the mouse is over specific triggers/areas
   resizer$: MemoryStream<string>
   vertexIndex$: MemoryStream<number>
@@ -40,6 +46,18 @@ export default class Mouse {
     this.up$ = this.convert(rawUp$)
     this.resizer$ = nextResizer$.dropRepeats().startWith(null)
     this.vertexIndex$ = nextVertexIndex$.dropRepeats().startWith(-1)
+
+    // Calculate other streams
+    this.pressing$ = xs.merge(this.rawDown$.mapTo(true), this.rawUp$.mapTo(false)).startWith(false)
+    this.cursor$ = xs
+      .combine(this.vertexIndex$, this.resizer$)
+      .map(([vertexIndex, resizer]) => {
+        if (vertexIndex !== -1) {
+          return 'crosshair'
+        }
+        return resizer || 'default'
+      })
+      .startWith('default')
   }
 
   private convert(rawPoint$: Stream<Point>) {
@@ -70,14 +88,5 @@ export default class Mouse {
     this.dblclick$.imitate(this.convert(rawDblclick$))
     this.rawWheel$.imitate(rawWheel$)
     this.wheel$.imitate(this.convertWheel(rawWheel$))
-  }
-
-  cursor() {
-    return xs.combine(this.vertexIndex$, this.resizer$).map(([vertexIndex, resizer]) => {
-      if (vertexIndex !== -1) {
-        return 'crosshair'
-      }
-      return resizer || 'default'
-    })
   }
 }

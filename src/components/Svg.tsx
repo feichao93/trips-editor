@@ -77,7 +77,7 @@ export default function Svg(sources: Sources): Sinks {
   const vdom$ = xs
     .combine(
       state$,
-      sources.mouse.cursor(),
+      sources.mouse.cursor$,
       transform$,
       sources.drawingItem,
       // TODO why the following two streams need `startWith`
