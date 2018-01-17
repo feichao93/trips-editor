@@ -30,16 +30,16 @@ export default class Mouse {
     transform$: MemoryStream<d3.ZoomTransform>,
     rawMove$: Stream<Point>,
     rawUp$: Stream<Point>,
-    resizer$: MemoryStream<string>,
-    vertexIndex$: MemoryStream<number>,
+    nextResizer$: Stream<string>,
+    nextVertexIndex$: Stream<number>,
   ) {
     this.transform$ = transform$
     this.rawMove$ = rawMove$
     this.move$ = this.convert(rawMove$)
     this.rawUp$ = rawUp$
     this.up$ = this.convert(rawUp$)
-    this.resizer$ = resizer$
-    this.vertexIndex$ = vertexIndex$
+    this.resizer$ = nextResizer$.dropRepeats().startWith(null)
+    this.vertexIndex$ = nextVertexIndex$.dropRepeats().startWith(-1)
   }
 
   private convert(rawPoint$: Stream<Point>) {
@@ -70,5 +70,14 @@ export default class Mouse {
     this.dblclick$.imitate(this.convert(rawDblclick$))
     this.rawWheel$.imitate(rawWheel$)
     this.wheel$.imitate(this.convertWheel(rawWheel$))
+  }
+
+  cursor() {
+    return xs.combine(this.vertexIndex$, this.resizer$).map(([vertexIndex, resizer]) => {
+      if (vertexIndex !== -1) {
+        return 'crosshair'
+      }
+      return resizer || 'default'
+    })
   }
 }

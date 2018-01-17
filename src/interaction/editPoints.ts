@@ -1,6 +1,7 @@
 import xs, { Stream } from 'xstream'
 import actions from '../actions'
 import { InteractionFn, Item, Point } from '../interfaces'
+import { selectionUtils } from '../utils/Selection'
 
 interface EditPointStartInfo {
   startPos: Point
@@ -13,30 +14,30 @@ const editPoints: InteractionFn = ({
   state: state$,
   mode: mode$,
   shortcut,
-  selection: selection$,
+  selection: sel$,
 }) => {
-  const start$ = shortcut.shortcut('e').when(selection$, sel => !sel.isEmpty())
+  const start$ = shortcut.shortcut('e').when(sel$, sel => !sel.isEmpty())
 
-  const nextSelection$ = start$.peek(selection$).map(sel => sel.toggleMode())
-
-  const startInfo$: Stream<EditPointStartInfo> = xs.combine(mode$, selection$).checkedFlatMap(
-    ([mode, sel]) => mode === 'idle' && sel.mode === 'vertices',
-    ([mode, sel]) =>
-      xs
-        .merge(
-          mouse.down$.map(pos => ({ type: 'down', pos })),
-          mouse.up$.map(pos => ({ type: 'up', pos })),
-        )
-        .sampleCombine(state$, mouse.vertexIndex$)
-        .map(([{ type, pos }, state, vertexIndex]) => {
-          if (type === 'up' || vertexIndex === -1) {
-            return null
-          } else {
-            const item = state.items.get(sel.sids.first())
-            return { startPos: pos, item, vertexIndex }
-          }
-        }),
-  )
+  const startInfo$: Stream<EditPointStartInfo> = xs
+    .combine(mode$, mouse.vertexIndex$, sel$)
+    .checkedFlatMap(
+      ([mode, vertexIndex, sel]) => mode === 'idle' && sel.mode === 'vertices',
+      ([mode, vertexIndex, sel]) =>
+        xs
+          .merge(
+            mouse.down$.map(pos => ({ type: 'down', pos })),
+            mouse.up$.map(pos => ({ type: 'up', pos })),
+          )
+          .sampleCombine(state$)
+          .map(([{ type, pos }, state]) => {
+            if (type === 'up' || vertexIndex === -1) {
+              return null
+            } else {
+              const item = state.items.get(sel.sids.first())
+              return { startPos: pos, item, vertexIndex }
+            }
+          }),
+    )
 
   const movingInfo$ = startInfo$.checkedFlatMap(
     ({ item, startPos, vertexIndex }) =>
@@ -50,7 +51,7 @@ const editPoints: InteractionFn = ({
   const movePoint$ = movingInfo$.filter(Boolean).map(actions.movePoint)
 
   return {
-    nextSelection: nextSelection$,
+    changeSelection: start$.mapTo(selectionUtils.toggleMode()),
     action: movePoint$,
   }
 }

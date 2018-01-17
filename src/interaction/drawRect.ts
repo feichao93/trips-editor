@@ -1,10 +1,10 @@
-import { OrderedSet } from 'immutable'
 import { identical } from 'ramda'
 import xs from 'xstream'
 import actions from '../actions'
 import { InteractionFn } from '../interfaces'
 import { injectItemId } from '../utils/common'
 import PolygonItem from '../utils/PolygonItem'
+import { selectionUtils } from '../utils/Selection'
 
 const drawRect: InteractionFn = ({ mouse, mode: mode$, shortcut, selection: sel$ }) => {
   const start$ = shortcut.shortcut('r', 'rect.ready')
@@ -24,15 +24,11 @@ const drawRect: InteractionFn = ({ mouse, mode: mode$, shortcut, selection: sel$
     .peek(drawingRect$)
     .map(injectItemId)
 
-  const nextSelection$ = newItem$
-    .sampleCombine(sel$)
-    .map(([newItem, sel]) => sel.set('sids', OrderedSet([newItem.id])))
-
   return {
     drawingItem: drawingRect$,
     action: newItem$.map(actions.addItem),
     nextMode: xs.merge(start$, newItem$.mapTo('idle'), startPos$.mapTo('rect.drawing')),
-    nextSelection: nextSelection$,
+    changeSelection: newItem$.map(selectionUtils.selectItem),
   }
 }
 

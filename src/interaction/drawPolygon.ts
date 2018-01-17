@@ -1,11 +1,12 @@
 import { h, VNode } from '@cycle/dom'
-import { List, OrderedSet } from 'immutable'
+import { List } from 'immutable'
 import { always, identical } from 'ramda'
 import xs, { Stream } from 'xstream'
 import actions from '../actions'
 import { SENSE_RANGE } from '../constants'
 import { InteractionFn, Point, PolygonItem, Updater } from '../interfaces'
 import { distanceBetweenPointAndPoint, injectItemId } from '../utils/common'
+import { selectionUtils } from '../utils/Selection'
 
 const drawPolygon: InteractionFn = ({
   mouse,
@@ -50,10 +51,6 @@ const drawPolygon: InteractionFn = ({
     .peek(points$)
     .map(PolygonItem.fromPoints)
     .map(injectItemId)
-
-  const nextSelection$ = newItem$
-    .sampleCombine(sel$)
-    .map(([newItem, sel]) => sel.set('sids', OrderedSet([newItem.id])))
 
   const addItem$ = newItem$.map(actions.addItem)
   resetPointsProxy$.imitate(addItem$)
@@ -100,7 +97,7 @@ const drawPolygon: InteractionFn = ({
     drawingItem: drawingPolygon$,
     action: addItem$,
     nextMode: xs.merge(start$, newItem$.mapTo('idle')),
-    nextSelection: nextSelection$,
+    changeSelection: newItem$.map(selectionUtils.selectItem),
     addons: { polygonCloseIndicator: closeIndicator$ },
   }
 }

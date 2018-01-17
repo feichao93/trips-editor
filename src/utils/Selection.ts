@@ -1,7 +1,7 @@
 import { List, Map, OrderedSet, Record } from 'immutable'
-import { State } from '../actions'
-import { Item, ItemId, Point, Rect } from '../interfaces'
 import { getBoundingBoxOfPoints } from './common'
+import { State } from '../actions'
+import { Item, ItemId, Point, Rect, Updater, Selection } from '../interfaces'
 
 export type SelectionMode = 'bbox' | 'vertices'
 
@@ -27,8 +27,11 @@ interface SelectionRecordExtra {
 }
 
 const SelectionRecord = makeSelectionRecord({
+  /** Ordered set of selected item id */
   sids: OrderedSet<ItemId>(),
   mode: 'bbox' as SelectionMode,
+  /** Selected vertex index */
+  svi: -1,
 })
 SelectionRecord.prototype.selectedItems = function selectedItems(
   this: SelectionRecord,
@@ -67,3 +70,24 @@ export const selectionRecord = SelectionRecord()
 type SelectionRecord = typeof selectionRecord
 
 export default SelectionRecord
+
+export const selectionUtils = {
+  toggleMode(): Updater<Selection> {
+    return sel => sel.toggleMode()
+  },
+  setSids(...sids: number[]): Updater<Selection> {
+    return sel => sel.set('sids', OrderedSet(sids))
+  },
+  clearSids(): Updater<Selection> {
+    return sel => sel.set('sids', OrderedSet())
+  },
+  selectItem(item: Item): Updater<Selection> {
+    return sel => sel.set('sids', OrderedSet([item.id]))
+  },
+  setSVI(svi: number): Updater<Selection> {
+    return sel => sel.set('svi', svi)
+  },
+  clearSVI(): Updater<Selection> {
+    return sel => sel.set('svi', -1)
+  },
+}

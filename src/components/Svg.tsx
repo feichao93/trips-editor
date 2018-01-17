@@ -7,9 +7,11 @@ import VerticesIndicator from './VerticesIndicator'
 import { State } from '../actions'
 import { Item, Point, Selection } from '../interfaces'
 import '../styles/svg.styl'
+import Mouse from '../utils/Mouse'
 
 export interface Sources {
   DOM: DOMSource
+  mouse: Mouse
   drawingItem: Stream<Item>
   state: Stream<State>
   selection: Stream<Selection>
@@ -21,13 +23,12 @@ export interface Sources {
 
 export interface Sinks {
   DOM: Stream<VNode>
-  svg: Stream<SVGSVGElement>
   rawDown: Stream<Point>
   rawClick: Stream<Point>
   rawDblclick: Stream<Point>
   rawWheel: Stream<{ pos: Point; deltaY: number }>
-  resizer: Stream<string>
-  vertexIndex: Stream<number>
+  whichVertex: Stream<(p: Point) => number>
+  whichResizer: Stream<(p: Point) => string>
 }
 
 export default function Svg(sources: Sources): Sinks {
@@ -76,22 +77,25 @@ export default function Svg(sources: Sources): Sinks {
   const vdom$ = xs
     .combine(
       state$,
+      sources.mouse.cursor(),
       transform$,
       sources.drawingItem,
-      verticesIndicator.DOM,
-      selectionIndicator.DOM,
+      // TODO why the following two streams need `startWith`
+      selectionIndicator.DOM.startWith(null),
+      verticesIndicator.DOM.startWith(null),
       sources.addons.polygonCloseIndicator,
     )
     .map(
       ([
         { items, zlist },
+        cursor,
         transform,
         drawingItem,
         selectionIndicator,
         verticesIndicator,
         polygonCloseIndicator,
       ]) =>
-        h('svg.svg', [
+        h('svg.svg', { style: { cursor } }, [
           h(
             'g',
             { attrs: { transform: String(transform) } },
@@ -116,12 +120,11 @@ export default function Svg(sources: Sources): Sinks {
     )
   return {
     DOM: vdom$,
-    svg: svgdom.element() as any,
     rawDown: rawDown$,
     rawDblclick: rawDblclick$,
     rawClick: rawClick$,
     rawWheel: rawWheel$,
-    resizer: selectionIndicator.resizer,
-    vertexIndex: verticesIndicator.vertexIndex,
+    whichResizer: selectionIndicator.whichResizer,
+    whichVertex: verticesIndicator.whichVertex,
   }
 }

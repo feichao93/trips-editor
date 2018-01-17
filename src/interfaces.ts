@@ -45,7 +45,7 @@ export interface InteractionFnSinks {
   action: Stream<Action>
   nextMode: Stream<string>
   nextTransform: Stream<d3.ZoomTransform>
-  nextSelection: Stream<Selection>
+  changeSelection: Stream<Updater<Selection>>
   drawingItem: Stream<Item>
   addons: { [key: string]: Stream<any> }
 }

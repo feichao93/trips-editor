@@ -15,7 +15,7 @@ import drawRect from './interaction/drawRect'
 import editPoints from './interaction/editPoints'
 import resizeItems from './interaction/resizeItems'
 import zoom from './interaction/zoom'
-import { InteractionFn } from './interfaces'
+import { InteractionFn, Updater } from './interfaces'
 import { ShortcutSource } from './makeShortcutDriver'
 import './styles/app.styl'
 import Mouse from './utils/Mouse'
@@ -44,7 +44,7 @@ export default function App(sources: Sources): Sinks {
 
   const actionProxy$ = xs.create<Action>()
   const nextModeProxy$ = xs.create<string>()
-  const nextSelectionProxy$ = xs.create<Selection>()
+  const changeSelectionProxy$ = xs.create<Updater<Selection>>()
   const nextResizerProxy$ = xs.create<string>()
   const nextVertexIndexProxy$ = xs.create<number>()
   const nextTransformProxy$ = xs.create<d3.ZoomTransform>()
@@ -52,14 +52,14 @@ export default function App(sources: Sources): Sinks {
   const state$ = actionProxy$.fold((s, updater) => updater(s), initState)
   const transform$ = nextTransformProxy$.startWith(d3.zoomIdentity)
   const mode$ = nextModeProxy$.startWith(initMode)
-  const selection$ = nextSelectionProxy$.dropRepeats(is).startWith(selectionRecord)
+  const selection$ = changeSelectionProxy$.fold((sel, updater) => updater(sel), selectionRecord)
 
   const mouse = new Mouse(
     transform$,
     sources.mousemove,
     sources.mouseup,
-    nextResizerProxy$.startWith(null),
-    nextVertexIndexProxy$.startWith(-1),
+    nextResizerProxy$,
+    nextVertexIndexProxy$,
   )
 
   const interactions: InteractionFn[] = [
@@ -92,6 +92,7 @@ export default function App(sources: Sources): Sinks {
   const structure = (isolate(Structure, 'structure') as typeof Structure)({ DOM: domSource })
   const svg = (isolate(Svg, 'svg') as typeof Svg)({
     DOM: domSource,
+    mouse,
     drawingItem: drawingItem$,
     state: state$,
     selection: selection$,
@@ -116,13 +117,17 @@ export default function App(sources: Sources): Sinks {
   nextTransformProxy$.imitate(
     xs.merge(...sinksArray.map(sinks => sinks.nextTransform).filter(Boolean)),
   )
-  nextSelectionProxy$.imitate(
-    xs.merge(...sinksArray.map(sinks => sinks.nextSelection).filter(Boolean)),
+  changeSelectionProxy$.imitate(
+    xs.merge(...sinksArray.map(sinks => sinks.changeSelection).filter(Boolean)),
   )
 
-  nextResizerProxy$.imitate(svg.resizer)
-  nextVertexIndexProxy$.imitate(svg.vertexIndex)
   mouse.imitate(svg.rawDown, svg.rawClick, svg.rawDblclick, svg.rawWheel)
+  nextResizerProxy$.imitate(
+    xs.combine(mouse.move$, svg.whichResizer).map(([pos, which]) => which(pos)),
+  )
+  nextVertexIndexProxy$.imitate(
+    xs.combine(mouse.move$, svg.whichVertex).map(([pos, which]) => which(pos)),
+  )
 
   const vdom$ = xs
     .combine(menubar.DOM, structure.DOM, svg.DOM, inspector.DOM, statusBar.DOM)
