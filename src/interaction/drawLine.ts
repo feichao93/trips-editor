@@ -7,7 +7,6 @@ import PolylineItem from '../utils/PolylineItem'
 import { selectionUtils } from '../utils/Selection'
 
 const drawLine: InteractionFn = ({ mouse, mode: mode$, shortcut, selection: sel$ }) => {
-  const start$ = shortcut.shortcut('l', 'line.ready')
   const startPos$ = mouse.down$.when(mode$, identical('line.ready')).remember()
 
   const movingPos$ = startPos$
@@ -28,7 +27,11 @@ const drawLine: InteractionFn = ({ mouse, mode: mode$, shortcut, selection: sel$
   return {
     drawingItem: drawingLine$,
     action: newItem$.map(actions.addItem),
-    nextMode: xs.merge(start$, startPos$.mapTo('line.drawing'), newItem$.mapTo('idle')),
+    nextMode: xs.merge(
+      shortcut.shortcut('l').mapTo('line.ready'),
+      startPos$.mapTo('line.drawing'),
+      newItem$.mapTo('idle'),
+    ),
     changeSelection: newItem$.map(selectionUtils.selectItem),
   }
 }

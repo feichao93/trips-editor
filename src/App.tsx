@@ -47,7 +47,7 @@ export default function App(sources: Sources): Sinks {
   const changeSelectionProxy$ = xs.create<Updater<Selection>>()
   const nextResizerProxy$ = xs.create<string>()
   const nextVertexIndexProxy$ = xs.create<number>()
-  const nextVertexAddIndexProxy$ = xs.create<number>()
+  const nextVertexInsertIndexProxy$ = xs.create<number>()
   const nextTransformProxy$ = xs.create<d3.ZoomTransform>()
 
   const state$ = actionProxy$.fold((s, updater) => updater(s), initState)
@@ -61,7 +61,7 @@ export default function App(sources: Sources): Sinks {
     sources.mouseup,
     nextResizerProxy$,
     nextVertexIndexProxy$,
-    nextVertexAddIndexProxy$,
+    nextVertexInsertIndexProxy$,
   )
 
   const interactions: InteractionFn[] = [
@@ -95,6 +95,7 @@ export default function App(sources: Sources): Sinks {
   const svg = (isolate(Svg, 'svg') as typeof Svg)({
     DOM: domSource,
     mouse,
+    shortcut,
     drawingItem: drawingItem$,
     state: state$,
     selection: selection$,
@@ -140,7 +141,7 @@ export default function App(sources: Sources): Sinks {
         .map(([pos, which]) => which(pos)),
     ),
   )
-  nextVertexAddIndexProxy$.imitate(svg.vertexAddIndex)
+  nextVertexInsertIndexProxy$.imitate(svg.vertexInsertIndex)
 
   const vdom$ = xs
     .combine(menubar.DOM, structure.DOM, svg.DOM, inspector.DOM, statusBar.DOM)

@@ -14,7 +14,7 @@ export interface Action {
 export type ZIndexOp = 'z-inc' | 'z-dec' | 'z-top' | 'z-bottom'
 
 export default {
-  deletePoint(sel: Selection, vertexIndex: number): Action {
+  deletePoint([sel, vertexIndex]: [Selection, number]): Action {
     return state =>
       state.setIn(['items', sel.sids.first(), 'points'], sel.item(state).points.delete(vertexIndex))
   },
@@ -85,10 +85,10 @@ export default {
         y: item.points.get(pointIndex).y + dy,
       }))
   },
-  addPoint([pos, sel, addIndex]: [Point, Selection, number]): Action {
+  addPoint([pos, sel, insertIndex]: [Point, Selection, number]): Action {
     return state =>
       state.updateIn(['items', sel.sids.first(), 'points'], (points: List<Point>) =>
-        points.insert(addIndex + 1, pos),
+        points.insert(insertIndex, pos),
       )
   },
 }

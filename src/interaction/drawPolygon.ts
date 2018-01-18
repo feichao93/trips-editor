@@ -13,9 +13,7 @@ const drawPolygon: InteractionFn = ({
   mode: mode$,
   shortcut,
   transform: transform$,
-  selection: sel$,
 }) => {
-  const start$ = shortcut.shortcut('q', 'polygon')
   const addPointProxy$ = xs.create<Point>()
   const resetPointsProxy$ = xs.create()
 
@@ -96,7 +94,7 @@ const drawPolygon: InteractionFn = ({
   return {
     drawingItem: drawingPolygon$,
     action: addItem$,
-    nextMode: xs.merge(start$, newItem$.mapTo('idle')),
+    nextMode: xs.merge(shortcut.shortcut('q').mapTo('polygon'), newItem$.mapTo('idle')),
     changeSelection: newItem$.map(selectionUtils.selectItem),
     addons: { polygonCloseIndicator: closeIndicator$ },
   }

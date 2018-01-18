@@ -14,7 +14,7 @@ const zoom: InteractionFn = ({ mouse, mode: mode$, state: state$, transform: tra
     .when(mode$, identical('idle'))
     .when(mouse.resizer$, identical(null))
     .when(mouse.vertexIndex$, identical(-1))
-    .when(mouse.vertexAddIndex$, identical(-1))
+    .when(mouse.vertexInsertIndex$, identical(-1))
     .sampleCombine(state$, transform$)
     .map(([{ type, pos: rawPos }, state, transform]) => {
       const [x, y] = transform.invert([rawPos.x, rawPos.y])

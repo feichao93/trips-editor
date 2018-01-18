@@ -1,3 +1,4 @@
+import { identical } from 'ramda'
 import xs, { Stream } from 'xstream'
 import actions from '../actions'
 import { InteractionFn, Item, Point } from '../interfaces'
@@ -16,24 +17,25 @@ const editPoints: InteractionFn = ({
   shortcut,
   selection: sel$,
 }) => {
-  const start$ = shortcut.shortcut('e').when(sel$, sel => !sel.isEmpty())
+  const toggleSelectionMode$ = shortcut
+    .shortcut('e')
+    .when(sel$, sel => !sel.isEmpty())
+    .mapTo(selectionUtils.toggleMode())
 
   const addPointConfig$ = mouse.down$
-    .when(mouse.vertexAddIndex$, i => i !== -1)
-    .sampleCombine(sel$, mouse.vertexAddIndex$)
+    .when(mouse.vertexInsertIndex$, i => i !== -1)
+    .sampleCombine(sel$, mouse.vertexInsertIndex$)
 
   const startFromAdd$ = addPointConfig$
-    .map(([pos, sel, vertexAddIndex]) =>
+    .map(([pos, sel, vertexInsertIndex]) =>
       state$
         .drop(1) // state$ is a memory-stream, so we drop the current state
         .take(1) // Use the next state (state that contains the added-point)
-        .map(state => {
-          return {
-            startPos: pos,
-            item: sel.item(state),
-            vertexIndex: vertexAddIndex + 1,
-          }
-        }),
+        .map(state => ({
+          startPos: pos,
+          item: sel.item(state),
+          vertexIndex: vertexInsertIndex,
+        })),
     )
     .flatten()
 
@@ -60,9 +62,17 @@ const editPoints: InteractionFn = ({
   )
   const movePoint$ = movingInfo$.filter(Boolean).map(actions.movePoint)
 
+  const deletePoint$ = shortcut
+    .keyup('d')
+    .whenNot(mouse.vertexIndex$, identical(-1))
+    .sampleCombine(sel$, mouse.vertexIndex$)
+    .peek(xs.combine(sel$, mouse.vertexIndex$))
+    .map(actions.deletePoint)
+
   return {
-    changeSelection: start$.mapTo(selectionUtils.toggleMode()),
-    action: xs.merge(movePoint$, addPointConfig$.map(actions.addPoint)),
+    changeSelection: toggleSelectionMode$,
+    action: xs.merge(movePoint$, addPointConfig$.map(actions.addPoint), deletePoint$),
+    resetVertexIndex: deletePoint$,
   }
 }
 

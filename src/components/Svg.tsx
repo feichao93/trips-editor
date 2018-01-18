@@ -3,16 +3,18 @@ import isolate from '@cycle/isolate'
 import { VNode } from 'snabbdom/vnode'
 import xs, { Stream } from 'xstream'
 import SelectionIndicator from './SelectionIndicator'
+import VertexInsertIndicator from './VertexInsertIndicator'
 import VerticesIndicator from './VerticesIndicator'
-import VertexAddIndicator from './VertexAddIndicator'
 import { State } from '../actions'
 import { Item, Point, Selection } from '../interfaces'
+import { ShortcutSource } from '../makeShortcutDriver'
 import '../styles/svg.styl'
 import Mouse from '../utils/Mouse'
 
 export interface Sources {
   DOM: DOMSource
   mouse: Mouse
+  shortcut: ShortcutSource
   drawingItem: Stream<Item>
   state: Stream<State>
   selection: Stream<Selection>
@@ -30,7 +32,7 @@ export interface Sinks {
   rawWheel: Stream<{ pos: Point; deltaY: number }>
   whichVertex: Stream<(p: Point) => number>
   whichResizer: Stream<(p: Point) => string>
-  vertexAddIndex: Stream<number>
+  vertexInsertIndex: Stream<number>
 }
 
 export default function Svg(sources: Sources): Sinks {
@@ -38,6 +40,7 @@ export default function Svg(sources: Sources): Sinks {
   const svgdom = domSource.select('.svg')
   const state$ = sources.state
   const mouse = sources.mouse
+  const shortcut = sources.shortcut
   const transform$ = sources.transform
   const selection$ = sources.selection
 
@@ -78,10 +81,11 @@ export default function Svg(sources: Sources): Sinks {
     transform: transform$,
   })
 
-  const vertexAddIndicator = VertexAddIndicator({
+  const vertexInsertIndicator = VertexInsertIndicator({
     DOM: domSource,
     state: state$,
     mouse,
+    shortcut,
     selection: selection$,
     transform: transform$,
   })
@@ -93,7 +97,7 @@ export default function Svg(sources: Sources): Sinks {
       transform$,
       sources.drawingItem,
       // TODO why the following streams need `startWith`
-      vertexAddIndicator.DOM.startWith(null),
+      vertexInsertIndicator.DOM.startWith(null),
       selectionIndicator.DOM.startWith(null),
       verticesIndicator.DOM.startWith(null),
       sources.addons.polygonCloseIndicator,
@@ -141,6 +145,6 @@ export default function Svg(sources: Sources): Sinks {
     rawWheel: rawWheel$,
     whichResizer: selectionIndicator.whichResizer,
     whichVertex: verticesIndicator.whichVertex,
-    vertexAddIndex: vertexAddIndicator.vertexAddIndex,
+    vertexInsertIndex: vertexInsertIndicator.vertexInsertIndex,
   }
 }

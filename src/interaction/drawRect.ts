@@ -7,7 +7,6 @@ import PolygonItem from '../utils/PolygonItem'
 import { selectionUtils } from '../utils/Selection'
 
 const drawRect: InteractionFn = ({ mouse, mode: mode$, shortcut, selection: sel$ }) => {
-  const start$ = shortcut.shortcut('r', 'rect.ready')
   const startPos$ = mouse.down$.when(mode$, identical('rect.ready')).remember()
   const movingPos$ = startPos$
     .map(start => mouse.move$.when(mode$, identical('rect.drawing')).startWith(start))
@@ -27,7 +26,11 @@ const drawRect: InteractionFn = ({ mouse, mode: mode$, shortcut, selection: sel$
   return {
     drawingItem: drawingRect$,
     action: newItem$.map(actions.addItem),
-    nextMode: xs.merge(start$, newItem$.mapTo('idle'), startPos$.mapTo('rect.drawing')),
+    nextMode: xs.merge(
+      shortcut.shortcut('r').mapTo('rect.ready'),
+      newItem$.mapTo('idle'),
+      startPos$.mapTo('rect.drawing'),
+    ),
     changeSelection: newItem$.map(selectionUtils.selectItem),
   }
 }

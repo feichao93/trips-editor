@@ -16,7 +16,7 @@ const commonInteraction: InteractionFn = ({
     .when(mode$, identical('idle'))
     .when(mouse.resizer$, identical(null))
     .when(mouse.vertexIndex$, identical(-1))
-    .when(mouse.vertexAddIndex$, identical(-1))
+    .when(mouse.vertexInsertIndex$, identical(-1))
     .sampleCombine(state$)
     .map(([pos, state]) => {
       const clickedItems = state.items.filter(item => item.containsPoint(pos))
@@ -29,23 +29,16 @@ const commonInteraction: InteractionFn = ({
     })
     .dropRepeats(is)
 
-  const esc$ = shortcut.shortcut('esc', 'idle')
-  const shortcutDelete$ = shortcut.shortcut('d')
-  const deleteSelection$ = shortcutDelete$
+  const deleteSelection$ = shortcut
+    .keyup('d')
     .when(sel$, sel => !sel.isEmpty() && sel.mode === 'bbox')
     .peek(sel$)
     .map(actions.deleteSelection)
 
-  const deletePoint$ = shortcutDelete$
-    .whenNot(mouse.vertexIndex$, identical(-1))
-    .sampleCombine(sel$, mouse.vertexIndex$)
-    .map(([_, sel, vertexIndex]) => actions.deletePoint(sel, vertexIndex))
-
   return {
-    action: xs.merge(deleteSelection$, deletePoint$),
-    nextMode: esc$,
+    action: deleteSelection$,
+    nextMode: shortcut.shortcut('esc').mapTo('idle'),
     changeSelection: xs.merge(changeSids$),
-    resetVertexIndex: deletePoint$,
   }
 }
 
