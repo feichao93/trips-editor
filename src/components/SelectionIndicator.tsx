@@ -4,6 +4,7 @@ import xs, { Stream } from 'xstream'
 import { State } from '../actions'
 import { INDICATOR_RECT_SIZE } from '../constants'
 import { Point, Selection } from '../interfaces'
+import Mouse from '../utils/Mouse'
 
 const SmallCross = ({ x, y, k }: { x: number; y: number; k: number }) =>
   h('g', { attrs: { transform: `translate(${x}, ${y})` } }, [
@@ -65,6 +66,7 @@ const BorderLine = ({ k, x1, y1, x2, y2 }: BorderLineProps) =>
 
 export interface Sources {
   DOM: DOMSource
+  mouse: Mouse
   state: Stream<State>
   selection: Stream<Selection>
   transform: Stream<d3.ZoomTransform>
@@ -72,10 +74,11 @@ export interface Sources {
 
 export interface Sinks {
   DOM: Stream<VNode>
-  whichResizer: Stream<(p: Point) => string>
+  nextResizer: Stream<string>
 }
 
 export default function SelectedItemsIndicator({
+  mouse,
   selection: selection$,
   transform: transform$,
   state: state$,
@@ -106,11 +109,12 @@ export default function SelectedItemsIndicator({
       }
     })
 
-  const whichResizer$: Stream<(p: Point) => string> = shapeConfig$.map(shapeConfig => {
-    if (shapeConfig) {
-      const { Shape, showShape, x0, y0, bbox: { width, height }, size } = shapeConfig
-      if (Shape === SmallRect && showShape) {
-        return ({ x, y }: Point) => {
+  const nextResizer$ = xs
+    .combine(shapeConfig$, mouse.move$)
+    .map(([shapeConfig, { x, y }]) => {
+      if (shapeConfig) {
+        const { Shape, showShape, x0, y0, bbox: { width, height }, size } = shapeConfig
+        if (Shape === SmallRect && showShape) {
           const west = x0 <= x && x <= x0 + size
           const vmid = x0 + width / 2 <= x && x <= x0 + width / 2 + size
           const east = x0 + width <= x && x <= x0 + width + size
@@ -128,9 +132,9 @@ export default function SelectedItemsIndicator({
           return null
         }
       }
-    }
-    return always(null)
-  })
+      return null
+    })
+    .whenNot(mouse.pressing$)
 
   const vdom$ = shapeConfig$.map(shapeConfig => {
     if (shapeConfig == null) {
@@ -161,5 +165,5 @@ export default function SelectedItemsIndicator({
     )
   })
 
-  return { DOM: vdom$, whichResizer: whichResizer$ }
+  return { DOM: vdom$, nextResizer: nextResizer$ }
 }

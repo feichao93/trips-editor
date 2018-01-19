@@ -16,7 +16,7 @@ export interface Sources {
 
 export interface Sinks {
   DOM: Stream<VNode>
-  whichVertex: Stream<(p: Point) => number>
+  nextVertexIndex: Stream<number>
 }
 
 export default function VerticesIndicator({
@@ -26,9 +26,10 @@ export default function VerticesIndicator({
   state: state$,
 }: Sources): Sinks {
   const vertices$ = xs.combine(sel$, state$).map(([sel, state]) => sel.vertices(state))
-  const whichVertex$ = vertices$
-    .sampleCombine(transform$)
-    .map(([vertices, transform]) => (p: Point) =>
+  const nextVertexIndex$ = xs
+    .combine(vertices$, mouse.move$, transform$)
+    .whenNot(mouse.pressing$)
+    .map(([vertices, p, transform]) =>
       vertices.findIndex(
         v => distanceBetweenPointAndPoint(v, p) <= INDICATOR_CIRCLE_RADIUS / transform.k,
       ),
@@ -58,6 +59,6 @@ export default function VerticesIndicator({
 
   return {
     DOM: vdom$,
-    whichVertex: whichVertex$,
+    nextVertexIndex: nextVertexIndex$,
   }
 }

@@ -19,7 +19,7 @@ export interface Sources {
 
 export interface Sinks {
   DOM: Stream<VNode>
-  vertexInsertIndex: Stream<number>
+  nextVertexInsertIndex: Stream<number>
 }
 
 export default function VertexInsertIndicator({
@@ -71,7 +71,7 @@ export default function VertexInsertIndicator({
 
   return {
     DOM: vdom$,
-    vertexInsertIndex: highlightedSegmentIndex$.map(
+    nextVertexInsertIndex: highlightedSegmentIndex$.map(
       segIndex => (segIndex === -1 ? -1 : segIndex + 1),
     ),
   }

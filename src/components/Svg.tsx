@@ -30,9 +30,9 @@ export interface Sinks {
   rawClick: Stream<Point>
   rawDblclick: Stream<Point>
   rawWheel: Stream<{ pos: Point; deltaY: number }>
-  whichVertex: Stream<(p: Point) => number>
-  whichResizer: Stream<(p: Point) => string>
-  vertexInsertIndex: Stream<number>
+  nextVertexIndex: Stream<number>
+  nextResizer: Stream<string>
+  nextVertexInsertIndex: Stream<number>
 }
 
 export default function Svg(sources: Sources): Sinks {
@@ -68,6 +68,7 @@ export default function Svg(sources: Sources): Sinks {
 
   const selectionIndicator = (isolate(SelectionIndicator) as typeof SelectionIndicator)({
     DOM: domSource,
+    mouse,
     state: state$,
     selection: selection$,
     transform: transform$,
@@ -143,8 +144,8 @@ export default function Svg(sources: Sources): Sinks {
     rawDblclick: rawDblclick$,
     rawClick: rawClick$,
     rawWheel: rawWheel$,
-    whichResizer: selectionIndicator.whichResizer,
-    whichVertex: verticesIndicator.whichVertex,
-    vertexInsertIndex: vertexInsertIndicator.vertexInsertIndex,
+    nextResizer: selectionIndicator.nextResizer,
+    nextVertexIndex: verticesIndicator.nextVertexIndex,
+    nextVertexInsertIndex: vertexInsertIndicator.nextVertexInsertIndex,
   }
 }

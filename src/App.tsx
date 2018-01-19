@@ -125,23 +125,15 @@ export default function App(sources: Sources): Sinks {
   )
 
   mouse.imitate(svg.rawDown, svg.rawClick, svg.rawDblclick, svg.rawWheel)
-  nextResizerProxy$.imitate(
-    xs
-      .combine(mouse.move$, svg.whichResizer)
-      .whenNot(mouse.pressing$)
-      .map(([pos, which]) => which(pos)),
-  )
+  nextResizerProxy$.imitate(svg.nextResizer)
 
   nextVertexIndexProxy$.imitate(
     xs.merge(
-      xs.merge(...sinksArray.map(sinks => sinks.nextVertexIndex).filter(Boolean)),
-      xs
-        .combine(mouse.move$, svg.whichVertex)
-        .whenNot(mouse.pressing$)
-        .map(([pos, which]) => which(pos)),
+      svg.nextVertexIndex,
+      ...sinksArray.map(sinks => sinks.nextVertexIndex).filter(Boolean),
     ),
   )
-  nextVertexInsertIndexProxy$.imitate(svg.vertexInsertIndex)
+  nextVertexInsertIndexProxy$.imitate(svg.nextVertexInsertIndex)
 
   const vdom$ = xs
     .combine(menubar.DOM, structure.DOM, svg.DOM, inspector.DOM, statusBar.DOM)
