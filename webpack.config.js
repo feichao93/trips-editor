@@ -35,11 +35,14 @@ module.exports = env => {
       new webpack.DefinePlugin({
         'node.env.NODE_ENV': JSON.stringify(isProduction ? 'production' : 'development'),
       }),
-      new webpack.NamedModulesPlugin(),
       new webpack.ProvidePlugin({
         Snabbdom: 'snabbdom-pragma',
       }),
-    ].concat(isProduction ? [new UglifyJsPlugin()] : [new webpack.HotModuleReplacementPlugin()]),
+    ].concat(
+      isProduction
+        ? [new UglifyJsPlugin()]
+        : [new webpack.NamedModulesPlugin(), new webpack.HotModuleReplacementPlugin()],
+    ),
 
     devServer: {
       port: 8080,
