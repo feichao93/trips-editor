@@ -134,7 +134,7 @@ export default function App(sources: Sources): Sinks {
 
   nextVertexIndexProxy$.imitate(
     xs.merge(
-      xs.merge(...sinksArray.map(sinks => sinks.resetVertexIndex).filter(Boolean)).mapTo(-1),
+      xs.merge(...sinksArray.map(sinks => sinks.nextVertexIndex).filter(Boolean)),
       xs
         .combine(mouse.move$, svg.whichVertex)
         .whenNot(mouse.pressing$)

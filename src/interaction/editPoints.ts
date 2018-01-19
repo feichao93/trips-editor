@@ -23,10 +23,10 @@ const editPoints: InteractionFn = ({
     .mapTo(selectionUtils.toggleMode())
 
   const addPointConfig$ = mouse.down$
-    .when(mouse.vertexInsertIndex$, i => i !== -1)
+    .whenNot(mouse.vertexInsertIndex$, identical(-1))
     .sampleCombine(sel$, mouse.vertexInsertIndex$)
 
-  const startFromAdd$ = addPointConfig$
+  const startFromAdd$: Stream<EditPointStartInfo> = addPointConfig$
     .map(([pos, sel, vertexInsertIndex]) =>
       state$
         .drop(1) // state$ is a memory-stream, so we drop the current state
@@ -72,7 +72,10 @@ const editPoints: InteractionFn = ({
   return {
     changeSelection: toggleSelectionMode$,
     action: xs.merge(movePoint$, addPointConfig$.map(actions.addPoint), deletePoint$),
-    resetVertexIndex: deletePoint$,
+    nextVertexIndex: xs.merge(
+      deletePoint$.mapTo(-1),
+      startFromAdd$.map(startInfo => startInfo.vertexIndex),
+    ),
   }
 }
 

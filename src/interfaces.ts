@@ -47,7 +47,7 @@ export interface InteractionFnSinks {
   nextTransform: Stream<d3.ZoomTransform>
   changeSelection: Stream<Updater<Selection>>
   drawingItem: Stream<Item>
-  resetVertexIndex: Stream<any>
+  nextVertexIndex: Stream<any>
   addons: { [key: string]: Stream<any> }
 }
 

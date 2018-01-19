@@ -8,12 +8,7 @@ import { InteractionFn, Point, PolygonItem, Updater } from '../interfaces'
 import { distanceBetweenPointAndPoint, injectItemId } from '../utils/common'
 import { selectionUtils } from '../utils/Selection'
 
-const drawPolygon: InteractionFn = ({
-  mouse,
-  mode: mode$,
-  shortcut,
-  transform: transform$,
-}) => {
+const drawPolygon: InteractionFn = ({ mouse, mode: mode$, shortcut, transform: transform$ }) => {
   const addPointProxy$ = xs.create<Point>()
   const resetPointsProxy$ = xs.create()
 
@@ -40,7 +35,6 @@ const drawPolygon: InteractionFn = ({
   // 绘制一个点
   const addPoint$ = mouse.click$.when(mode$, identical('polygon')).whenNot(canClose$)
   addPointProxy$.imitate(addPoint$)
-  addPoint$.addListener({})
 
   // 闭合多边形，完成绘制
   const close$ = mouse.click$.when(canClose$)
