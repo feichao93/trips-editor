@@ -4,13 +4,13 @@ import { Point } from '../interfaces'
 type SimpleWheelEvent = { pos: Point; deltaY: number }
 
 export default class Mouse {
-  // move and up events are from window, so it will be available in constructor
+  // `move` and `up` events are from window, so they will be available in constructor
   move$: Stream<Point>
   rawMove$: Stream<Point>
   up$: Stream<Point>
   rawUp$: Stream<Point>
 
-  // The following events are from children of the main component.
+  // The following events are from child component.
   // We need to create an empty stream first and imitate another stream later.
   down$: Stream<Point> = xs.create()
   rawDown$: Stream<Point> = xs.create()
@@ -21,18 +21,30 @@ export default class Mouse {
   wheel$: Stream<SimpleWheelEvent> = xs.create()
   rawWheel$: Stream<SimpleWheelEvent> = xs.create()
 
-  /** Indicates whether the mouse is being pressed */
+  /** Indicates whether the mouse (left-button) is being pressed */
   pressing$: MemoryStream<boolean>
 
   /** Cursor style for SVG */
   cursor$: MemoryStream<string>
 
-  // These two streams indicating whether the mouse is over specific triggers/areas
+  /*
+    The following streams indicating whether the mouse is over specific triggers/areas.
+    resizer$ has higher priority over vertexIndex$, which means when resizer$ is not null,
+    vertexIndex$ must be -1. And vertexIndex$ has higher priority over vertexInsertIndex$,
+    which means when vertexIndex$ is not -1, vertexInsertIndex$ must be -1
+  */
   resizer$: MemoryStream<string>
   vertexIndex$: MemoryStream<number>
   vertexInsertIndex$: MemoryStream<number>
 
+  /** `isBusy` indicates whether the mouse is busy.
+   * The mouse is busy when mouse is over specific areas (resizer/vertex/vertexInsert).
+   */
+  isBusy$: MemoryStream<boolean>
+
+  // A d3.ZoomTransform stream which records the current drawing board transformation.
   private transform$: MemoryStream<d3.ZoomTransform>
+
   constructor(
     transform$: MemoryStream<d3.ZoomTransform>,
     rawMove$: Stream<Point>,
@@ -49,6 +61,13 @@ export default class Mouse {
     this.resizer$ = nextResizer$.dropRepeats().startWith(null)
     this.vertexIndex$ = nextVertexIndex$.dropRepeats().startWith(-1)
     this.vertexInsertIndex$ = nextVertexInsertIndex$.dropRepeats().startWith(-1)
+    this.isBusy$ = xs
+      .combine(this.resizer$, this.vertexIndex$, this.vertexInsertIndex$)
+      .map(
+        ([resizer, vertexIndex, vertexInsertIndex]) =>
+          !(resizer == null && vertexIndex === -1 && vertexInsertIndex === -1),
+      )
+      .remember()
 
     // Calculate other streams
     this.pressing$ = xs.merge(this.rawDown$.mapTo(true), this.rawUp$.mapTo(false)).startWith(false)
@@ -64,17 +83,13 @@ export default class Mouse {
   }
 
   private convert(rawPoint$: Stream<Point>) {
-    return rawPoint$.sampleCombine(this.transform$).map(([p, transform]) => {
-      const [x, y] = transform.invert([p.x, p.y])
-      return { x, y }
-    })
+    return rawPoint$.sampleCombine(this.transform$).map(([p, transform]) => transform.invertPos(p))
   }
 
   private convertWheel(rawWheel$: Stream<SimpleWheelEvent>) {
-    return rawWheel$.sampleCombine(this.transform$).map(([{ pos, deltaY }, transform]) => {
-      const [x, y] = transform.invert([pos.x, pos.y])
-      return { pos: { x, y }, deltaY }
-    })
+    return rawWheel$
+      .sampleCombine(this.transform$)
+      .map(([{ pos, deltaY }, transform]) => ({ pos: transform.invertPos(pos), deltaY }))
   }
 
   imitate(

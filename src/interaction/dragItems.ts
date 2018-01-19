@@ -4,10 +4,8 @@ import { InteractionFn } from '../interfaces'
 
 const dragItems: InteractionFn = ({ mouse, mode: mode$, state: state$ }) => {
   const dragStart$ = mouse.down$
-    .when(mouse.resizer$, identical(null))
-    .when(mouse.vertexIndex$, identical(-1))
-    .when(mouse.vertexInsertIndex$, identical(-1))
     .when(mode$, identical('idle'))
+    .whenNot(mouse.isBusy$)
     .sampleCombine(state$)
     .map(([pos, state]) => {
       const clickedItems = state.items.filter(item => item.containsPoint(pos))

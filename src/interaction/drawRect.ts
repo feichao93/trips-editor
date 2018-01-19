@@ -7,16 +7,14 @@ import PolygonItem from '../utils/PolygonItem'
 import { selectionUtils } from '../utils/Selection'
 
 const drawRect: InteractionFn = ({ mouse, mode: mode$, shortcut, selection: sel$ }) => {
-  const startPos$ = mouse.down$.when(mode$, identical('rect.ready')).remember()
-  const movingPos$ = startPos$
-    .map(start => mouse.move$.when(mode$, identical('rect.drawing')).startWith(start))
-    .flatten()
-
-  const drawingRect$ = mode$
-    .checkedFlatMap(identical('rect.drawing'), () =>
-      xs.combine(startPos$, movingPos$).map(PolygonItem.rectFromPoints),
+  const startPos$ = mouse.down$.when(mode$, identical('rect.ready'))
+  const drawingRect$ = startPos$
+    .map(startPos =>
+      mouse.move$
+        .when(mode$, identical('rect.drawing'))
+        .map(movingPos => PolygonItem.rectFromPoints([startPos, movingPos])),
     )
-    .filter(Boolean)
+    .flatten()
 
   const newItem$ = mouse.up$
     .when(mode$, identical('rect.drawing'))

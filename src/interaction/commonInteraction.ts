@@ -14,9 +14,7 @@ const commonInteraction: InteractionFn = ({
 }) => {
   const changeSids$ = mouse.down$
     .when(mode$, identical('idle'))
-    .when(mouse.resizer$, identical(null))
-    .when(mouse.vertexIndex$, identical(-1))
-    .when(mouse.vertexInsertIndex$, identical(-1))
+    .whenNot(mouse.isBusy$)
     .sampleCombine(state$)
     .map(([pos, state]) => {
       const clickedItems = state.items.filter(item => item.containsPoint(pos))

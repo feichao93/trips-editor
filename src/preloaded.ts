@@ -2,6 +2,7 @@ import { complement } from 'ramda'
 import xs, { Stream } from 'xstream'
 import dropRepeats from 'xstream/extra/dropRepeats'
 import sampleCombine from 'xstream/extra/sampleCombine'
+import { Point } from './interfaces'
 import peek from './utils/peek'
 import when from './utils/when-operator'
 
@@ -78,4 +79,21 @@ declare module 'xstream' {
     checkedFlatMap<U>(checkFn: (t: T) => boolean, mapFn: (t: T) => Stream<U>): Stream<U>
     checkedFlatMap<U>(/* checkFn = Boolean */ mapFn: (t: T) => Stream<U>): Stream<U>
   }
+}
+
+declare module 'd3-zoom' {
+  interface ZoomTransform {
+    invertPos(p: Point): Point
+    applyPos(p: Point): Point
+  }
+}
+
+const { Transform } = require('d3-zoom/src/transform')
+Transform.prototype.invertPos = function invertPos(p: Point): Point {
+  const [x, y] = this.invert([p.x, p.y])
+  return { x, y }
+}
+Transform.prototype.applyPos = function applyPos(p: Point): Point {
+  const [x, y] = this.apply([p.x, p.y])
+  return { x, y }
 }

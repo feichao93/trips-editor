@@ -1,5 +1,13 @@
 import { List, Map, OrderedMap, Record } from 'immutable'
-import { Item, ItemId, Point, Selection } from './interfaces'
+import { Item, ItemId, Point, ResizeDirConfig, Selection } from './interfaces'
+
+export interface ResizingInfo {
+  movingPos: Point
+  startPos: Point
+  startItems: Map<ItemId, Item>
+  anchor: Point
+  resizeDirConfig: ResizeDirConfig
+}
 
 export const StateRecord = Record({
   items: Map<ItemId, Item>(),
@@ -31,6 +39,13 @@ export default {
   },
   moveItems(movedItems: OrderedMap<ItemId, Item>): Action {
     return state => state.mergeIn(['items'], movedItems)
+  },
+  resizeItems({ startItems, startPos, anchor, movingPos, resizeDirConfig }: ResizingInfo): Action {
+    return state =>
+      state.mergeIn(
+        ['items'],
+        startItems.map(item => item.resize(anchor, resizeDirConfig, startPos, movingPos)),
+      )
   },
   addItem(item: Item): Action {
     return state =>

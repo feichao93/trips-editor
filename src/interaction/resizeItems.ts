@@ -1,18 +1,8 @@
-import { Map } from 'immutable'
 import { identical } from 'ramda'
-import xs, { Stream } from 'xstream'
-import { Action, State } from '../actions'
-import { InteractionFn, Item, ItemId, Point, Rect, ResizeDirConfig } from '../interfaces'
+import actions from '../actions'
+import { InteractionFn, Rect, ResizeDirConfig } from '../interfaces'
 
 // TODO 该文件还可以进行优化
-
-export interface ResizingInfo {
-  movingPos: Point
-  startPos: Point
-  startItems: Map<ItemId, Item>
-  anchor: Point
-  resizeDirConfig: ResizeDirConfig
-}
 
 const resizeItems: InteractionFn = ({
   mouse,
@@ -22,36 +12,26 @@ const resizeItems: InteractionFn = ({
 }) => {
   const resizer$ = mouse.resizer$
   const startInfo$ = mouse.down$
-    .when(resizer$)
     .when(mode$, identical('idle'))
+    .when(resizer$)
     .sampleCombine(resizer$, state$, selection$)
     .map(([pos, resizer, state, selection]) => {
       const startItems = selection.selectedItems(state)
+      // When resizer is not null, we can make sure that bbox is not null.
       const bbox = selection.getBBox(state)
-      if (bbox != null) {
-        return {
-          startPos: pos,
-          startItems,
-          anchor: resolveAnchor(resizer, bbox),
-          resizeDirConfig: resolveResizeDirConfig(resizer),
-        }
-      } else {
-        return null
+      return {
+        startPos: pos,
+        startItems,
+        anchor: resolveAnchor(resizer, bbox),
+        resizeDirConfig: resolveResizeDirConfig(resizer),
       }
     })
 
-  const resizingInfo$: Stream<ResizingInfo> = startInfo$.checkedFlatMap(startInfo =>
-    mouse.move$.map(movingPos => ({ movingPos, ...startInfo })).endWhen(mouse.up$),
-  )
-
-  const resizeAction$: Stream<Action> = resizingInfo$
-    .filter(Boolean)
-    .map(({ startItems, anchor, resizeDirConfig, startPos, movingPos }) => (state: State) => {
-      const resizedItems = startItems.map(item =>
-        item.resize(anchor, resizeDirConfig, startPos, movingPos),
-      )
-      return state.mergeIn(['items'], resizedItems)
-    })
+  const resizeAction$ = startInfo$
+    .checkedFlatMap(startInfo =>
+      mouse.move$.map(movingPos => ({ movingPos, ...startInfo })).endWhen(mouse.up$),
+    )
+    .map(actions.resizeItems)
 
   return {
     action: resizeAction$,

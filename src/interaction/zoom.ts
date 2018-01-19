@@ -6,43 +6,31 @@ import { InteractionFn } from '../interfaces'
 import transition from '../utils/transition'
 
 const zoom: InteractionFn = ({ mouse, mode: mode$, state: state$, transform: transform$ }) => {
-  const dragStart$ = xs
-    .merge(
-      mouse.rawDown$.map(pos => ({ type: 'down', pos })),
-      mouse.rawUp$.map(pos => ({ type: 'up', pos })),
-    )
+  const dragStart$ = mouse.rawDown$
     .when(mode$, identical('idle'))
-    .when(mouse.resizer$, identical(null))
-    .when(mouse.vertexIndex$, identical(-1))
-    .when(mouse.vertexInsertIndex$, identical(-1))
+    .whenNot(mouse.isBusy$)
     .sampleCombine(state$, transform$)
-    .map(([{ type, pos: rawPos }, state, transform]) => {
-      const [x, y] = transform.invert([rawPos.x, rawPos.y])
-      const pos = { x, y }
-      if (type === 'down') {
-        const clickedItems = state.items.filter(item => item.containsPoint(pos))
-        if (clickedItems.every(item => item.locked)) {
-          return { pos: rawPos, transform }
-        }
+    .map(([rawPos, state, transform]) => {
+      const pos = transform.invertPos(rawPos)
+      const clickedItems = state.items.filter(item => item.containsPoint(pos))
+      if (clickedItems.every(item => item.locked)) {
+        return { rawPos, transform }
       }
       return null
     })
     .startWith(null)
 
   const drag$ = dragStart$
-    .map(dragStart => {
-      return mouse.rawMove$.map(pos => {
-        if (dragStart == null) {
-          return null
-        } else {
+    .checkedFlatMap(dragStart =>
+      mouse.rawMove$
+        .map(rawPos => {
           const k = dragStart.transform.k
-          const dx = pos.x - dragStart.pos.x
-          const dy = pos.y - dragStart.pos.y
+          const dx = rawPos.x - dragStart.rawPos.x
+          const dy = rawPos.y - dragStart.rawPos.y
           return dragStart.transform.translate(dx / k, dy / k)
-        }
-      })
-    })
-    .flatten()
+        })
+        .endWhen(mouse.up$),
+    )
     .filter(Boolean)
 
   const zoomFromDblclick$ = mouse.rawDblclick$.map(pos => ({ pos, delta: 2, useTransition: true }))
