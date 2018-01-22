@@ -1,22 +1,22 @@
 import { MemoryStream, Stream } from 'xstream'
 import { Action, State } from './actions'
 import { ShortcutSource } from './makeShortcutDriver'
+import AdjustedMouse from './utils/AdjustMouse'
 import PolygonItem from './utils/PolygonItem'
 import PolylineItem from './utils/PolylineItem'
 import Selection from './utils/Selection'
-import Mouse from './utils/Mouse'
 
 export { PolygonItem, PolylineItem, Selection }
 
 export interface Point {
-  x: number
-  y: number
+  readonly x: number
+  readonly y: number
 }
 export interface Rect {
-  x: number
-  y: number
-  width: number
-  height: number
+  readonly x: number
+  readonly y: number
+  readonly width: number
+  readonly height: number
 }
 
 export interface Updater<T> {
@@ -33,7 +33,7 @@ export interface ResizeDirConfig {
 }
 
 export interface InterfaceFnSources {
-  mouse: Mouse
+  mouse: AdjustedMouse
   mode: MemoryStream<string>
   state: MemoryStream<State>
   selection: MemoryStream<Selection>
@@ -48,9 +48,27 @@ export interface InteractionFnSinks {
   changeSelection: Stream<Updater<Selection>>
   drawingItem: Stream<Item>
   nextVertexIndex: Stream<any>
+  nextAdjustConfigs: Stream<AdjustConfig[]>
   addons: { [key: string]: Stream<any> }
 }
 
 export interface InteractionFn {
   (sources: InterfaceFnSources): Partial<InteractionFnSinks>
+}
+
+export type AdjustConfig = AdjustConfigCement | AdjustConfigAlign | AdjustConfigRestrict
+
+export interface AdjustConfigCement {
+  type: 'cement'
+  include?: Point[]
+  exclude?: Point[]
+}
+export interface AdjustConfigAlign {
+  type: 'align'
+  include?: Point[]
+  exclude?: Point[]
+}
+export interface AdjustConfigRestrict {
+  type: 'restrict'
+  anchor: Point
 }

@@ -2,23 +2,25 @@ import { DOMSource, h } from '@cycle/dom'
 import isolate from '@cycle/isolate'
 import { VNode } from 'snabbdom/vnode'
 import xs, { Stream } from 'xstream'
+import AdjustIndicator from './AdjustIndicator'
 import SelectionIndicator from './SelectionIndicator'
 import VertexInsertIndicator from './VertexInsertIndicator'
 import VerticesIndicator from './VerticesIndicator'
 import { State } from '../actions'
-import { Item, Point, Selection } from '../interfaces'
+import { AdjustConfig, Item, Point, Selection } from '../interfaces'
 import { ShortcutSource } from '../makeShortcutDriver'
 import '../styles/svg.styl'
-import Mouse from '../utils/Mouse'
+import AdjustedMouse from '../utils/AdjustMouse'
 
 export interface Sources {
   DOM: DOMSource
-  mouse: Mouse
+  mouse: AdjustedMouse
   shortcut: ShortcutSource
   drawingItem: Stream<Item>
   state: Stream<State>
   selection: Stream<Selection>
   transform: Stream<d3.ZoomTransform>
+  adjustConfigs: Stream<AdjustConfig[]>
   addons: {
     polygonCloseIndicator: Stream<VNode>
   }
@@ -82,13 +84,21 @@ export default function Svg(sources: Sources): Sinks {
     transform: transform$,
   })
 
-  const vertexInsertIndicator = VertexInsertIndicator({
+  const vertexInsertIndicator = (isolate(VertexInsertIndicator) as typeof VertexInsertIndicator)({
     DOM: domSource,
     state: state$,
     mouse,
     shortcut,
     selection: selection$,
     transform: transform$,
+  })
+
+  const adjustIndicator = (isolate(AdjustIndicator) as typeof AdjustIndicator)({
+    DOM: domSource,
+    mouse,
+    transform: transform$,
+    state: state$,
+    adjustConfigs: sources.adjustConfigs,
   })
 
   const vdom$ = xs
@@ -101,6 +111,7 @@ export default function Svg(sources: Sources): Sinks {
       vertexInsertIndicator.DOM.startWith(null),
       selectionIndicator.DOM.startWith(null),
       verticesIndicator.DOM.startWith(null),
+      adjustIndicator.DOM,
       sources.addons.polygonCloseIndicator,
     )
     .map(
@@ -113,6 +124,7 @@ export default function Svg(sources: Sources): Sinks {
         selectionIndicator,
         verticesIndicator,
         polygonCloseIndicator,
+        adjustIndicator,
       ]) =>
         h('svg.svg', { style: { cursor } }, [
           h(
@@ -134,6 +146,7 @@ export default function Svg(sources: Sources): Sinks {
               selectionIndicator,
               verticesIndicator,
               polygonCloseIndicator,
+              adjustIndicator,
             ].filter(Boolean),
           ),
         ]),

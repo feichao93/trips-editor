@@ -15,11 +15,13 @@ import drawRect from './interaction/drawRect'
 import editPoints from './interaction/editPoints'
 import resizeItems from './interaction/resizeItems'
 import zoom from './interaction/zoom'
-import { InteractionFn, Updater } from './interfaces'
+import { AdjustConfig, InteractionFn, Updater } from './interfaces'
 import { ShortcutSource } from './makeShortcutDriver'
 import './styles/app.styl'
+import AdjustedMouse from './utils/AdjustMouse'
 import Mouse from './utils/Mouse'
 import Selection, { selectionRecord } from './utils/Selection'
+import makeAdjuster from './utils/adjust'
 
 const EmptyComponent = (sources: { DOM: DOMSource }) => ({ DOM: xs.of(null) as any })
 const Menubar = EmptyComponent
@@ -49,13 +51,15 @@ export default function App(sources: Sources): Sinks {
   const nextVertexIndexProxy$ = xs.create<number>()
   const nextVertexInsertIndexProxy$ = xs.create<number>()
   const nextTransformProxy$ = xs.create<d3.ZoomTransform>()
+  const nextAdjustConfigs$ = xs.create<AdjustConfig[]>()
 
   const state$ = actionProxy$.fold((s, updater) => updater(s), initState)
   const transform$ = nextTransformProxy$.startWith(d3.zoomIdentity)
   const mode$ = nextModeProxy$.startWith(initMode)
   const selection$ = changeSelectionProxy$.fold((sel, updater) => updater(sel), selectionRecord)
+  const adjustConfigs$ = nextAdjustConfigs$.startWith([])
 
-  const mouse = new Mouse(
+  const mouse = new AdjustedMouse(
     transform$,
     sources.mousemove,
     sources.mouseup,
@@ -100,6 +104,7 @@ export default function App(sources: Sources): Sinks {
     state: state$,
     selection: selection$,
     transform: transform$,
+    adjustConfigs: adjustConfigs$,
     addons,
   })
   const inspector = (isolate(Inspector, 'inspector') as typeof Inspector)({
@@ -123,8 +128,12 @@ export default function App(sources: Sources): Sinks {
   changeSelectionProxy$.imitate(
     xs.merge(...sinksArray.map(sinks => sinks.changeSelection).filter(Boolean)),
   )
+  nextAdjustConfigs$.imitate(
+    xs.merge(...sinksArray.map(sinks => sinks.nextAdjustConfigs).filter(Boolean)),
+  )
 
   mouse.imitate(svg.rawDown, svg.rawClick, svg.rawDblclick, svg.rawWheel)
+  mouse.setAdjuster(makeAdjuster(mouse, state$, transform$, adjustConfigs$))
   nextResizerProxy$.imitate(svg.nextResizer)
 
   nextVertexIndexProxy$.imitate(
