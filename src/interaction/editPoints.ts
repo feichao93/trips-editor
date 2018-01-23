@@ -39,33 +39,50 @@ const editPoints: InteractionFn = ({
     )
     .flatten()
 
-  const startFromMouseDown$: Stream<EditPointStartInfo> = xs
-    .combine(mode$, mouse.vertexIndex$, sel$)
-    .checkedFlatMap(
-      ([mode, vertexIndex, sel]) =>
-        mode === 'idle' && vertexIndex !== -1 && sel.mode === 'vertices',
-      ([mode, vertexIndex, sel]) =>
-        mouse.down$
-          .sampleCombine(state$)
-          .map(([pos, state]) => ({ startPos: pos, item: sel.item(state), vertexIndex })),
-    )
+  const startFromMouseDown$: Stream<EditPointStartInfo> = mouse.down$
+    .when(mode$, identical('idle'))
+    .whenNot(mouse.vertexIndex$, identical(-1))
+    .when(sel$, sel => sel.mode === 'vertices')
+    .sampleCombine(mouse.vertexIndex$, sel$, state$)
+    .map(([pos, vertexIndex, sel, state]) => ({
+      startPos: pos,
+      item: sel.item(state).setIn(['points', vertexIndex], pos),
+      vertexIndex,
+    }))
+
   const startInfo$ = xs.merge(startFromAdd$, startFromMouseDown$)
 
-  const movingInfo$ = startInfo$.checkedFlatMap(({ item, startPos, vertexIndex }) =>
-    mouse.move$
-      .map(movingPos => {
-        const dx = movingPos.x - startPos.x
-        const dy = movingPos.y - startPos.y
-        return [item, vertexIndex, dx, dy]
-      })
-      .endWhen(mouse.up$),
-  )
-  const movePoint$ = movingInfo$.filter(Boolean).map(actions.movePoint)
+  const nextAdjustConfigs$ = startInfo$
+    .map(({ item, vertexIndex }) =>
+      xs.merge(
+        mouse.move$
+          .peek(state$)
+          .map(state => [
+            { type: 'align', exclude: [state.getIn(['items', item.id, 'points', vertexIndex])] },
+          ])
+          .startWith([{ type: 'align', exclude: [] }])
+          .endWhen(mouse.up$),
+        mouse.up$.mapTo([]),
+      ),
+    )
+    .flatten()
+
+  const movingInfo$ = startInfo$
+    .map(({ item, startPos, vertexIndex }) =>
+      mouse.amove$
+        .map(movingPos => {
+          const dx = movingPos.x - startPos.x
+          const dy = movingPos.y - startPos.y
+          return [item, vertexIndex, dx, dy]
+        })
+        .endWhen(mouse.up$),
+    )
+    .flatten()
+  const movePoint$ = movingInfo$.map(actions.movePoint)
 
   const deletePoint$ = shortcut
     .keyup('d')
     .whenNot(mouse.vertexIndex$, identical(-1))
-    .sampleCombine(sel$, mouse.vertexIndex$)
     .peek(xs.combine(sel$, mouse.vertexIndex$))
     .map(actions.deletePoint)
 
@@ -76,6 +93,7 @@ const editPoints: InteractionFn = ({
       deletePoint$.mapTo(-1),
       startFromAdd$.map(startInfo => startInfo.vertexIndex),
     ),
+    nextAdjustConfigs: nextAdjustConfigs$ as any,
   }
 }
 

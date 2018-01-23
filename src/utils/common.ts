@@ -74,7 +74,7 @@ export function distanceBetweenPointAndPoint(point1: Point, point2: Point) {
 export function distanceBetweenPointAndSegment(point: Point, start: Point, end: Point) {
   const length2 = dist2(start, end)
   if (length2 === 0) {
-    throw new Error('Invalid segment')
+    return distanceBetweenPointAndPoint(point, start)
   }
   const t =
     ((point.x - start.x) * (end.x - start.x) + (point.y - start.y) * (end.y - start.y)) / length2
