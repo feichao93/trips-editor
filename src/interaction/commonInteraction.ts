@@ -33,9 +33,12 @@ const commonInteraction: InteractionFn = ({
     .peek(sel$)
     .map(actions.deleteSelection)
 
+  const toIdle$ = shortcut.shortcut('esc').mapTo('idle')
+
   return {
     action: deleteSelection$,
-    nextMode: shortcut.shortcut('esc').mapTo('idle'),
+    nextMode: toIdle$,
+    nextAdjustConfigs: toIdle$.mapTo([]),
     changeSelection: xs.merge(changeSids$),
   }
 }

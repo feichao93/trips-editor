@@ -133,8 +133,8 @@ export default function App(sources: Sources): Sinks {
 
   mouse.imitate(svg.rawDown, svg.rawClick, svg.rawDblclick, svg.rawWheel)
   mouse.setAdjuster(makeAdjuster(mouse, state$, transform$, adjustConfigs$))
-  nextResizerProxy$.imitate(svg.nextResizer)
 
+  nextResizerProxy$.imitate(svg.nextResizer)
   nextVertexIndexProxy$.imitate(
     xs.merge(
       svg.nextVertexIndex,

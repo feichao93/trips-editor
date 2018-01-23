@@ -77,5 +77,10 @@ export interface AdjustResult {
   point: Point
   applied: string[]
   ensure: (p: Point) => boolean
-  info: { [key: string]: any } // TODO TS-any
+  info?: AdjustResultExtraInfo
 }
+
+export type AdjustResultExtraInfo = Partial<{
+  horizontalPoint: Point
+  verticalPoint: Point
+}>

@@ -109,7 +109,7 @@ export default function Svg(sources: Sources): Sinks {
       vertexInsertIndicator.DOM.startWith(null),
       selectionIndicator.DOM.startWith(null),
       verticesIndicator.DOM.startWith(null),
-      adjustIndicator.DOM,
+      adjustIndicator.DOM.startWith(null),
       sources.addons.polygonCloseIndicator,
     )
     .map(

@@ -2,7 +2,7 @@ import { identical } from 'ramda'
 import xs from 'xstream'
 import actions from '../actions'
 import { AdjustConfig, InteractionFn } from '../interfaces'
-import { injectItemId } from '../utils/common'
+import { injectItemId, getBoundingBoxOfPoints } from '../utils/common'
 import PolygonItem from '../utils/PolygonItem'
 import { selectionUtils } from '../utils/Selection'
 
@@ -22,7 +22,10 @@ import { selectionUtils } from '../utils/Selection'
  */
 const drawRect: InteractionFn = ({ mouse, mode: mode$, shortcut, selection: sel$ }) => {
   const toRectReady$ = shortcut.shortcut('r').mapTo('rect.ready')
-  const adjustInRectReady$ = toRectReady$.mapTo<AdjustConfig[]>([{ type: 'cement' }])
+  const adjustInRectReady$ = toRectReady$.mapTo<AdjustConfig[]>([
+    { type: 'cement' },
+    { type: 'align' },
+  ])
 
   const startPos$ = mouse.adown$.when(mode$, identical('rect.ready'))
   const toRectDrawing = startPos$.mapTo('rect.drawing')
@@ -30,13 +33,18 @@ const drawRect: InteractionFn = ({ mouse, mode: mode$, shortcut, selection: sel$
     .map(startPos =>
       mouse.amove$
         .when(mode$, identical('rect.drawing'))
-        .map(movingPos => PolygonItem.rectFromPoints(startPos, movingPos)),
+        .map(movingPos => PolygonItem.rectFromPoints(startPos, movingPos))
+        .startWith(PolygonItem.rectFromPoints(startPos, startPos)),
     )
     .flatten()
 
   const newItem$ = mouse.aup$
     .when(mode$, identical('rect.drawing'))
     .peek(drawingRect$)
+    .filter(rect => {
+      const bbox = getBoundingBoxOfPoints(rect.getPoints())
+      return bbox.width * bbox.height > 0
+    })
     .map(injectItemId)
 
   const toIdle$ = newItem$.mapTo('idle')

@@ -4,10 +4,20 @@ import { always, identical } from 'ramda'
 import xs, { Stream } from 'xstream'
 import actions from '../actions'
 import { SENSE_RANGE } from '../constants'
-import { InteractionFn, Point, PolygonItem, Updater } from '../interfaces'
+import { AdjustConfig, InteractionFn, Point, PolygonItem, Updater } from '../interfaces'
 import { distanceBetweenPointAndPoint, injectItemId } from '../utils/common'
 import { selectionUtils } from '../utils/Selection'
 
+/** Implementation for drawing polygon interaction.
+ * Steps to draw a polygon:
+ * 1. In `idle` mode, press shortcut `Q` to enter `polygon` mode;
+ * 2. In `polygon` mode, every click will lead to adding one point to the polygon;
+ * 3. When the drawing polygon is closed, a new polygon item is created;
+ * 4. After new polygon is created, the mode will change back to `idle`.
+ *
+ * Note that we set `adjustConfigs` when drawing a new polygon, so we use adjusted
+ *  positions like `mouse.aclick$` instead of raw positions like `mouse.click$`.
+ */
 const drawPolygon: InteractionFn = ({ mouse, mode: mode$, shortcut, transform: transform$ }) => {
   const addPointProxy$ = xs.create<Point>()
   const resetPointsProxy$ = xs.create()
@@ -17,10 +27,10 @@ const drawPolygon: InteractionFn = ({ mouse, mode: mode$, shortcut, transform: t
     resetPointsProxy$.mapTo(always(List<Point>())),
   )
 
-  // 记录当前绘制的点
+  // The points of polygon under drawing
   const points$ = changePoints$.fold((points, updater) => updater(points), List<Point>())
 
-  // 记录当前是否能够完成polygon的绘制
+  // Whether the user can close the polygon and add a new polygon item
   const canClose$ = xs
     .combine(mouse.move$, transform$)
     .sampleCombine(points$)
@@ -32,11 +42,18 @@ const drawPolygon: InteractionFn = ({ mouse, mode: mode$, shortcut, transform: t
     .dropRepeats()
     .startWith(false)
 
-  // 绘制一个点
-  const addPoint$ = mouse.click$.when(mode$, identical('polygon')).whenNot(canClose$)
+  // Step 1
+  const toPolygonMode$ = shortcut.shortcut('q').mapTo('polygon')
+  const adjustInPolygonMode$ = toPolygonMode$.mapTo<AdjustConfig[]>([
+    { type: 'cement' },
+    { type: 'align' },
+  ])
+
+  // Step 2
+  const addPoint$ = mouse.aclick$.when(mode$, identical('polygon')).whenNot(canClose$)
   addPointProxy$.imitate(addPoint$)
 
-  // 闭合多边形，完成绘制
+  // Step 3
   const close$ = mouse.click$.when(canClose$)
 
   const newItem$ = close$
@@ -44,23 +61,27 @@ const drawPolygon: InteractionFn = ({ mouse, mode: mode$, shortcut, transform: t
     .map(PolygonItem.fromPoints)
     .map(injectItemId)
 
+  // Step 4
+  const toIdleMode$ = newItem$.mapTo('idle')
+  const resetAdjust$ = toIdleMode$.mapTo([])
+
   const addItem$ = newItem$.map(actions.addItem)
-  resetPointsProxy$.imitate(addItem$)
+  resetPointsProxy$.imitate(xs.merge(addItem$, toPolygonMode$))
 
   // 记录当前正在绘制的多边形的预览
   const drawingPolygon$ = mode$
-    .checkedFlatMap(
-      identical('polygon'),
-      // () => mouse.move$.sampleCombine(points$).map(PolygonItem.preview),
-      () =>
-        mouse.move$
-          .sampleCombine(canClose$, points$)
-          .map(
-            ([movingPos, canClose, points]) =>
-              canClose
-                ? PolygonItem.preview([points.first(), points])
-                : PolygonItem.preview([movingPos, points]),
-          ),
+    .checkedFlatMap(identical('polygon'), () =>
+      canClose$
+        .map(canClose => {
+          if (canClose) {
+            return points$.map(points => PolygonItem.preview([points.first(), points]))
+          } else {
+            return mouse.amove$
+              .sampleCombine(points$)
+              .map(([movingPos, points]) => PolygonItem.preview([movingPos, points]))
+          }
+        })
+        .flatten(),
     )
     .startWith(null)
 
@@ -88,9 +109,10 @@ const drawPolygon: InteractionFn = ({ mouse, mode: mode$, shortcut, transform: t
   return {
     drawingItem: drawingPolygon$,
     action: addItem$,
-    nextMode: xs.merge(shortcut.shortcut('q').mapTo('polygon'), newItem$.mapTo('idle')),
+    nextMode: xs.merge(toPolygonMode$, toIdleMode$),
     changeSelection: newItem$.map(selectionUtils.selectItem),
     addons: { polygonCloseIndicator: closeIndicator$ },
+    nextAdjustConfigs: xs.merge(adjustInPolygonMode$, resetAdjust$),
   }
 }
 

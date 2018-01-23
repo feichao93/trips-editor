@@ -21,7 +21,16 @@ type AdjustFn = (
   transform: d3.ZoomTransform,
   config: AdjustConfig,
   points: Set<Point>,
-) => { point: Point; ensure: (point: Point) => boolean; info?: { [key: string]: any } }
+) => AdjustResultItem
+
+type AdjustResultItem = {
+  point: Point
+  ensure: (p: Point) => boolean
+  info?: Partial<{
+    horizontalPoint: Point
+    verticalPoint: Point
+  }>
+}
 
 const adjustFn: { [key in AdjustConfig['type']]: AdjustFn } = {
   cement(point, transform, config, points) {
@@ -87,12 +96,8 @@ const adjustFn: { [key in AdjustConfig['type']]: AdjustFn } = {
         ensure: T,
         info: { horizontalPoint: hp, verticalPoint: vp },
       }
-    } else {
-      return {
-        point,
-        ensure: T,
-      }
     }
+    return null
   },
   restrict(point, transform, config, points) {
     config = config as AdjustConfigRestrict
