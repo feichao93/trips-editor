@@ -1,7 +1,6 @@
-import xs, { Stream } from 'xstream'
-import { AdjustResult } from './adjust'
+import xs, { MemoryStream, Stream } from 'xstream'
 import Mouse from './Mouse'
-import { Point } from '../interfaces'
+import { AdjustResult, Point } from '../interfaces'
 
 function applyAdjuster([pos, adjuster]: [Point, (p: Point) => AdjustResult]) {
   return adjuster(pos)
@@ -17,7 +16,8 @@ export default class AdjustedMouse extends Mouse {
   adown$: Stream<Point> = this.adjustedDownInfo$.map(info => info.point)
   aup$: Stream<Point> = this.adjustedUpInfo$.map(info => info.point)
 
-  setAdjuster(adjuster$: Stream<(p: Point) => AdjustResult>) {
+  /** Set the adjuster stream for the mouse. This method should be called after Mouse#imitate() */
+  setAdjuster(adjuster$: MemoryStream<(p: Point) => AdjustResult>) {
     this.adjustedMoveInfo$.imitate(this.move$.sampleCombine(adjuster$).map(applyAdjuster))
     this.adjustedUpInfo$.imitate(this.up$.sampleCombine(adjuster$).map(applyAdjuster))
     this.adjustedDownInfo$.imitate(this.down$.sampleCombine(adjuster$).map(applyAdjuster))

@@ -1,16 +1,12 @@
 import { DOMSource, h, VNode } from '@cycle/dom'
 import xs, { Stream } from 'xstream'
-import { State } from '../actions'
-import { AdjustConfig } from '../interfaces'
 import { SENSE_RANGE } from '../constants'
-import AdjustedMouse from '../utils/AdjustMouse'
+import AdjustedMouse from '../utils/AdjustedMouse'
 
 export interface Sources {
   DOM: DOMSource
-  state: Stream<State>
   transform: Stream<d3.ZoomTransform>
   mouse: AdjustedMouse
-  adjustConfigs: Stream<AdjustConfig[]>
 }
 
 export interface Sinks {

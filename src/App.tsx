@@ -18,10 +18,9 @@ import zoom from './interaction/zoom'
 import { AdjustConfig, InteractionFn, Updater } from './interfaces'
 import { ShortcutSource } from './makeShortcutDriver'
 import './styles/app.styl'
-import AdjustedMouse from './utils/AdjustMouse'
-import Mouse from './utils/Mouse'
+import AdjustedMouse from './utils/AdjustedMouse'
+import makeAdjuster from './utils/makeAdjuster'
 import Selection, { selectionRecord } from './utils/Selection'
-import makeAdjuster from './utils/adjust'
 
 const EmptyComponent = (sources: { DOM: DOMSource }) => ({ DOM: xs.of(null) as any })
 const Menubar = EmptyComponent
@@ -94,9 +93,9 @@ export default function App(sources: Sources): Sinks {
   const drawingItem$ = xs.merge(...sinksArray.map(sinks => sinks.drawingItem).filter(Boolean))
 
   // views
-  const menubar = (isolate(Menubar, 'menubar') as typeof Menubar)({ DOM: domSource })
-  const structure = (isolate(Structure, 'structure') as typeof Structure)({ DOM: domSource })
-  const svg = (isolate(Svg, 'svg') as typeof Svg)({
+  const menubar = isolate(Menubar, 'menubar')({ DOM: domSource })
+  const structure = isolate(Structure, 'structure')({ DOM: domSource })
+  const svg = isolate(Svg, 'svg')({
     DOM: domSource,
     mouse,
     shortcut,
@@ -107,12 +106,12 @@ export default function App(sources: Sources): Sinks {
     adjustConfigs: adjustConfigs$,
     addons,
   })
-  const inspector = (isolate(Inspector, 'inspector') as typeof Inspector)({
+  const inspector = isolate(Inspector, 'inspector')({
     DOM: domSource,
     selection: selection$,
     state: state$,
   })
-  const statusBar = (isolate(StatusBar, 'status-bar') as typeof StatusBar)({
+  const statusBar = isolate(StatusBar, 'status-bar')({
     DOM: domSource,
     state: state$,
     mode: mode$,

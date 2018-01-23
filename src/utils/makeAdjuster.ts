@@ -7,18 +7,12 @@ import { State } from '../actions'
 import { SENSE_RANGE } from '../constants'
 import {
   AdjustConfig,
-  AdjustConfigCement,
-  Point,
-  AdjustConfigRestrict,
   AdjustConfigAlign,
+  AdjustConfigCement,
+  AdjustConfigRestrict,
+  AdjustResult,
+  Point,
 } from '../interfaces'
-
-export interface AdjustResult {
-  point: Point
-  applied: string[]
-  ensure: (p: Point) => boolean
-  info: { [key: string]: any } // TODO TS-any
-}
 
 const PointRecord = Record({ x: 0, y: 0 })
 

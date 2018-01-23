@@ -1,7 +1,7 @@
 import { MemoryStream, Stream } from 'xstream'
 import { Action, State } from './actions'
 import { ShortcutSource } from './makeShortcutDriver'
-import AdjustedMouse from './utils/AdjustMouse'
+import AdjustedMouse from './utils/AdjustedMouse'
 import PolygonItem from './utils/PolygonItem'
 import PolylineItem from './utils/PolylineItem'
 import Selection from './utils/Selection'
@@ -32,7 +32,7 @@ export interface ResizeDirConfig {
   v: boolean
 }
 
-export interface InterfaceFnSources {
+export interface InteractionFnSources {
   mouse: AdjustedMouse
   mode: MemoryStream<string>
   state: MemoryStream<State>
@@ -53,7 +53,7 @@ export interface InteractionFnSinks {
 }
 
 export interface InteractionFn {
-  (sources: InterfaceFnSources): Partial<InteractionFnSinks>
+  (sources: InteractionFnSources): Partial<InteractionFnSinks>
 }
 
 export type AdjustConfig = AdjustConfigCement | AdjustConfigAlign | AdjustConfigRestrict
@@ -71,4 +71,11 @@ export interface AdjustConfigAlign {
 export interface AdjustConfigRestrict {
   type: 'restrict'
   anchor: Point
+}
+
+export interface AdjustResult {
+  point: Point
+  applied: string[]
+  ensure: (p: Point) => boolean
+  info: { [key: string]: any } // TODO TS-any
 }

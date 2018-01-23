@@ -10,7 +10,7 @@ import { State } from '../actions'
 import { AdjustConfig, Item, Point, Selection } from '../interfaces'
 import { ShortcutSource } from '../makeShortcutDriver'
 import '../styles/svg.styl'
-import AdjustedMouse from '../utils/AdjustMouse'
+import AdjustedMouse from '../utils/AdjustedMouse'
 
 export interface Sources {
   DOM: DOMSource
@@ -68,7 +68,7 @@ export default function Svg(sources: Sources): Sinks {
     .events('wheel')
     .map(e => ({ pos: e, deltaY: e.deltaY }))
 
-  const selectionIndicator = (isolate(SelectionIndicator) as typeof SelectionIndicator)({
+  const selectionIndicator = isolate(SelectionIndicator)({
     DOM: domSource,
     mouse,
     state: state$,
@@ -76,7 +76,7 @@ export default function Svg(sources: Sources): Sinks {
     transform: transform$,
   })
 
-  const verticesIndicator = (isolate(VerticesIndicator) as typeof VerticesIndicator)({
+  const verticesIndicator = isolate(VerticesIndicator)({
     DOM: domSource,
     state: state$,
     mouse,
@@ -84,7 +84,7 @@ export default function Svg(sources: Sources): Sinks {
     transform: transform$,
   })
 
-  const vertexInsertIndicator = (isolate(VertexInsertIndicator) as typeof VertexInsertIndicator)({
+  const vertexInsertIndicator = isolate(VertexInsertIndicator)({
     DOM: domSource,
     state: state$,
     mouse,
@@ -93,12 +93,10 @@ export default function Svg(sources: Sources): Sinks {
     transform: transform$,
   })
 
-  const adjustIndicator = (isolate(AdjustIndicator) as typeof AdjustIndicator)({
+  const adjustIndicator = isolate(AdjustIndicator)({
     DOM: domSource,
     mouse,
     transform: transform$,
-    state: state$,
-    adjustConfigs: sources.adjustConfigs,
   })
 
   const vdom$ = xs

@@ -12,6 +12,13 @@ declare global {
   }
 }
 
+declare module '@cycle/isolate' {
+  export default function isolate<InnerSo, InnerSi>(
+    component: Component<InnerSo, InnerSi>,
+    scope?: any,
+  ): Component<InnerSo, InnerSi>
+}
+
 Stream.prototype.peek = function<T, U>(this: Stream<T>, peekStream: Stream<U>) {
   return this.compose(peek(peekStream))
 }
