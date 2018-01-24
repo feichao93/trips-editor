@@ -1,17 +1,120 @@
-# Editor [WIP]
+# Editor
 
-A very simple SVG editor which focuses on editing polygons/polylines and attaching semantic data to them.
+## Motivation
 
-## Features [TODO]
+The spatial topological relations of the floor, which is hard to generate or extract, is one of the key inputs to our algorithm. 
 
-## Shortcus
+In many cases, we could only get a bitmap image file of the floorplan. And there are sophisticated tools such as [Microsoft Visio][] or [Inkscape][] which can load the image file and make a diagram manually according to the image file. But the main disadvantage is that the output of these tools is too complicated to fit in our algorithm: it is hard to parse and manipulate in our code, and it lacks the abilities of attaching semantic information to shapes. Our algorithm prefers a simple and clean data format so it can focus on processing positioning data and aggregating semantic trajectories.
 
-* `D` Delete selected polygons.
-* `R` Start drawing a new rectangle.
-* `Q` Start drawing a new polygon.
-* `E` Toggle selection mode between _bbox_ and _vertices_
-* `L` Start drawing a new line.
+The editor could help us build up the topologicals relations from a image file. The editor can load the image file and display it, then we can draw polygons/polylines imitating the spatial structures on the image. After completing the geometric information, we can use the editor to attach specific semantic information to polygons/polyglines. For example, we can designate severals rectangles as rooms or specify a polyline as a wall. When all is done, the editor can export both geometric and semantic information to a single json file, which can be parsed by our algorithm easily.
 
-## Implementation [TODO]
+While the editor is created originally for our algorithm, the editor itself is just a good SVG editor which focuses on editing polygons/polylines and attaching semantic data to them. The editor should be easy to be reused in other situations.
 
-Cycle.js / Reactive Programming
+## Introduction
+
+This section describes what features does the editor has and how to use them.
+
+1. The board: The board is where shapes display and user interactions happens.
+2. Mode: The mode is displayed at the lower left corner. It tells the user 'What we are doing'. The mode is default to `idle`; The mode is `rect.xxx` when drawing a rect; And the mode is `line.xxx` when drawing a line and so on.
+3. Load image file: In `idle` mode, drag the image file from file explorer and drop it onto the editor board. (TODO NOT IMPLEMENTED)
+4. Draw polygons: In `idle` mode, press `Q` to enter `polygon` mode, and an empty drawing-polygon is set up; In `polygon` mode, every mouse click will add a vertex to the drawing-polygon; If the user closes the drawing-polygon by clicks near the first vertex, a new polygon will be added and mode changes back to `idle`. The user can always press `ESC` to return `idle` mode.
+5. Draw lines/rectangles: Press the shortcut and enter the corresponding mode, drag the mouse and a new shape will be added. See [github repository of the editor][repo] for more details about shortcuts.
+6. Selections and the Inspector: Click on a shape to select it, and the inspector on the right will list all the properties about the selected shape. The inspector has two tabs, one for geometric information such as width, height, z-index, and one for semantic information including region type (room / staircase / hallway), line type (wall / door). Some properties are readonly in the inspector and some are editable. (TODO a image showing the inspector
+7. Dragging, Zooming and Resizing: The board supports dragging and zooming. The selected items can be resized using the resizers. These three operations are really intuitive so we just mention them here.
+8. Point editing: Press `E` to toggle selection mode between `bbox`(default) and `vertices`. In `vertices` selection mode, a small circle will appear at every vertex of the selected polygon/polyline, the user could drag the circle to change the vertex position, or press `D` and delete the hovered vertex, or drag from near an edge and add a new vertex.
+
+## Interaction Refinement
+
+1. Auto adjust: TODO  自动对齐，点的吸附
+
+## Implementation Overview
+
+This editor is built upon the web platform. We use SVG to render shapes.
+
+We adopt [reactive programming][RP] to implement this editor. Anything changing when the editor is running, including variables, user inputs and data structures, are abstracted as asynchronous data stream in the editor. For example, click events on the board are encapsulated into a point stream, denoted by `click$` in code. Every time the user clicks, the stream emits an object that contains x and y coordinates of the click position. The state of drawn shapes is just another stream of polygons/polylines, and every time we peek the stream we can get the current state at that time. In such a framework, our editor application can be simplified as a pure function named *main function* which accepts a collection of several streams (one stream for one kind of input) and returns a view stream (for rendering) and a file stream (for exporting files). States that should be preserved when the application is running are kept as local varaiables of the main function. Note that we use `$` as postfix to indicate that the name references to a stream.
+
+#### Some important streams
+
+* `mode$` records the current mode;
+* `state$` records the drawn shapes;
+* `selection$` records the current selected shapes;
+* `transform$` records the current transform (dx, dy, scale) of the board.
+
+Many other streams can be calculated by these streams. For example, the stream of the inspector content can be calculated by combining `state$` and `selection$` and extracting selected-part state. The view of the shapes can be get by applying a puer map function to  `state$`.
+
+Any of the above streams reacts to a corresponding update stream: often ... (TODO)
+
+#### Mouse and Keyboard
+
+The editor is a highly interactive web application with a multitude of UI events. Using streams, we set up a concise and powerful interface for mouse and keyboard. ( Note that our mouse and keyboard objects are passed to the main function and sub-components as parameters and can be referenced by name `mouse` and `keyboard`. )
+
+**Shortcuts as lazy and queryable streams**
+
+`keyboard.shortcut('xxx')` will give us a stream which emits a `KeyboardEvent` when the user press the specified shortcut. The shortcut can be a simple key like `D` or can be a complex combination like `ctrl + shift + T`. The streams are lazy that none of the streams existed before calling `shortcuts('xxx')`; The streams are queryable that all the potential shortcut streams can be get from a single method.
+
+The keyboard also provides a `isPressing` method. `keyboard.isPressing('z')` returns a stream indicating whether a key is pressing, which is then map to the stream of whether the auto-adjust feature is disabled.
+
+**Pre-calculated mouse positions**
+
+There are three different types of mouse positions: **Raw positions** are from mouse event listener directly and records the coordinates relative to the web page. **Board positions** records the coordinates relative to the board, which are calculating by combining the transform stream and raw position stream and [inverting](https://github.com/d3/d3-zoom#transform_invert) the position by the transform. **Adjusted position** are board positions processed by the adjuster. (TODO 在Interaction Refinement中添加对adjuster的说明)
+
+We pre-calculate all types of mouse positions and pack them into the `mouse` object. For example, `mouse.rawDown$` is the stream that records the raw position of the mouse down event, and `mouse.down$` records the board position, and `mouse.adown$` records the adjusted board position.
+
+In different situations, we use different types of mouse positions. We use adjusted board positions when drawing a new shape. When the auto-adjust is disbled, we switch to board positions. And raw positions are useful when dragging the board. As a result of pre-calculating mouse positions, the logic of interaction is seperated from transformations among different types of mouse positions, which makes the interaction implementation clean and expressive.
+
+#### Interaction Implementation
+
+Every interaction is implemented by an interaction function. Interaction functions have a common interface that each takes a collection of streams as input and returns a collection streams. Input streams tell the function _what's the current state_ and _what does the user do_. For example, `keyboard` are a typical input stream container and records the keyboard usages, and `mode$` tells the function what is the current mode. Output streams returned from functions in turn tells the application _what should be updated and how to update them_. For example, `nextMode$` is a typical output stream that decides the next mode. The interaction function, in essence, is just a puer function that maps from input streams to output streams.
+
+The `mode$` is the most important state in interaction implementation. The same mouse or keyboard events will be translated into different actions in different mode. And during different stages of an drawing operation, the mode is different in order to reflect the current drawing state. Here we pick the `drawRect` interaction function as the example to illustrate the common pattern of the interaction implementation.
+
+The following is a slim version of `drawRect`:
+
+```javascript
+function drawRect({ mouse, keyboard, mode: mode$, selection: selection$ }) {
+  /* 1 */
+  const toRectReadyMode$ = keyboard.shortcut('r').mapTo('rect.ready')
+
+  /* 2 */
+  const startPos$ = mouse.down$.when(mode$, identical('rect.ready'))
+  const toRectDrawingMode$ = startPos$.mapTo('rect.drawing')
+  
+  /* 3 */
+  const drawingRect$ = startPos$
+    .map(startPos =>
+      mouse.move$
+        .when(mode$, identical('rect.drawing'))
+        .map(movingPos => PolygonItem.rectFromPoints(startPos, movingPos)),
+    )
+    .flatten()
+  
+  /* 4 */
+  const addItem$ = mouse.up$
+    .when(mode$, identical('rect.drawing'))
+    .peek(drawingRect$)
+  	.map(actions.addItem)
+  const toIdleMode$ = addItem$.mapTo('idle')
+  
+  return {
+    drawingItem: drawingRect$,
+    action: addItem$,
+    nextMode: xs.merge(toRectReadyMode$, toIdleMode$, toRectDrawingMode$),
+  }
+}
+```
+
+Code blocks 1-4 are logics at different stages.
+
+* Block 1: Press shortcut R in `idle` mode to enter into `rect.ready` mode.
+* Block 2: In `rect.ready` mode, the position of the mouse press will be the start point of the drawing rectangle. And the mode will change to `rect.drawing`.
+* Block 3: In `rect.drawing` mode, the mouse moving position will be the end point of the drawing rectangle. The segment from start point to end point is a diagonal of the drawing rectangle. We call `PolygonItem.rectFromPoints` to create a new polygon from the two points as the drawing preview.
+* Block 4: In `rect.drawing` mode, when mouse is released we peek `drawingRect$` and transform it into an action which will add an polygon to state.
+
+The above code is expressive thanks to mouse/keyboard abstraction and various operators for streams. It maintains the mode at different stages, reacts to mouse events correctly according to the current mode, handles the drawing preview, and adds a new polygon when the operation is completed.
+
+
+
+[Inkscape]: https://inkscape.org/
+[Microsoft Visio]: https://products.office.com/en-us/visio/flowchart-software
+[repo]: https://github.com/shinima/editor
+[RP]: https://en.wikipedia.org/wiki/Reactive_programming
