@@ -3,7 +3,7 @@ import xs, { Stream } from 'xstream'
 
 const MouseTrap = require('mousetrap')
 
-export class ShortcutSource {
+export class KeyboardSource {
   shortcut(key: string | string[]): Stream<KeyboardEvent> {
     return this.getStream(key, undefined)
   }
@@ -52,8 +52,8 @@ export class ShortcutSource {
   }
 }
 
-export default function makeShortcutDriver() {
-  return function shortcutDriver() {
-    return new ShortcutSource()
+export default function makeKeyboardDriver() {
+  return function keyboardDriver() {
+    return new KeyboardSource()
   }
 }

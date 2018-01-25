@@ -5,7 +5,7 @@ import { distanceBetweenPointAndPoint } from './common'
 import Mouse from './Mouse'
 import { State } from '../actions'
 import { SENSE_RANGE } from '../constants'
-import { ShortcutSource } from '../makeShortcutDriver'
+import { KeyboardSource } from '../makeKeyboardDriver'
 import {
   AdjustConfig,
   AdjustConfigAlign,
@@ -114,7 +114,7 @@ const adjustFn: { [key in AdjustConfig['type']]: AdjustFn } = {
 }
 
 export default function makeAdjuster(
-  shortcut: ShortcutSource,
+  keyboard: KeyboardSource,
   mouse: Mouse,
   state$: Stream<State>,
   transform$: Stream<d3.ZoomTransform>,
@@ -123,7 +123,7 @@ export default function makeAdjuster(
   const allPoints$ = state$.map(state => state.items.toList().flatMap(item => item.getPoints()))
 
   return xs
-    .combine(shortcut.isPressing('z'), configs$, transform$, allPoints$)
+    .combine(keyboard.isPressing('z'), configs$, transform$, allPoints$)
     .map(([disabled, configs, transform, allPoints]) => (targetPoint: Point) => {
       function reduceFn(reduction: AdjustResult, config: AdjustConfig): AdjustResult {
         const next = adjustFn[config.type](reduction.point, transform, config, Set(allPoints))

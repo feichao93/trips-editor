@@ -71,7 +71,7 @@ The `mode$` is the most important state in interaction implementation. The same 
 The following is a slim version of `drawRect`:
 
 ```javascript
-function drawRect({ mouse, keyboard, mode: mode$, selection: selection$ }) {
+function drawRect({ mouse, keyboard, mode: mode$ }) {
   /* 1 */
   const toRectReadyMode$ = keyboard.shortcut('r').mapTo('rect.ready')
 

@@ -14,10 +14,10 @@ const editPoints: InteractionFn = ({
   mouse,
   state: state$,
   mode: mode$,
-  shortcut,
+  keyboard,
   selection: sel$,
 }) => {
-  const toggleSelectionMode$ = shortcut
+  const toggleSelectionMode$ = keyboard
     .shortcut('e')
     .when(sel$, sel => !sel.isEmpty())
     .mapTo(selectionUtils.toggleMode())
@@ -80,7 +80,7 @@ const editPoints: InteractionFn = ({
     .flatten()
   const movePoint$ = movingInfo$.map(actions.movePoint)
 
-  const deletePoint$ = shortcut
+  const deletePoint$ = keyboard
     .keyup('d')
     .whenNot(mouse.vertexIndex$, identical(-1))
     .peek(xs.combine(sel$, mouse.vertexIndex$))

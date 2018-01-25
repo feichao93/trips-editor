@@ -7,7 +7,7 @@ import { selectionUtils } from '../utils/Selection'
 
 const commonInteraction: InteractionFn = ({
   mouse,
-  shortcut,
+  keyboard,
   mode: mode$,
   state: state$,
   selection: sel$,
@@ -27,13 +27,13 @@ const commonInteraction: InteractionFn = ({
     })
     .dropRepeats(is)
 
-  const deleteSelection$ = shortcut
+  const deleteSelection$ = keyboard
     .keyup('d')
     .when(sel$, sel => !sel.isEmpty() && sel.mode === 'bbox')
     .peek(sel$)
     .map(actions.deleteSelection)
 
-  const toIdle$ = shortcut.shortcut('esc').mapTo('idle')
+  const toIdle$ = keyboard.shortcut('esc').mapTo('idle')
 
   return {
     action: deleteSelection$,

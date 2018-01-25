@@ -20,15 +20,12 @@ import { selectionUtils } from '../utils/Selection'
  * Note that we set `adjustConfigs` when drawing a new rect, so we use `mouse.adown$`
  *  instead of `mouse.down$`.
  */
-const drawRect: InteractionFn = ({ mouse, mode: mode$, shortcut, selection: sel$ }) => {
-  const toRectReady$ = shortcut.shortcut('r').mapTo('rect.ready')
-  const adjustInRectReady$ = toRectReady$.mapTo<AdjustConfig[]>([
-    { type: 'cement' },
-    { type: 'align' },
-  ])
+const drawRect: InteractionFn = ({ mouse, mode: mode$, keyboard }) => {
+  const toRectReadyMode$ = keyboard.shortcut('r').mapTo('rect.ready')
 
   const startPos$ = mouse.adown$.when(mode$, identical('rect.ready'))
-  const toRectDrawing = startPos$.mapTo('rect.drawing')
+  const toRectDrawingMode$ = startPos$.mapTo('rect.drawing')
+
   const drawingRect$ = startPos$
     .map(startPos =>
       mouse.amove$
@@ -47,15 +44,23 @@ const drawRect: InteractionFn = ({ mouse, mode: mode$, shortcut, selection: sel$
     })
     .map(injectItemId)
 
-  const toIdle$ = newItem$.mapTo('idle')
-  const resetAdjust$ = toIdle$.mapTo([])
+  const toIdleMode$ = newItem$.mapTo('idle')
+
+  const nextMode$ = xs.merge(toRectReadyMode$, toIdleMode$, toRectDrawingMode$)
+  const nextAdjustConfigs$ = nextMode$.map<AdjustConfig[]>(nextMode => {
+    if (nextMode === 'rect.ready' || nextMode === 'rect.drawing') {
+      return [{ type: 'cement' }, { type: 'align' }]
+    } else {
+      return []
+    }
+  })
 
   return {
     drawingItem: drawingRect$,
     action: newItem$.map(actions.addItem),
-    nextMode: xs.merge(toRectReady$, toIdle$, toRectDrawing),
+    nextMode: nextMode$,
     changeSelection: newItem$.map(selectionUtils.selectItem),
-    nextAdjustConfigs: xs.merge(adjustInRectReady$, resetAdjust$),
+    nextAdjustConfigs: nextAdjustConfigs$,
   }
 }
 

@@ -8,14 +8,14 @@ import VertexInsertIndicator from './VertexInsertIndicator'
 import VerticesIndicator from './VerticesIndicator'
 import { State } from '../actions'
 import { AdjustConfig, Item, Point, Selection } from '../interfaces'
-import { ShortcutSource } from '../makeShortcutDriver'
+import { KeyboardSource } from '../makeKeyboardDriver'
 import '../styles/svg.styl'
 import AdjustedMouse from '../utils/AdjustedMouse'
 
 export interface Sources {
   DOM: DOMSource
   mouse: AdjustedMouse
-  shortcut: ShortcutSource
+  keyboard: KeyboardSource
   drawingItem: Stream<Item>
   state: Stream<State>
   selection: Stream<Selection>
@@ -42,7 +42,7 @@ export default function Svg(sources: Sources): Sinks {
   const svgdom = domSource.select('.svg')
   const state$ = sources.state
   const mouse = sources.mouse
-  const shortcut = sources.shortcut
+  const keyboard = sources.keyboard
   const transform$ = sources.transform
   const selection$ = sources.selection
 
@@ -88,7 +88,7 @@ export default function Svg(sources: Sources): Sinks {
     DOM: domSource,
     state: state$,
     mouse,
-    shortcut,
+    keyboard,
     selection: selection$,
     transform: transform$,
   })

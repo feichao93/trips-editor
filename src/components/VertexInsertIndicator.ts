@@ -4,7 +4,7 @@ import xs, { Stream } from 'xstream'
 import { State } from '../actions'
 import { SENSE_RANGE } from '../constants'
 import { Point, Selection } from '../interfaces'
-import { ShortcutSource } from '../makeShortcutDriver'
+import { KeyboardSource } from '../makeKeyboardDriver'
 import { distanceBetweenPointAndSegment } from '../utils/common'
 import Mouse from '../utils/Mouse'
 
@@ -12,7 +12,7 @@ export interface Sources {
   DOM: DOMSource
   state: Stream<State>
   mouse: Mouse
-  shortcut: ShortcutSource
+  keyboard: KeyboardSource
   selection: Stream<Selection>
   transform: Stream<d3.ZoomTransform>
 }
@@ -25,7 +25,7 @@ export interface Sinks {
 export default function VertexInsertIndicator({
   selection: sel$,
   mouse,
-  shortcut,
+  keyboard,
   transform: transform$,
   state: state$,
 }: Sources): Sinks {

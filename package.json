@@ -7,7 +7,8 @@
   "private": true,
   "scripts": {
     "start": "webpack-dev-server",
-    "build": "webpack --env.prod"
+    "build": "webpack --env.prod",
+    "prettier": "prettier --write \"src/**/*.{ts,tsx,js,jsx}\""
   },
   "prettier": {
     "printWidth": 100,

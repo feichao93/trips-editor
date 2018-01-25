@@ -47,8 +47,8 @@ function PositionAndSize(state: State, selection: Selection) {
   const { x, y, width, height } = bbox
   return h('div', [
     Row({ label: 'Position', key: 'position' }, [
-      EditableField({ field: 'x', label: 'X', type: 'number', value: round3(x) }),
-      EditableField({ field: 'y', label: 'Y', type: 'number', value: round3(y) }),
+      EditableField({ field: 'x', label: 'X', type: 'number', disabled: true, value: round3(x) }),
+      EditableField({ field: 'y', label: 'Y', type: 'number', disabled: true, value: round3(y) }),
     ]),
     Row({ label: 'Side', key: 'side' }, [
       EditableField({

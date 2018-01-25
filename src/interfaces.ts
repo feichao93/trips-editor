@@ -1,6 +1,6 @@
 import { MemoryStream, Stream } from 'xstream'
 import { Action, State } from './actions'
-import { ShortcutSource } from './makeShortcutDriver'
+import { KeyboardSource } from './makeKeyboardDriver'
 import AdjustedMouse from './utils/AdjustedMouse'
 import PolygonItem from './utils/PolygonItem'
 import PolylineItem from './utils/PolylineItem'
@@ -38,7 +38,7 @@ export interface InteractionFnSources {
   state: MemoryStream<State>
   selection: MemoryStream<Selection>
   transform: MemoryStream<d3.ZoomTransform>
-  shortcut: ShortcutSource
+  keyboard: KeyboardSource
 }
 
 export interface InteractionFnSinks {

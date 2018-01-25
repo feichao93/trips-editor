@@ -16,7 +16,7 @@ import editPoints from './interaction/editPoints'
 import resizeItems from './interaction/resizeItems'
 import zoom from './interaction/zoom'
 import { AdjustConfig, InteractionFn, Updater } from './interfaces'
-import { ShortcutSource } from './makeShortcutDriver'
+import { KeyboardSource } from './makeKeyboardDriver'
 import './styles/app.styl'
 import AdjustedMouse from './utils/AdjustedMouse'
 import makeAdjuster from './utils/makeAdjuster'
@@ -28,7 +28,7 @@ const Structure = EmptyComponent
 
 export interface Sources {
   DOM: DOMSource
-  shortcut: ShortcutSource
+  keyboard: KeyboardSource
   mouseup: Stream<MouseEvent>
   mousemove: Stream<MouseEvent>
 }
@@ -41,7 +41,7 @@ const initMode = 'idle'
 
 export default function App(sources: Sources): Sinks {
   const domSource = sources.DOM
-  const shortcut = sources.shortcut
+  const keyboard = sources.keyboard
 
   const actionProxy$ = xs.create<Action>()
   const nextModeProxy$ = xs.create<string>()
@@ -81,7 +81,7 @@ export default function App(sources: Sources): Sinks {
     fn({
       mode: mode$,
       mouse,
-      shortcut,
+      keyboard,
       state: state$,
       selection: selection$,
       transform: transform$,
@@ -98,7 +98,7 @@ export default function App(sources: Sources): Sinks {
   const svg = isolate(Svg, 'svg')({
     DOM: domSource,
     mouse,
-    shortcut,
+    keyboard,
     drawingItem: drawingItem$,
     state: state$,
     selection: selection$,
@@ -132,7 +132,7 @@ export default function App(sources: Sources): Sinks {
   )
 
   mouse.imitate(svg.rawDown, svg.rawClick, svg.rawDblclick, svg.rawWheel)
-  mouse.setAdjuster(makeAdjuster(shortcut, mouse, state$, transform$, adjustConfigs$))
+  mouse.setAdjuster(makeAdjuster(keyboard, mouse, state$, transform$, adjustConfigs$))
 
   nextResizerProxy$.imitate(svg.nextResizer)
   nextVertexIndexProxy$.imitate(
