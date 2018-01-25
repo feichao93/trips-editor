@@ -27,7 +27,7 @@ const drawPolygon: InteractionFn = ({ mouse, mode: mode$, keyboard, transform: t
     resetPointsProxy$.mapTo(always(List<Point>())),
   )
 
-  // The points of polygon under drawing
+  // The points of current-drawing polygon
   const points$ = changePoints$.fold((points, updater) => updater(points), List<Point>())
 
   // Whether the user can close the polygon and add a new polygon item
@@ -44,10 +44,6 @@ const drawPolygon: InteractionFn = ({ mouse, mode: mode$, keyboard, transform: t
 
   // Step 1
   const toPolygonMode$ = keyboard.shortcut('q').mapTo('polygon')
-  const adjustInPolygonMode$ = toPolygonMode$.mapTo<AdjustConfig[]>([
-    { type: 'cement' },
-    { type: 'align' },
-  ])
 
   // Step 2
   const addPoint$ = mouse.aclick$.when(mode$, identical('polygon')).whenNot(canClose$)
@@ -63,7 +59,6 @@ const drawPolygon: InteractionFn = ({ mouse, mode: mode$, keyboard, transform: t
 
   // Step 4
   const toIdleMode$ = newItem$.mapTo('idle')
-  const resetAdjust$ = toIdleMode$.mapTo([])
 
   const addItem$ = newItem$.map(actions.addItem)
   resetPointsProxy$.imitate(xs.merge(addItem$, toPolygonMode$))
@@ -71,17 +66,15 @@ const drawPolygon: InteractionFn = ({ mouse, mode: mode$, keyboard, transform: t
   // 记录当前正在绘制的多边形的预览
   const drawingPolygon$ = mode$
     .checkedFlatMap(identical('polygon'), () =>
-      canClose$
-        .map(canClose => {
-          if (canClose) {
-            return points$.map(points => PolygonItem.preview([points.first(), points]))
-          } else {
-            return mouse.amove$
-              .sampleCombine(points$)
-              .map(([movingPos, points]) => PolygonItem.preview([movingPos, points]))
-          }
-        })
-        .flatten(),
+      mouse.amove$.sampleCombine(canClose$, points$).map(([movingPos, canClose, points]) => {
+        if (points.isEmpty()) {
+          return null
+        } else if (canClose) {
+          return PolygonItem.fromPoints(points.push(points.first()))
+        } else {
+          return PolygonItem.fromPoints(points.push(movingPos))
+        }
+      }),
     )
     .startWith(null)
 
@@ -106,13 +99,40 @@ const drawPolygon: InteractionFn = ({ mouse, mode: mode$, keyboard, transform: t
     )
     .startWith(null)
 
+  const nextMode$ = xs.merge(toPolygonMode$, toIdleMode$)
+  const nextAdjustConfigs$ = xs
+    .combine(canClose$, nextMode$, keyboard.isPressing('shift'))
+    .map<Stream<AdjustConfig[]>>(([canClose, nextMode, restrict]) => {
+      if (nextMode === 'polygon') {
+        if (canClose) {
+          return xs.of([] as AdjustConfig[])
+        } else if (!restrict) {
+          return xs.of([{ type: 'cement' }, { type: 'align' }] as AdjustConfig[])
+        } else {
+          return points$
+            .map(ps => ps.last())
+            .map(
+              anchor =>
+                [
+                  { type: 'restrict', anchor },
+                  { type: 'cement' },
+                  { type: 'align' },
+                ] as AdjustConfig[],
+            )
+        }
+      } else {
+        return xs.of([])
+      }
+    })
+    .flatten()
+
   return {
     drawingItem: drawingPolygon$,
     action: addItem$,
-    nextMode: xs.merge(toPolygonMode$, toIdleMode$),
+    nextMode: nextMode$,
     changeSelection: newItem$.map(selectionUtils.selectItem),
+    nextAdjustConfigs: nextAdjustConfigs$,
     addons: { polygonCloseIndicator: closeIndicator$ },
-    nextAdjustConfigs: xs.merge(adjustInPolygonMode$, resetAdjust$),
   }
 }
 

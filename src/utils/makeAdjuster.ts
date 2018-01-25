@@ -1,4 +1,4 @@
-import { Record, Set } from 'immutable'
+import { Record } from 'immutable'
 import { T } from 'ramda'
 import xs, { Stream } from 'xstream'
 import { distanceBetweenPointAndPoint } from './common'
@@ -21,7 +21,7 @@ type AdjustFn = (
   point: Point,
   transform: d3.ZoomTransform,
   config: AdjustConfig,
-  points: Set<Point>,
+  points: Iterable<Point>,
 ) => AdjustResultItem
 
 type AdjustResultItem = {
@@ -33,16 +33,52 @@ type AdjustResultItem = {
   }>
 }
 
+class PointSet {
+  points: Set<Point>
+
+  constructor(points: Iterable<Point> = []) {
+    this.points = new Set(points)
+  }
+
+  [Symbol.iterator]() {
+    return this.points[Symbol.iterator]()
+  }
+
+  union(other: Iterable<Point>) {
+    for (const p of other) {
+      this.points.add(p)
+    }
+    return this
+  }
+  subtract(other: Iterable<Point>) {
+    for (const p of other) {
+      this.points.delete(p)
+    }
+    return this
+  }
+
+  minBy(iteratee: (p: Point) => number) {
+    let result: Point = null
+    let minValue = Infinity
+    for (const p of this.points) {
+      const value = iteratee(p)
+      if (value < minValue) {
+        minValue = value
+        result = p
+      }
+    }
+    return result
+  }
+}
+
 const adjustFn: { [key in AdjustConfig['type']]: AdjustFn } = {
   cement(point, transform, config, points) {
     config = config as AdjustConfigCement
     if (config != null) {
-      // TODO 注意 Point 并不是Record subtract和union 是有问题的
-      const finalPoints = points
-        .map(PointRecord)
-        .subtract((config.exclude || []).map(PointRecord))
-        .union((config.include || []).map(PointRecord))
-      const nearestPoint = finalPoints.minBy(p => distanceBetweenPointAndPoint(point, p))
+      const pointSet = new PointSet(points)
+      pointSet.subtract(config.exclude || [])
+      pointSet.union(config.include || [])
+      const nearestPoint = pointSet.minBy(p => distanceBetweenPointAndPoint(point, p))
       if (nearestPoint != null) {
         const nearestDistance = distanceBetweenPointAndPoint(point, nearestPoint)
         if (nearestDistance <= SENSE_RANGE / transform.k) {
@@ -52,21 +88,19 @@ const adjustFn: { [key in AdjustConfig['type']]: AdjustFn } = {
     }
     return null
   },
+
   align(point, transform, config, points) {
     config = config as AdjustConfigAlign
     const sense = SENSE_RANGE / transform.k
     const { exclude = [], include = [] } = config
-    const finalPoints = points
-      .map(PointRecord)
-      .union(include.map(PointRecord))
-      .subtract(exclude.map(PointRecord))
+    const pointSet = new PointSet(points).subtract(exclude).union(include)
 
     let dyMin = sense
     let dxMin = sense
 
     // 横向
     let hp = null // horizontal-point
-    for (const p of finalPoints) {
+    for (const p of pointSet) {
       const dy = Math.abs(p.y - point.y)
       if (dy <= dyMin) {
         dyMin = dy
@@ -78,7 +112,7 @@ const adjustFn: { [key in AdjustConfig['type']]: AdjustFn } = {
 
     // 纵向
     let vp = null // vertical-point
-    for (const p of finalPoints) {
+    for (const p of pointSet) {
       const dx = Math.abs(p.x - point.x)
       if (dx <= dxMin) {
         dxMin = dx
@@ -100,6 +134,7 @@ const adjustFn: { [key in AdjustConfig['type']]: AdjustFn } = {
     }
     return null
   },
+
   restrict(point, transform, config, points) {
     config = config as AdjustConfigRestrict
     const pointRecord = PointRecord(point)
@@ -126,7 +161,7 @@ export default function makeAdjuster(
     .combine(keyboard.isPressing('z'), configs$, transform$, allPoints$)
     .map(([disabled, configs, transform, allPoints]) => (targetPoint: Point) => {
       function reduceFn(reduction: AdjustResult, config: AdjustConfig): AdjustResult {
-        const next = adjustFn[config.type](reduction.point, transform, config, Set(allPoints))
+        const next = adjustFn[config.type](reduction.point, transform, config, allPoints)
         if (next != null && reduction.ensure(next.point)) {
           return {
             point: next.point,
