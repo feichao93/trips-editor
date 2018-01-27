@@ -6,14 +6,17 @@ import AdjustIndicator from './AdjustIndicator'
 import SelectionIndicator from './SelectionIndicator'
 import VertexInsertIndicator from './VertexInsertIndicator'
 import VerticesIndicator from './VerticesIndicator'
-import { State } from '../actions'
-import { AdjustConfig, Item, Point, Selection } from '../interfaces'
+import actions, { Action, State } from '../actions'
+import { AdjustConfig, ImgItem, Item, Point, Selection } from '../interfaces'
+import { ImgFileStat } from '../makeImgFileDriver'
 import { KeyboardSource } from '../makeKeyboardDriver'
 import '../styles/svg.styl'
 import AdjustedMouse from '../utils/AdjustedMouse'
+import { injectItemId } from '../utils/common'
 
 export interface Sources {
   DOM: DOMSource
+  FILE: Stream<ImgFileStat>
   mouse: AdjustedMouse
   keyboard: KeyboardSource
   drawingItem: Stream<Item>
@@ -28,6 +31,8 @@ export interface Sources {
 
 export interface Sinks {
   DOM: Stream<VNode>
+  FILE: Stream<File>
+  action: Stream<Action>
   rawDown: Stream<Point>
   rawClick: Stream<Point>
   rawDblclick: Stream<Point>
@@ -57,8 +62,25 @@ export default function Svg(sources: Sources): Sinks {
     .map(e => e.dataTransfer.files[0])
     .filter(Boolean)
 
-  // TODO handle open file
-  file$.debug('file').addListener({})
+  const addItem$ = file$
+    .map(file =>
+      sources.FILE.filter(stat => stat.file === file)
+        .take(1)
+        .map(({ naturalWidth, naturalHeight, url }) =>
+          ImgItem({
+            x: 0,
+            y: 0,
+            width: naturalWidth,
+            height: naturalHeight,
+            naturalWidth,
+            naturalHeight,
+            url,
+          }),
+        )
+        .map(injectItemId)
+        .map(actions.addItem),
+    )
+    .flatten()
 
   const rawDown$ = domSource.select('svg').events('mousedown')
   const rawClick$ = domSource.select('svg').events('click')
@@ -125,32 +147,34 @@ export default function Svg(sources: Sources): Sinks {
         adjustIndicator,
       ]) =>
         h('svg.svg', { style: { cursor } }, [
-          h(
-            'g',
-            { attrs: { transform: String(transform) } },
-            [
-              h('line', { attrs: { x1: 0, y1: 0, x2: 300, y2: 0, stroke: 'red' } }),
-              h('line', { attrs: { x1: 0, y1: 0, x2: 0, y2: 300, stroke: 'red' } }),
-              h(
-                'g',
-                { attrs: { role: 'items' } },
-                zlist
-                  .map(itemId => items.get(itemId))
-                  .map(item => item.render())
-                  .toArray(),
-              ),
-              drawingItem && drawingItem.render(),
-              addPointIndicator,
-              selectionIndicator,
-              verticesIndicator,
-              polygonCloseIndicator,
-              adjustIndicator,
-            ].filter(Boolean),
-          ),
+          h('g', { attrs: { transform: String(transform) } }, [
+            h('line', { attrs: { x1: 0, y1: 0, x2: 300, y2: 0, stroke: 'red' } }),
+            h('line', { attrs: { x1: 0, y1: 0, x2: 0, y2: 300, stroke: 'red' } }),
+            h(
+              'g.items',
+              zlist
+                .map(itemId => items.get(itemId))
+                .map(item => item.render())
+                .toArray(),
+            ),
+            h('g.drawing-item', [drawingItem && drawingItem.render()].filter(Boolean)),
+            h(
+              'g.indicators',
+              [
+                addPointIndicator,
+                selectionIndicator,
+                verticesIndicator,
+                polygonCloseIndicator,
+                adjustIndicator,
+              ].filter(Boolean),
+            ),
+          ]),
         ]),
     )
   return {
     DOM: vdom$,
+    FILE: file$,
+    action: addItem$,
     rawDown: rawDown$,
     rawDblclick: rawDblclick$,
     rawClick: rawClick$,

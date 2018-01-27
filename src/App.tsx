@@ -16,6 +16,7 @@ import editPoints from './interaction/editPoints'
 import resizeItems from './interaction/resizeItems'
 import zoom from './interaction/zoom'
 import { AdjustConfig, InteractionFn, Updater } from './interfaces'
+import { ImgFileStat } from './makeImgFileDriver'
 import { KeyboardSource } from './makeKeyboardDriver'
 import './styles/app.styl'
 import AdjustedMouse from './utils/AdjustedMouse'
@@ -28,13 +29,14 @@ const Structure = EmptyComponent
 
 export interface Sources {
   DOM: DOMSource
+  FILE: Stream<ImgFileStat>
   keyboard: KeyboardSource
   mouseup: Stream<MouseEvent>
   mousemove: Stream<MouseEvent>
 }
 export interface Sinks {
   DOM: Stream<VNode>
-  title: Stream<string>
+  FILE: Stream<File>
 }
 
 const initMode = 'idle'
@@ -97,6 +99,7 @@ export default function App(sources: Sources): Sinks {
   const structure = isolate(Structure, 'structure')({ DOM: domSource })
   const svg = isolate(Svg, 'svg')({
     DOM: domSource,
+    FILE: sources.FILE,
     mouse,
     keyboard,
     drawingItem: drawingItem$,
@@ -118,7 +121,11 @@ export default function App(sources: Sources): Sinks {
   })
 
   actionProxy$.imitate(
-    xs.merge(inspector.action, ...sinksArray.map(sinks => sinks.action).filter(Boolean)),
+    xs.merge(
+      svg.action,
+      inspector.action,
+      ...sinksArray.map(sinks => sinks.action).filter(Boolean),
+    ),
   )
   nextModeProxy$.imitate(xs.merge(...sinksArray.map(sinks => sinks.nextMode).filter(Boolean)))
   nextTransformProxy$.imitate(
@@ -149,6 +156,6 @@ export default function App(sources: Sources): Sinks {
 
   return {
     DOM: vdom$,
-    title: xs.never(),
+    FILE: svg.FILE,
   }
 }

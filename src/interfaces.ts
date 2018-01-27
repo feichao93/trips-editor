@@ -2,11 +2,13 @@ import { MemoryStream, Stream } from 'xstream'
 import { Action, State } from './actions'
 import { KeyboardSource } from './makeKeyboardDriver'
 import AdjustedMouse from './utils/AdjustedMouse'
+import ImgItem from './utils/ImgItem'
+import Item from './utils/Item'
 import PolygonItem from './utils/PolygonItem'
 import PolylineItem from './utils/PolylineItem'
 import Selection from './utils/Selection'
 
-export { PolygonItem, PolylineItem, Selection }
+export { Item, PolygonItem, PolylineItem, ImgItem, Selection }
 
 export interface Point {
   readonly x: number
@@ -24,8 +26,6 @@ export interface Updater<T> {
 }
 
 export type ItemId = number
-
-export type Item = PolygonItem | PolylineItem
 
 export interface ResizeDirConfig {
   h: boolean

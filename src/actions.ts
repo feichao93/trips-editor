@@ -1,5 +1,6 @@
 import { List, Map, OrderedMap, Record } from 'immutable'
 import { Item, ItemId, Point, ResizeDirConfig, Selection } from './interfaces'
+import { isPolygonItem, isPolylineItem } from './utils/common'
 
 export interface ResizingInfo {
   movingPos: Point
@@ -22,9 +23,11 @@ export interface Action {
 export type ZIndexOp = 'z-inc' | 'z-dec' | 'z-top' | 'z-bottom'
 
 export default {
-  deletePoint([sel, vertexIndex]: [Selection, number]): Action {
+  deleteVertex([sel, vertexIndex]: [Selection, number]): Action {
     return state =>
-      state.setIn(['items', sel.sids.first(), 'points'], sel.item(state).points.delete(vertexIndex))
+      state.update('items', items =>
+        items.update(sel.sids.first(), item => item.deleteVertex(vertexIndex)),
+      )
   },
   deleteSelection(sel: Selection): Action {
     return state => {
@@ -93,17 +96,18 @@ export default {
       return state.mergeIn(['items'], unlockedItems)
     }
   },
-  movePoint([item, pointIndex, dx, dy]: [Item, number, number, number]): Action {
+  moveVertex([item, vertexIndex, dx, dy]: [Item, number, number, number]): Action {
     return state =>
-      state.updateIn(['items', item.id, 'points', pointIndex], p => ({
-        x: item.points.get(pointIndex).x + dx,
-        y: item.points.get(pointIndex).y + dy,
-      }))
+      state.update('items', items => items.set(item.id, item.moveVertex(vertexIndex, dx, dy)))
   },
-  addPoint([pos, sel, insertIndex]: [Point, Selection, number]): Action {
+  addVertex([pos, sel, insertIndex]: [Point, Selection, number]): Action {
     return state =>
-      state.updateIn(['items', sel.sids.first(), 'points'], (points: List<Point>) =>
-        points.insert(insertIndex, pos),
-      )
+      state.updateIn(['items', sel.sids.first()], (item: Item) => {
+        if (isPolygonItem(item) || isPolylineItem(item)) {
+          return item.update('points', points => points.insert(insertIndex, pos))
+        } else {
+          return item
+        }
+      })
   },
 }

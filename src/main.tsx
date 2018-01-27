@@ -5,12 +5,12 @@ import 'normalize.css'
 import App from './App'
 import makeKeyboardDriver from './makeKeyboardDriver'
 import makeWindowEventDriver from './makeWindowEventDriver'
-import makeTitleDriver from './makeTitleDriver'
+import makeImgFileDriver from './makeImgFileDriver'
 
 run(App, {
   DOM: makeDOMDriver('#container'),
+  FILE: makeImgFileDriver(),
   keyboard: makeKeyboardDriver(),
   mouseup: makeWindowEventDriver('mouseup'),
   mousemove: makeWindowEventDriver('mousemove'),
-  title: makeTitleDriver(),
 })

@@ -1,5 +1,5 @@
 import { List } from 'immutable'
-import { Item, Point, Rect } from '../interfaces'
+import { ImgItem, Item, Point, PolygonItem, PolylineItem, Rect } from '../interfaces'
 
 const nextIdMap = new Map<string, number>()
 
@@ -12,6 +12,18 @@ export function getNextId(tag = '') {
     nextIdMap.set(tag, 2)
     return 1
   }
+}
+
+export function isPolygonItem(item: Item): item is PolygonItem {
+  return item instanceof PolygonItem
+}
+
+export function isPolylineItem(item: Item): item is PolylineItem {
+  return item instanceof PolylineItem
+}
+
+export function isImgItem(item: Item): item is ImgItem {
+  return item instanceof ImgItem
 }
 
 export function injectItemId(item: Item) {

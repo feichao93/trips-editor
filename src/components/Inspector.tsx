@@ -6,9 +6,7 @@ import sampleCombine from 'xstream/extra/sampleCombine'
 import actions, { Action, State, ZIndexOp } from '../actions'
 import { Item, Selection } from '../interfaces'
 import '../styles/inspector.styl'
-import { round3 } from '../utils/common'
-import PolygonItem from '../utils/PolygonItem'
-import PolylineItem from '../utils/PolylineItem'
+import { isPolygonItem, isPolylineItem, round3 } from '../utils/common'
 
 export interface Sources {
   DOM: DOMSource
@@ -73,7 +71,7 @@ function Fill(sitem: Item) {
   if (sitem == null) {
     return null
   }
-  if (sitem instanceof PolygonItem) {
+  if (isPolygonItem(sitem)) {
     return Row({ label: 'Fill', key: 'fill' }, [
       EditableField({ field: 'fill', label: 'Fill', type: 'color', value: sitem.fill }),
     ])
@@ -85,7 +83,7 @@ function Stroke(sitem: Item) {
   if (sitem == null) {
     return null
   }
-  if (sitem instanceof PolygonItem || sitem instanceof PolylineItem) {
+  if (isPolygonItem(sitem) || isPolylineItem(sitem)) {
     return Row({ label: 'Stroke', key: 'stroke' }, [
       EditableField({ field: 'stroke', label: 'Stroke', type: 'color', value: sitem.stroke }),
       EditableField({

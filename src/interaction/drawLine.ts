@@ -1,9 +1,8 @@
 import { identical } from 'ramda'
 import xs from 'xstream'
 import actions from '../actions'
-import { InteractionFn } from '../interfaces'
+import { InteractionFn, PolylineItem } from '../interfaces'
 import { injectItemId } from '../utils/common'
-import PolylineItem from '../utils/PolylineItem'
 import { selectionUtils } from '../utils/Selection'
 
 const drawLine: InteractionFn = ({ mouse, mode: mode$, keyboard }) => {

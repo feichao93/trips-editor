@@ -14,8 +14,8 @@ const defaultMethods: ItemRecord = {
     console.warn('Using default render()')
     return null
   },
-  getPoints() {
-    console.warn('Using default getPoints()!')
+  getVertices() {
+    console.warn('Using default getVertices()!')
     return List()
   },
   containsPoint() {
@@ -28,6 +28,22 @@ const defaultMethods: ItemRecord = {
   },
   resize() {
     console.warn('Using default resize()!')
+    return this
+  },
+  supportEditVertex() {
+    console.warn('Using default supportEditVertex')
+    return false
+  },
+  deleteVertex() {
+    if (this.supportEditVertex()) {
+      console.warn('Using default deleteVertex()')
+    }
+    return this
+  },
+  moveVertex() {
+    if (this.supportEditVertex()) {
+      console.warn('Using default moveVertex()')
+    }
     return this
   },
 }
@@ -47,7 +63,20 @@ export function ItemRecord<TProps, Static>(
 export interface ItemRecord {
   render(): VNode
   resize(anchor: Point, resizeDirConfig: ResizeDirConfig, startPos: Point, endPos: Point): this
-  getPoints(): List<Point>
+  getVertices(): List<Point>
   containsPoint(point: Point): boolean
   move(dx: number, dy: number): this
+  supportEditVertex(): boolean
+  deleteVertex(vertexIndex: number): this
+  moveVertex(vertexIndex: number, dx: number, dy: number): this
 }
+
+type ItemBase = {
+  id: number
+  locked: boolean
+  opacity: number
+}
+
+type Item = Record<ItemBase> & Readonly<ItemBase> & ItemRecord
+
+export default Item

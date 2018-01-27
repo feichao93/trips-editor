@@ -29,7 +29,7 @@ const PolylineItem = ItemRecord(
 export const polylineItem = PolylineItem()
 type PolylineItem = typeof polylineItem
 
-PolylineItem.prototype.getPoints = function getPoints(this: PolylineItem) {
+PolylineItem.prototype.getVertices = function getVertices(this: PolylineItem) {
   return this.points
 }
 

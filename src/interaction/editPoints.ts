@@ -78,17 +78,17 @@ const editPoints: InteractionFn = ({
         .endWhen(mouse.up$),
     )
     .flatten()
-  const movePoint$ = movingInfo$.map(actions.movePoint)
+  const movePoint$ = movingInfo$.map(actions.moveVertex)
 
   const deletePoint$ = keyboard
     .keyup('d')
     .whenNot(mouse.vertexIndex$, identical(-1))
     .peek(xs.combine(sel$, mouse.vertexIndex$))
-    .map(actions.deletePoint)
+    .map(actions.deleteVertex)
 
   return {
     changeSelection: toggleSelectionMode$,
-    action: xs.merge(movePoint$, addPointConfig$.map(actions.addPoint), deletePoint$),
+    action: xs.merge(movePoint$, addPointConfig$.map(actions.addVertex), deletePoint$),
     nextVertexIndex: xs.merge(
       deletePoint$.mapTo(-1),
       startFromAdd$.map(startInfo => startInfo.vertexIndex),

@@ -1,9 +1,8 @@
 import { identical } from 'ramda'
 import xs from 'xstream'
 import actions from '../actions'
-import { AdjustConfig, InteractionFn } from '../interfaces'
-import { injectItemId, getBoundingBoxOfPoints } from '../utils/common'
-import PolygonItem from '../utils/PolygonItem'
+import { AdjustConfig, InteractionFn, PolygonItem } from '../interfaces'
+import { getBoundingBoxOfPoints, injectItemId } from '../utils/common'
 import { selectionUtils } from '../utils/Selection'
 
 /**
@@ -39,7 +38,7 @@ const drawRect: InteractionFn = ({ mouse, mode: mode$, keyboard }) => {
     .when(mode$, identical('rect.drawing'))
     .peek(drawingRect$)
     .filter(rect => {
-      const bbox = getBoundingBoxOfPoints(rect.getPoints())
+      const bbox = getBoundingBoxOfPoints(rect.getVertices())
       return bbox.width * bbox.height > 0
     })
     .map(injectItemId)

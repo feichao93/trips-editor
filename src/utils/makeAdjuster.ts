@@ -155,7 +155,7 @@ export default function makeAdjuster(
   transform$: Stream<d3.ZoomTransform>,
   configs$: Stream<AdjustConfig[]>,
 ) {
-  const allPoints$ = state$.map(state => state.items.toList().flatMap(item => item.getPoints()))
+  const allPoints$ = state$.map(state => state.items.toList().flatMap(item => item.getVertices()))
 
   return xs
     .combine(keyboard.isPressing('z'), configs$, transform$, allPoints$)

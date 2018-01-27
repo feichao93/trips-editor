@@ -45,7 +45,7 @@ SelectionRecord.prototype.vertices = function item(this: SelectionRecord, state:
   if (this.mode !== 'vertices' || item == null) {
     return List()
   } else {
-    return item.points
+    return item.getVertices()
   }
 }
 SelectionRecord.prototype.isEmpty = function isEmpty(this: SelectionRecord) {
@@ -60,7 +60,7 @@ SelectionRecord.prototype.toggleMode = function toggleMode(this: SelectionRecord
 }
 SelectionRecord.prototype.getBBox = function toggleMode(this: SelectionRecord, state: State) {
   const selectedItems = this.selectedItems(state)
-  const points = selectedItems.toList().flatMap(item => item.getPoints())
+  const points = selectedItems.toList().flatMap(item => item.getVertices())
   return getBoundingBoxOfPoints(points)
 }
 

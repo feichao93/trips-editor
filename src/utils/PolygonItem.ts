@@ -83,12 +83,29 @@ PolygonItem.prototype.render = function render(this: PolygonItem) {
   })
 }
 
-PolygonItem.prototype.getPoints = function getPoints(this: PolygonItem) {
+PolygonItem.prototype.getVertices = function getVertices(this: PolygonItem) {
   return this.points
 }
 
 PolygonItem.prototype.containsPoint = function _containsPoint(this: PolygonItem, p: Point) {
   return containsPoint(this.points.toArray(), p)
+}
+
+PolygonItem.prototype.deleteVertex = function deleteVertex(this: PolygonItem, vertexIndex: number) {
+  return this.update('points', points => points.delete(vertexIndex))
+}
+PolygonItem.prototype.moveVertex = function moveVertex(
+  this: PolygonItem,
+  vertexIndex: number,
+  dx: number,
+  dy: number,
+) {
+  return this.update('points', points =>
+    points.update(vertexIndex, p => ({
+      x: p.x + dx,
+      y: p.y + dy,
+    })),
+  )
 }
 
 export default PolygonItem
