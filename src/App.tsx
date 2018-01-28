@@ -117,6 +117,7 @@ export default function App(sources: Sources): Sinks {
   const statusBar = isolate(StatusBar, 'status-bar')({
     DOM: domSource,
     state: state$,
+    transform: transform$,
     mode: mode$,
   })
 
@@ -129,7 +130,10 @@ export default function App(sources: Sources): Sinks {
   )
   nextModeProxy$.imitate(xs.merge(...sinksArray.map(sinks => sinks.nextMode).filter(Boolean)))
   nextTransformProxy$.imitate(
-    xs.merge(...sinksArray.map(sinks => sinks.nextTransform).filter(Boolean)),
+    xs.merge(
+      statusBar.nextTransform,
+      ...sinksArray.map(sinks => sinks.nextTransform).filter(Boolean),
+    ),
   )
   changeSelectionProxy$.imitate(
     xs.merge(...sinksArray.map(sinks => sinks.changeSelection).filter(Boolean)),

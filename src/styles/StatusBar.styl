@@ -1,15 +1,31 @@
-.status-bar  {
+.status-bar {
   position fixed
   display flex
-  align-items center
+  align-items stretch
   width 100%
   bottom 0
   height 22px
   padding 0 10px
-  color white
-  background-color #007acc
+  color #9da5b4
+  background-color #21252b
 
-  > p {
+  p {
     margin 0
+    line-height @height
+  }
+
+  .right {
+    margin-left auto
+  }
+
+  .button {
+    padding 0 8px
+    cursor pointer
+    &:hover {
+      background-color #2c313a
+    }
+    &:active {
+      background-color rgba(255, 255, 255, 0.18)
+    }
   }
 }
