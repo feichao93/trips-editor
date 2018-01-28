@@ -1,0 +1,66 @@
+.menubar {
+  display flex
+  align-items stretch
+  width 100%
+  height 22px
+  padding 0 10px
+  background #21252b
+  outline none
+  z-index 1
+
+  .category {
+    position relative
+    line-height @height
+
+    .title {
+      padding 0 8px
+      color #9da5b4
+      cursor pointer
+      &:hover {
+        background-color #2c313a
+      }
+      &:active {
+        background-color rgba(255, 255, 255, 0.18)
+      }
+      &.active {
+        color black
+        background-color white
+      }
+    }
+
+    .menu-item-list {
+      position absolute
+      margin 0
+      padding 0
+      top 100%
+      left 0
+      list-style none
+      width 200px
+      background white
+      .menu-item {
+        display flex
+        padding 0 8px
+        height 40px
+        cursor pointer
+        transition background 250ms
+        &:hover {
+          background rgba(34, 38, 44, 0.161)
+        }
+        &.disabled {
+          color gray
+          background inherit
+          cursor default
+        }
+
+        > p {
+          margin 0
+          line-height @height
+        }
+        .hint {
+          margin-left auto
+          color gray
+        }
+      }
+    }
+  }
+}

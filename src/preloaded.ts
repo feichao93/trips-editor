@@ -8,7 +8,7 @@ import when from './utils/when-operator'
 
 declare global {
   interface Event {
-    ownerTarget: EventTarget
+    ownerTarget: HTMLElement
   }
 }
 
@@ -77,7 +77,7 @@ declare module 'xstream' {
     whenNot<U>(peekStream: Stream<U>, filterFn?: (u: U) => boolean): this
     combine: InlineCombineSignature<T>
     sampleCombine: InlineCombineSignature<T>
-    dropRepeats(isEqual?: ((x: T, y: T) => boolean)): this
+    dropRepeats(isEqual?: ((x: T, y: T) => boolean)): Stream<T>
 
     /** Like flatMap, but will check the value using `checkFn` before call `mapFn`.
      * If `checkFn(t)` returns false, then the result stream will just emit **one null** for this `t`,

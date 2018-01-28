@@ -19,8 +19,10 @@ import { selectionUtils } from '../utils/Selection'
  * Note that we set `adjustConfigs` when drawing a new rect, so we use `mouse.adown$`
  *  instead of `mouse.down$`.
  */
-const drawRect: InteractionFn = ({ mouse, mode: mode$, keyboard }) => {
-  const toRectReadyMode$ = keyboard.shortcut('r').mapTo('rect.ready')
+const drawRect: InteractionFn = ({ menubar, mouse, mode: mode$, keyboard }) => {
+  const toRectReadyMode$ = xs
+    .merge(menubar.intent('rect'), keyboard.shortcut('r'))
+    .mapTo('rect.ready')
 
   const startPos$ = mouse.adown$.when(mode$, identical('rect.ready'))
   const toRectDrawingMode$ = startPos$.mapTo('rect.drawing')

@@ -8,6 +8,7 @@ import { selectionUtils } from '../utils/Selection'
 const commonInteraction: InteractionFn = ({
   mouse,
   keyboard,
+  menubar,
   mode: mode$,
   state: state$,
   selection: sel$,
@@ -27,19 +28,22 @@ const commonInteraction: InteractionFn = ({
     })
     .dropRepeats(is)
 
-  const deleteSelection$ = keyboard
-    .keyup('d')
-    .when(sel$, sel => !sel.isEmpty() && sel.mode === 'bbox')
+  const deleteSelection$ = xs
+    .merge(
+      menubar.intent('delete'),
+      keyboard.shortcut('d').when(sel$, sel => !sel.isEmpty() && sel.mode === 'bbox'),
+    )
     .peek(sel$)
     .map(actions.deleteSelection)
 
   const toIdle$ = keyboard.shortcut('esc').mapTo('idle')
+  const changeSelection$ = xs.merge(changeSids$, deleteSelection$.mapTo(selectionUtils.clearSids()))
 
   return {
     action: deleteSelection$,
     nextMode: toIdle$,
     nextAdjustConfigs: toIdle$.mapTo([]),
-    changeSelection: xs.merge(changeSids$),
+    changeSelection: changeSelection$,
   }
 }
 

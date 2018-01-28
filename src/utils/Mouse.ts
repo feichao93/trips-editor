@@ -3,6 +3,10 @@ import { Point } from '../interfaces'
 
 type SimpleWheelEvent = { pos: Point; deltaY: number }
 
+// TODO use the DOM API to get the correct offset
+const offset = { top: 22, left: 0 }
+const applyOffset = (p: Point) => ({ x: p.x - offset.left, y: p.y - offset.top })
+
 export default class Mouse {
   // `move` and `up` events are from window, so they will be available in constructor
   move$: Stream<Point>
@@ -54,10 +58,10 @@ export default class Mouse {
     nextVertexInsertIndex$: Stream<number>,
   ) {
     this.transform$ = transform$
-    this.rawMove$ = rawMove$
-    this.move$ = this.convert(rawMove$)
-    this.rawUp$ = rawUp$
-    this.up$ = this.convert(rawUp$)
+    this.rawMove$ = rawMove$.map(applyOffset)
+    this.move$ = this.convert(this.rawMove$)
+    this.rawUp$ = rawUp$.map(applyOffset)
+    this.up$ = this.convert(this.rawUp$)
     this.resizer$ = nextResizer$.dropRepeats().startWith(null)
     this.vertexIndex$ = nextVertexIndex$.dropRepeats().startWith(-1)
     this.vertexInsertIndex$ = nextVertexInsertIndex$.dropRepeats().startWith(-1)
@@ -98,13 +102,13 @@ export default class Mouse {
     rawDblclick$: Stream<Point>,
     rawWheel$: Stream<SimpleWheelEvent>,
   ) {
-    this.rawDown$.imitate(rawDown$)
-    this.down$.imitate(this.convert(rawDown$))
-    this.rawClick$.imitate(rawClick$)
-    this.click$.imitate(this.convert(rawClick$))
-    this.rawDblclick$.imitate(rawDblclick$)
-    this.dblclick$.imitate(this.convert(rawDblclick$))
-    this.rawWheel$.imitate(rawWheel$)
-    this.wheel$.imitate(this.convertWheel(rawWheel$))
+    this.rawDown$.imitate(rawDown$.map(applyOffset))
+    this.down$.imitate(this.convert(this.rawDown$))
+    this.rawClick$.imitate(rawClick$.map(applyOffset))
+    this.click$.imitate(this.convert(this.rawClick$))
+    this.rawDblclick$.imitate(rawDblclick$.map(applyOffset))
+    this.dblclick$.imitate(this.convert(this.rawDblclick$))
+    this.rawWheel$.imitate(rawWheel$.map(({ deltaY, pos }) => ({ pos: applyOffset(pos), deltaY })))
+    this.wheel$.imitate(this.convertWheel(this.rawWheel$))
   }
 }

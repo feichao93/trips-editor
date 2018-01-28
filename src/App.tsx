@@ -1,11 +1,11 @@
 import { DOMSource, h, VNode } from '@cycle/dom'
 import isolate from '@cycle/isolate'
 import * as d3 from 'd3'
-import { is } from 'immutable'
 import xs, { Stream } from 'xstream'
 import { Action, initState } from './actions'
 import Inspector from './components/Inspector'
 import StatusBar from './components/StatusBar'
+import Menubar from './components/Menubar'
 import Svg from './components/Svg'
 import commonInteraction from './interaction/commonInteraction'
 import dragItems from './interaction/dragItems'
@@ -22,10 +22,6 @@ import './styles/app.styl'
 import AdjustedMouse from './utils/AdjustedMouse'
 import makeAdjuster from './utils/makeAdjuster'
 import Selection, { selectionRecord } from './utils/Selection'
-
-const EmptyComponent = (sources: { DOM: DOMSource }) => ({ DOM: xs.of(null) as any })
-const Menubar = EmptyComponent
-const Structure = EmptyComponent
 
 export interface Sources {
   DOM: DOMSource
@@ -68,6 +64,7 @@ export default function App(sources: Sources): Sinks {
     nextVertexIndexProxy$,
     nextVertexInsertIndexProxy$,
   )
+  const menubar = isolate(Menubar, 'menubar')({ DOM: domSource, selection: selection$ })
 
   const interactions: InteractionFn[] = [
     commonInteraction,
@@ -82,6 +79,7 @@ export default function App(sources: Sources): Sinks {
   const sinksArray = interactions.map(fn =>
     fn({
       mode: mode$,
+      menubar,
       mouse,
       keyboard,
       state: state$,
@@ -94,9 +92,6 @@ export default function App(sources: Sources): Sinks {
   // 目前正在绘制的元素 用于绘制预览
   const drawingItem$ = xs.merge(...sinksArray.map(sinks => sinks.drawingItem).filter(Boolean))
 
-  // views
-  const menubar = isolate(Menubar, 'menubar')({ DOM: domSource })
-  const structure = isolate(Structure, 'structure')({ DOM: domSource })
   const svg = isolate(Svg, 'svg')({
     DOM: domSource,
     FILE: sources.FILE,
@@ -155,8 +150,10 @@ export default function App(sources: Sources): Sinks {
   nextVertexInsertIndexProxy$.imitate(svg.nextVertexInsertIndex)
 
   const vdom$ = xs
-    .combine(menubar.DOM, structure.DOM, svg.DOM, inspector.DOM, statusBar.DOM)
-    .map(components => h('div.app', components.filter(Boolean)))
+    .combine(menubar.DOM, svg.DOM, inspector.DOM, statusBar.DOM)
+    .map(([menubar, svg, inspector, statusBar]) =>
+      h('div.app', [menubar, h('main', [svg, inspector]), statusBar]),
+    )
 
   return {
     DOM: vdom$,

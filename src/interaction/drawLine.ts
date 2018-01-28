@@ -5,7 +5,7 @@ import { InteractionFn, PolylineItem } from '../interfaces'
 import { injectItemId } from '../utils/common'
 import { selectionUtils } from '../utils/Selection'
 
-const drawLine: InteractionFn = ({ mouse, mode: mode$, keyboard }) => {
+const drawLine: InteractionFn = ({ mouse, menubar, mode: mode$, keyboard }) => {
   const startPos$ = mouse.down$.when(mode$, identical('line.ready')).remember()
 
   const movingPos$ = startPos$
@@ -27,6 +27,7 @@ const drawLine: InteractionFn = ({ mouse, mode: mode$, keyboard }) => {
     drawingItem: drawingLine$,
     action: newItem$.map(actions.addItem),
     nextMode: xs.merge(
+      menubar.intent('line').mapTo('line.ready'),
       keyboard.shortcut('l').mapTo('line.ready'),
       startPos$.mapTo('line.drawing'),
       newItem$.mapTo('idle'),

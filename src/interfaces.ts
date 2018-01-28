@@ -1,5 +1,6 @@
 import { MemoryStream, Stream } from 'xstream'
 import { Action, State } from './actions'
+import { Sinks as MenubarSinks } from './components/Menubar'
 import { KeyboardSource } from './makeKeyboardDriver'
 import AdjustedMouse from './utils/AdjustedMouse'
 import ImgItem from './utils/ImgItem'
@@ -8,7 +9,7 @@ import PolygonItem from './utils/PolygonItem'
 import PolylineItem from './utils/PolylineItem'
 import Selection from './utils/Selection'
 
-export { Item, PolygonItem, PolylineItem, ImgItem, Selection }
+export { Action, State, Item, PolygonItem, PolylineItem, ImgItem, Selection }
 
 export interface Point {
   readonly x: number
@@ -39,6 +40,7 @@ export interface InteractionFnSources {
   selection: MemoryStream<Selection>
   transform: MemoryStream<d3.ZoomTransform>
   keyboard: KeyboardSource
+  menubar: MenubarSinks
 }
 
 export interface InteractionFnSinks {

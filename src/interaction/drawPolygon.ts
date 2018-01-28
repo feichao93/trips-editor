@@ -18,7 +18,13 @@ import { selectionUtils } from '../utils/Selection'
  * Note that we set `adjustConfigs` when drawing a new polygon, so we use adjusted
  *  positions like `mouse.aclick$` instead of raw positions like `mouse.click$`.
  */
-const drawPolygon: InteractionFn = ({ mouse, mode: mode$, keyboard, transform: transform$ }) => {
+const drawPolygon: InteractionFn = ({
+  mouse,
+  keyboard,
+  menubar,
+  mode: mode$,
+  transform: transform$,
+}) => {
   const addPointProxy$ = xs.create<Point>()
   const resetPointsProxy$ = xs.create()
 
@@ -43,7 +49,9 @@ const drawPolygon: InteractionFn = ({ mouse, mode: mode$, keyboard, transform: t
     .startWith(false)
 
   // Step 1
-  const toPolygonMode$ = keyboard.shortcut('q').mapTo('polygon')
+  const toPolygonMode$ = xs
+    .merge(keyboard.shortcut('p'), menubar.intent('polygon'))
+    .mapTo('polygon')
 
   // Step 2
   const addPoint$ = mouse.aclick$.when(mode$, identical('polygon')).whenNot(canClose$)
