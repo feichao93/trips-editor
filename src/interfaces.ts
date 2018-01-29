@@ -1,15 +1,16 @@
+import { VNode } from '@cycle/dom'
+import { List } from 'immutable'
 import { MemoryStream, Stream } from 'xstream'
 import { Action, State } from './actions'
 import { Sinks as MenubarSinks } from './components/Menubar'
 import { KeyboardSource } from './makeKeyboardDriver'
 import AdjustedMouse from './utils/AdjustedMouse'
 import ImgItem from './utils/ImgItem'
-import Item from './utils/Item'
 import PolygonItem from './utils/PolygonItem'
 import PolylineItem from './utils/PolylineItem'
 import Selection from './utils/Selection'
 
-export { Action, State, Item, PolygonItem, PolylineItem, ImgItem, Selection }
+export { Action, State, PolygonItem, PolylineItem, ImgItem, Selection }
 
 export interface Point {
   readonly x: number
@@ -24,6 +25,29 @@ export interface Rect {
 
 export interface Updater<T> {
   (t: T): T
+}
+
+export interface ItemMethods {
+  render(): VNode
+  getVertices(): List<Point>
+  containsPoint(p: Point): boolean
+  move(dx: number, dy: number): this
+  resize(anchor: Point, config: ResizeDirConfig, startPos: Point, endPos: Point): this
+
+  supportEditVertex(): boolean
+  insertVertex?(insertIndex: number, p: Point): this
+  deleteVertex?(vertexIndex: number): this
+  moveVertex?(vertexIndex: number, dx: number, dy: number): this
+}
+
+export type CommonRecordSetter = RecordSetter<'id', number> &
+  RecordSetter<'locked', boolean> &
+  RecordSetter<'opacity', number>
+
+export type Item = (PolygonItem | PolylineItem | ImgItem) & CommonRecordSetter & ItemMethods
+
+export interface RecordSetter<K, V> {
+  set(key: K, value: V): this
 }
 
 export type ItemId = number

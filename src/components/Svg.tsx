@@ -66,17 +66,7 @@ export default function Svg(sources: Sources): Sinks {
     .map(file =>
       sources.FILE.filter(stat => stat.file === file)
         .take(1)
-        .map(({ naturalWidth, naturalHeight, url }) =>
-          ImgItem({
-            x: 0,
-            y: 0,
-            width: naturalWidth,
-            height: naturalHeight,
-            naturalWidth,
-            naturalHeight,
-            url,
-          }),
-        )
+        .map(ImgItem.fromImgFileStat)
         .map(injectItemId)
         .map(actions.addItem),
     )

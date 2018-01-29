@@ -48,7 +48,7 @@ function PositionAndSize(state: State, selection: Selection) {
       EditableField({ field: 'x', label: 'X', type: 'number', disabled: true, value: round3(x) }),
       EditableField({ field: 'y', label: 'Y', type: 'number', disabled: true, value: round3(y) }),
     ]),
-    Row({ label: 'Side', key: 'side' }, [
+    Row({ label: 'Size', key: 'size' }, [
       EditableField({
         field: 'width',
         label: 'width',
@@ -185,7 +185,7 @@ export default function Inspector(sources: Sources): Sinks {
       const field = input.dataset.field as any
       const value = input.type === 'number' ? Number(input.value) : input.value
       const sitems = state.items.filter(item => selection.sids.has(item.id))
-      const updatedItems = sitems.map(item => item.set(field, value))
+      const updatedItems = sitems.map(item => item.set(field, value as any))
       return actions.updateItems(updatedItems)
     })
 

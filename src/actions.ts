@@ -26,7 +26,10 @@ export default {
   deleteVertex([sel, vertexIndex]: [Selection, number]): Action {
     return state =>
       state.update('items', items =>
-        items.update(sel.sids.first(), item => item.deleteVertex(vertexIndex)),
+        items.update(
+          sel.sids.first(),
+          item => (item.supportEditVertex() ? item.deleteVertex(vertexIndex) : item),
+        ),
       )
   },
   deleteSelection(sel: Selection): Action {
@@ -98,16 +101,15 @@ export default {
   },
   moveVertex([item, vertexIndex, dx, dy]: [Item, number, number, number]): Action {
     return state =>
-      state.update('items', items => items.set(item.id, item.moveVertex(vertexIndex, dx, dy)))
+      state.update('items', items =>
+        items.set(item.id, item.supportEditVertex() ? item.moveVertex(vertexIndex, dx, dy) : item),
+      )
   },
-  addVertex([pos, sel, insertIndex]: [Point, Selection, number]): Action {
+  insertVertex([pos, sel, insertIndex]: [Point, Selection, number]): Action {
     return state =>
-      state.updateIn(['items', sel.sids.first()], (item: Item) => {
-        if (isPolygonItem(item) || isPolylineItem(item)) {
-          return item.update('points', points => points.insert(insertIndex, pos))
-        } else {
-          return item
-        }
-      })
+      state.updateIn(
+        ['items', sel.sids.first()],
+        (item: Item) => (item.supportEditVertex() ? item.insertVertex(insertIndex, pos) : item),
+      )
   },
 }

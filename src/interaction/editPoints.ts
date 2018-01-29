@@ -88,7 +88,7 @@ const editPoints: InteractionFn = ({
 
   return {
     changeSelection: toggleSelectionMode$,
-    action: xs.merge(movePoint$, addPointConfig$.map(actions.addVertex), deletePoint$),
+    action: xs.merge(movePoint$, addPointConfig$.map(actions.insertVertex), deletePoint$),
     nextVertexIndex: xs.merge(
       deletePoint$.mapTo(-1),
       startFromAdd$.map(startInfo => startInfo.vertexIndex),
