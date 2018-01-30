@@ -18,6 +18,14 @@ const PolylineItemRecord = Record(
 )
 
 export default class PolylineItem extends PolylineItemRecord implements ItemMethods {
+  toJS() {
+    const superJS: any = super.toJS()
+    superJS.type = 'PolylineItem'
+    return superJS
+  }
+  static fromJS(object: any) {
+    return new PolylineItem(object).update('points', List)
+  }
   static lineFromPoints([p1, p2]: [Point, Point]) {
     return new PolylineItem({ points: List([p1, p2]) })
   }

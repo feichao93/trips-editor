@@ -18,6 +18,15 @@ const PolygonItemRecord = Record(
 )
 
 export default class PolygonItem extends PolygonItemRecord implements ItemMethods {
+  toJS() {
+    const superJS: any = super.toJS()
+    superJS.type = 'PolygonItem'
+    return superJS
+  }
+  static fromJS(object: any) {
+    return new PolygonItem(object).update('points', List)
+  }
+
   static rectFromPoints(startPos: Point, endPos: Point) {
     const x1 = startPos.x
     const y1 = startPos.y

@@ -32,6 +32,11 @@ export default class ImgItem extends ImgItemRecord implements ItemMethods {
     })
   }
 
+  toJS() {
+    // null means that this item does not support serialization.
+    return null as any
+  }
+
   render() {
     return h('image', {
       key: this.id,

@@ -33,6 +33,7 @@ export interface ItemMethods {
   containsPoint(p: Point): boolean
   move(dx: number, dy: number): this
   resize(anchor: Point, config: ResizeDirConfig, startPos: Point, endPos: Point): this
+  toJS(): any
 
   supportEditVertex(): boolean
   insertVertex?(insertIndex: number, p: Point): this
