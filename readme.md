@@ -2,30 +2,48 @@
 
 ## Motivation
 
-The spatial topological relations of the floor, which is hard to generate or extract, is one of the key inputs to our algorithm. 
+(TODO) Add a basic description about _our algorithm_.
 
-In many cases, we could only get a bitmap image file of the floorplan. And there are sophisticated tools such as [Microsoft Visio][] or [Inkscape][] which can load the image file and make a diagram manually according to the image file. But the main disadvantage is that the output of these tools is too complicated to fit in our algorithm: it is hard to parse and manipulate in our code, and it lacks the abilities of attaching semantic information to shapes. Our algorithm prefers a simple and clean data format so it can focus on processing positioning data and aggregating semantic trajectories.
+The spatial topological relations of the floor, which is hard to generate or extract, is one of the key inputs to our algorithm. In many cases, we could only get a bitmap image file of the floorplan. And there are sophisticated tools such as [Microsoft Visio][] or [Inkscape][] which can load the image file and make a diagram manually according to the image file. But the main disadvantage is that the output of these tools is too complicated to fit in our algorithm: it is hard to parse and manipulate in our code, and it lacks the abilities of attaching semantic information to shapes. Our algorithm prefers a simple and clean data format so it can focus on processing positioning data and aggregating semantic trajectories.
 
-The editor could help us build up the topologicals relations from a image file. The editor can load the image file and display it, then we can draw polygons/polylines imitating the spatial structures on the image. After completing the geometric information, we can use the editor to attach specific semantic information to polygons/polyglines. For example, we can designate severals rectangles as rooms or specify a polyline as a wall. When all is done, the editor can export both geometric and semantic information to a single json file, which can be parsed by our algorithm easily.
+The editor could help us build up the topological relations from a image file. The editor can load the image file and display it, then we can draw polygons/polylines imitating the spatial structures on the image. After completing the geometric information, we can use the editor to attach specific semantic information to polygons/polyglines. For example, we can designate severals rectangles as rooms or specify a polyline as a wall. When all is done, the editor can export both geometric and semantic information to a single json file, which can be parsed by our algorithm easily.
 
 While the editor is created originally for our algorithm, the editor itself is just a good SVG editor which focuses on editing polygons/polylines and attaching semantic data to them. The editor should be easy to be reused in other situations.
 
 ## Introduction
 
-This section describes what features does the editor has and how to use them.
+This section describes what features does the editor provides and how to use them.
 
 1. The board: The board is where shapes display and user interactions happens.
 2. Mode: The mode is displayed at the lower left corner. It tells the user 'What we are doing'. The mode is default to `idle`; The mode is `rect.xxx` when drawing a rect; And the mode is `line.xxx` when drawing a line and so on.
-3. Load image file: In `idle` mode, drag the image file from file explorer and drop it onto the editor board. (TODO NOT IMPLEMENTED)
-4. Draw polygons: In `idle` mode, press `Q` to enter `polygon` mode, and an empty drawing-polygon is set up; In `polygon` mode, every mouse click will add a vertex to the drawing-polygon; If the user closes the drawing-polygon by clicks near the first vertex, a new polygon will be added and mode changes back to `idle`. The user can always press `ESC` to return `idle` mode.
-5. Draw lines/rectangles: Press the shortcut and enter the corresponding mode, drag the mouse and a new shape will be added. See [github repository of the editor][repo] for more details about shortcuts.
+3. Load image file: In `idle` mode, drag the image file from file explorer and drop it onto the editor board.
+4. Draw polygons: In `idle` mode, press `P` to enter `polygon` mode, and an empty drawing-polygon is set up; In `polygon` mode, every mouse click will add a vertex to the drawing-polygon; If the user closes the drawing-polygon by clicks near the first vertex, a new polygon will be added and mode changes back to `idle`. The user can always press `ESC` to return `idle` mode.
+5. Draw lines/rectangles: Press the shortcut and enter the corresponding mode, drag the mouse and a new shape will be added.
 6. Selections and the Inspector: Click on a shape to select it, and the inspector on the right will list all the properties about the selected shape. The inspector has two tabs, one for geometric information such as width, height, z-index, and one for semantic information including region type (room / staircase / hallway), line type (wall / door). Some properties are readonly in the inspector and some are editable. (TODO a image showing the inspector
 7. Dragging, Zooming and Resizing: The board supports dragging and zooming. The selected items can be resized using the resizers. These three operations are really intuitive so we just mention them here.
 8. Point editing: Press `E` to toggle selection mode between `bbox`(default) and `vertices`. In `vertices` selection mode, a small circle will appear at every vertex of the selected polygon/polyline, the user could drag the circle to change the vertex position, or press `D` and delete the hovered vertex, or drag from near an edge and add a new vertex.
 
 ## Interaction Refinement
 
-1. Auto adjust: TODO  自动对齐，点的吸附
+We have make efforts to improve the interactions details.
+
+#### Shortcuts
+
+We attach shortcuts to almost every action in the editor, including deleting a shape, start adding a rectangle, toggle between two selection mode and so on. We also display the shortcuts alongside the entries of the actions in menu bar, so the users can quickly remember the shortcuts.
+
+The `ESC` shortcut has a consistent meaning in different modes: abort the current interaction and go back to the idle mode. And we have familiar `Ctrl + Z` (undo), `Ctrl + Y` / `Ctrl + Shift + Z` (redo), `Ctrl + C` (copy) and `Ctrl + V` (redo). (TODO ctrl+z, ctrl+c and ctrl+v are not implemented).
+
+#### Auto-Adjust
+
+When drawing shapes or moving vertices, auto-adjust helps the users find the correct positions without trivial minor adjustments. Auto-adjust is useful in the following situations:
+
+* Start drawing a line from an existed polgyon vertex.
+* Move a rectangle to a position where it tangents exactly to another rectangle. (TODO not implemented)
+* Move a polygon vertex to a position that has the same x or y coordinate of another vertex.
+
+Auto-adjust is default to be enabled, but it be can be disabled when the shortcuts is pressed. Since the state of editor is changing, the behavior the adjuster should also be changing. We create an adjuster stream which abstracts the changing behaviors. The adjuster reads the adjust-configs (returned from the interaction functions), current drawing mode, existed vertices of all shapes, and the current mouse position and then determine the adjusted position.
+
+In practice, auto-adjust makes interactions more fluently, and it speeds up the generation of the output.
 
 ## Implementation Overview
 
