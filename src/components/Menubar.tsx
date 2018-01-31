@@ -17,7 +17,7 @@ export interface Sinks {
 export interface MenuItem {
   name: string
   hint?: string
-  action?: string
+  intent?: string
   disabled?: boolean
 }
 
@@ -33,10 +33,10 @@ function MenuCategory({ active, category, items }: MenuCategoryProps) {
     h(
       'ol.menu-item-list',
       { style: { display: active ? 'block' : 'none' } },
-      items.map(({ name, hint, action, disabled }) =>
+      items.map(({ name, hint, intent, disabled }) =>
         h(
           'li.menu-item',
-          { dataset: { action }, class: { disabled } },
+          { dataset: { intent }, class: { disabled } },
           [h('p', name), hint ? h('p.hint', hint) : null].filter(Boolean),
         ),
       ),
@@ -51,12 +51,12 @@ export default function Menubar(sources: Sources): Sinks {
 
   const activeCategory$ = nextActiveCategoryProxy$.dropRepeats().startWith(null)
 
-  const blur$ = domSource
+  const closeWhenBlur$ = domSource
     .select('.menubar')
     .events('blur')
     .mapTo(null)
 
-  const closeAfterChooseAction$ = domSource
+  const closeWhenMakeIntent$ = domSource
     .select('.menu-item')
     .events('click')
     .filter(e => !e.ownerTarget.classList.contains('disabled'))
@@ -75,8 +75,8 @@ export default function Menubar(sources: Sources): Sinks {
 
   nextActiveCategoryProxy$.imitate(
     xs.merge(
-      blur$,
-      closeAfterChooseAction$,
+      closeWhenBlur$,
+      closeWhenMakeIntent$,
       clickToToggleCategory$
         .sampleCombine(activeCategory$)
         .map(([next, active]) => (next === active ? null : next)),
@@ -85,10 +85,10 @@ export default function Menubar(sources: Sources): Sinks {
   )
 
   const intent$ = domSource
-    .select('*[data-action]')
+    .select('*[data-intent]')
     .events('click')
     .filter(e => !e.ownerTarget.classList.contains('disabled'))
-    .map(e => e.ownerTarget.dataset.action)
+    .map(e => e.ownerTarget.dataset.intent)
 
   const vdom$ = xs.combine(activeCategory$, sel$).map(([activeCategory, sel]) =>
     h('div.menubar', { attrs: { tabIndex: 1 } }, [
@@ -96,8 +96,8 @@ export default function Menubar(sources: Sources): Sinks {
         category: 'File',
         active: activeCategory === 'File',
         items: [
-          { name: 'Save as JSON', disabled: true },
-          { name: 'Load JSON', disabled: true },
+          { name: 'Save as JSON', intent: 'save', hint: 'Ctrl+S' },
+          { name: 'Load JSON', intent: 'load' },
           { name: 'Export as SVG', disabled: true },
           { name: 'Load Image', disabled: true },
         ],
@@ -106,10 +106,10 @@ export default function Menubar(sources: Sources): Sinks {
         category: 'Edit',
         active: activeCategory === 'Edit',
         items: [
-          { name: 'Delete Selection', disabled: sel.isEmpty(), hint: 'D', action: 'delete' },
-          { name: 'Add Rectangle', hint: 'R', action: 'rect' },
-          { name: 'Add Polygon', hint: 'P', action: 'polygon' },
-          { name: 'Add Line', hint: 'L', action: 'line' },
+          { name: 'Delete Selection', disabled: sel.isEmpty(), hint: 'D', intent: 'delete' },
+          { name: 'Add Rectangle', hint: 'R', intent: 'rect' },
+          { name: 'Add Polygon', hint: 'P', intent: 'polygon' },
+          { name: 'Add Line', hint: 'L', intent: 'line' },
         ],
       }),
     ]),

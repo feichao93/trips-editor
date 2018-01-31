@@ -1,6 +1,5 @@
 import { List, Map, OrderedMap, Record } from 'immutable'
 import { Item, ItemId, Point, ResizeDirConfig, Selection } from './interfaces'
-import { isPolygonItem, isPolylineItem } from './utils/common'
 
 export interface ResizingInfo {
   movingPos: Point
@@ -111,5 +110,8 @@ export default {
         ['items', sel.sids.first()],
         (item: Item) => (item.supportEditVertex() ? item.insertVertex(insertIndex, pos) : item),
       )
+  },
+  setState(state: State): Action {
+    return () => state
   },
 }

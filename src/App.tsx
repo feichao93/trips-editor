@@ -13,10 +13,11 @@ import drawLine from './interaction/drawLine'
 import drawPolygon from './interaction/drawPolygon'
 import drawRect from './interaction/drawRect'
 import editPoints from './interaction/editPoints'
+import menubarInteractions from './interaction/menubarInteractions'
 import resizeItems from './interaction/resizeItems'
 import zoom from './interaction/zoom'
-import { AdjustConfig, InteractionFn, Updater } from './interfaces'
-import { ImgFileStat } from './makeImgFileDriver'
+import { AdjustConfig, InteractionFn, SaveConfig, Updater } from './interfaces'
+import { FileStat } from './makeFileDriver'
 import { KeyboardSource } from './makeKeyboardDriver'
 import './styles/app.styl'
 import AdjustedMouse from './utils/AdjustedMouse'
@@ -25,7 +26,7 @@ import Selection, { selectionRecord } from './utils/Selection'
 
 export interface Sources {
   DOM: DOMSource
-  FILE: Stream<ImgFileStat>
+  FILE: Stream<FileStat>
   keyboard: KeyboardSource
   mouseup: Stream<MouseEvent>
   mousemove: Stream<MouseEvent>
@@ -33,6 +34,7 @@ export interface Sources {
 export interface Sinks {
   DOM: Stream<VNode>
   FILE: Stream<File>
+  SAVE: Stream<SaveConfig>
 }
 
 const initMode = 'idle'
@@ -68,6 +70,7 @@ export default function App(sources: Sources): Sinks {
 
   const interactions: InteractionFn[] = [
     commonInteraction,
+    menubarInteractions,
     dragItems,
     resizeItems,
     zoom,
@@ -79,6 +82,7 @@ export default function App(sources: Sources): Sinks {
   const sinksArray = interactions.map(fn =>
     fn({
       mode: mode$,
+      FILE: sources.FILE,
       menubar,
       mouse,
       keyboard,
@@ -136,6 +140,8 @@ export default function App(sources: Sources): Sinks {
   nextAdjustConfigs$.imitate(
     xs.merge(...sinksArray.map(sinks => sinks.nextAdjustConfigs).filter(Boolean)),
   )
+  const save$: Stream<SaveConfig> = xs.merge(...sinksArray.map(sinks => sinks.SAVE).filter(Boolean))
+  const file$ = xs.merge(svg.FILE, ...sinksArray.map(sinks => sinks.FILE).filter(Boolean))
 
   mouse.imitate(svg.rawDown, svg.rawClick, svg.rawDblclick, svg.rawWheel)
   mouse.setAdjuster(makeAdjuster(keyboard, mouse, state$, transform$, adjustConfigs$))
@@ -157,6 +163,7 @@ export default function App(sources: Sources): Sinks {
 
   return {
     DOM: vdom$,
-    FILE: svg.FILE,
+    FILE: file$,
+    SAVE: save$,
   }
 }

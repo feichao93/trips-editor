@@ -1,8 +1,9 @@
 import { VNode } from '@cycle/dom'
 import { List } from 'immutable'
 import { MemoryStream, Stream } from 'xstream'
-import { Action, State } from './actions'
+import { Action, State, StateRecord } from './actions'
 import { Sinks as MenubarSinks } from './components/Menubar'
+import { FileStat } from './makeFileDriver'
 import { KeyboardSource } from './makeKeyboardDriver'
 import AdjustedMouse from './utils/AdjustedMouse'
 import ImgItem from './utils/ImgItem'
@@ -10,7 +11,7 @@ import PolygonItem from './utils/PolygonItem'
 import PolylineItem from './utils/PolylineItem'
 import Selection from './utils/Selection'
 
-export { Action, State, PolygonItem, PolylineItem, ImgItem, Selection }
+export { StateRecord, Action, State, PolygonItem, PolylineItem, ImgItem, Selection }
 
 export interface Point {
   readonly x: number
@@ -66,6 +67,7 @@ export interface InteractionFnSources {
   transform: MemoryStream<d3.ZoomTransform>
   keyboard: KeyboardSource
   menubar: MenubarSinks
+  FILE: Stream<FileStat>
 }
 
 export interface InteractionFnSinks {
@@ -76,11 +78,18 @@ export interface InteractionFnSinks {
   drawingItem: Stream<Item>
   nextVertexIndex: Stream<any>
   nextAdjustConfigs: Stream<AdjustConfig[]>
+  SAVE: Stream<SaveConfig>
+  FILE: Stream<File | 'open-file-dialog'>
   addons: { [key: string]: Stream<any> }
 }
 
 export interface InteractionFn {
   (sources: InteractionFnSources): Partial<InteractionFnSinks>
+}
+
+export interface SaveConfig {
+  blob: Blob
+  filename?: string
 }
 
 export type AdjustConfig = AdjustConfigCement | AdjustConfigAlign | AdjustConfigRestrict

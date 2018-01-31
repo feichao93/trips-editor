@@ -8,7 +8,7 @@ import VertexInsertIndicator from './VertexInsertIndicator'
 import VerticesIndicator from './VerticesIndicator'
 import actions, { Action, State } from '../actions'
 import { AdjustConfig, ImgItem, Item, Point, Selection } from '../interfaces'
-import { ImgFileStat } from '../makeImgFileDriver'
+import { FileStat } from '../makeFileDriver'
 import { KeyboardSource } from '../makeKeyboardDriver'
 import '../styles/svg.styl'
 import AdjustedMouse from '../utils/AdjustedMouse'
@@ -16,7 +16,7 @@ import { injectItemId } from '../utils/common'
 
 export interface Sources {
   DOM: DOMSource
-  FILE: Stream<ImgFileStat>
+  FILE: Stream<FileStat>
   mouse: AdjustedMouse
   keyboard: KeyboardSource
   drawingItem: Stream<Item>

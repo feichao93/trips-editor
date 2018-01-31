@@ -3,7 +3,7 @@ import { List, Record } from 'immutable'
 import { add, identity } from 'ramda'
 import { containsPoint, getCoordinateUpdater } from './common'
 import { ItemMethods, Point, ResizeDirConfig } from '../interfaces'
-import { ImgFileStat } from '../makeImgFileDriver'
+import { ImgFileStat } from '../makeFileDriver'
 
 const ImgItemRecord = Record(
   {
