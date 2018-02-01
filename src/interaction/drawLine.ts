@@ -2,7 +2,6 @@ import { identical } from 'ramda'
 import xs from 'xstream'
 import actions from '../actions'
 import { InteractionFn, PolylineItem } from '../interfaces'
-import { injectItemId } from '../utils/common'
 import { selectionUtils } from '../utils/Selection'
 
 const drawLine: InteractionFn = ({ mouse, menubar, mode: mode$, keyboard }) => {
@@ -18,10 +17,7 @@ const drawLine: InteractionFn = ({ mouse, menubar, mode: mode$, keyboard }) => {
     )
     .filter(Boolean)
 
-  const newItem$ = mouse.up$
-    .when(mode$, identical('line.drawing'))
-    .peek(drawingLine$)
-    .map(injectItemId)
+  const newItem$ = mouse.up$.when(mode$, identical('line.drawing')).peek(drawingLine$)
 
   return {
     drawingItem: drawingLine$,

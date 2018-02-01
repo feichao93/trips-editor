@@ -1,17 +1,10 @@
 import { List } from 'immutable'
+import { State } from '../actions'
 import { ImgItem, Item, Point, PolygonItem, PolylineItem, Rect } from '../interfaces'
 
-const nextIdMap = new Map<string, number>()
-
-export function getNextId(tag = '') {
-  if (nextIdMap.has(tag)) {
-    const nextId = nextIdMap.get(tag)
-    nextIdMap.set(tag, nextId + 1)
-    return nextId
-  } else {
-    nextIdMap.set(tag, 2)
-    return 1
-  }
+export function getNextItemId(state: State) {
+  const maxId = state.items.map(item => item.id).max() || 0
+  return maxId + 1
 }
 
 export function isPolygonItem(item: Item): item is PolygonItem {
@@ -24,10 +17,6 @@ export function isPolylineItem(item: Item): item is PolylineItem {
 
 export function isImgItem(item: Item): item is ImgItem {
   return item instanceof ImgItem
-}
-
-export function injectItemId(item: Item) {
-  return item.set('id', getNextId('item'))
 }
 
 export function getBoundingBoxOfPoints(points: List<Point>): Rect {

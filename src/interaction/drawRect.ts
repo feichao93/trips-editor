@@ -2,7 +2,7 @@ import { identical } from 'ramda'
 import xs from 'xstream'
 import actions from '../actions'
 import { AdjustConfig, InteractionFn, PolygonItem } from '../interfaces'
-import { getBoundingBoxOfPoints, injectItemId } from '../utils/common'
+import { getBoundingBoxOfPoints } from '../utils/common'
 import { selectionUtils } from '../utils/Selection'
 
 /**
@@ -43,7 +43,6 @@ const drawRect: InteractionFn = ({ menubar, mouse, mode: mode$, keyboard }) => {
       const bbox = getBoundingBoxOfPoints(rect.getVertices())
       return bbox.width * bbox.height > 0
     })
-    .map(injectItemId)
 
   const toIdleMode$ = newItem$.mapTo('idle')
 

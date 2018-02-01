@@ -12,7 +12,6 @@ import { FileStat } from '../makeFileDriver'
 import { KeyboardSource } from '../makeKeyboardDriver'
 import '../styles/svg.styl'
 import AdjustedMouse from '../utils/AdjustedMouse'
-import { injectItemId } from '../utils/common'
 
 export interface Sources {
   DOM: DOMSource
@@ -67,7 +66,6 @@ export default function Svg(sources: Sources): Sinks {
       sources.FILE.filter(stat => stat.file === file)
         .take(1)
         .map(ImgItem.fromImgFileStat)
-        .map(injectItemId)
         .map(actions.addItem),
     )
     .flatten()

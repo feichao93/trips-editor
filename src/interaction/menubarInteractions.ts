@@ -27,7 +27,6 @@ const menubarInteractions: InteractionFn = ({ FILE, menubar, keyboard, state: st
   const resetState$ = loadedState$.map(actions.setState)
   const resetSelection$ = loadedState$.map(selectionUtils.clearSids)
   const toIdleMode$ = loadedState$.mapTo('idle')
-  const initTransform$ = loadedState$.mapTo(d3.zoomIdentity)
 
   return {
     SAVE: save$,
@@ -35,7 +34,6 @@ const menubarInteractions: InteractionFn = ({ FILE, menubar, keyboard, state: st
     action: resetState$,
     changeSelection: resetSelection$,
     nextMode: toIdleMode$,
-    nextTransform: initTransform$,
   }
 }
 

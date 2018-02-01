@@ -1,5 +1,6 @@
 import { List, Map, OrderedMap, Record } from 'immutable'
 import { Item, ItemId, Point, ResizeDirConfig, Selection } from './interfaces'
+import { getNextItemId } from './utils/common'
 
 export interface ResizingInfo {
   movingPos: Point
@@ -53,8 +54,12 @@ export default {
       )
   },
   addItem(item: Item): Action {
-    return state =>
-      state.setIn(['items', item.id], item).update('zlist', zlist => zlist.push(item.id))
+    return state => {
+      const itemId = getNextItemId(state)
+      return state
+        .setIn(['items', itemId], item.set('id', itemId))
+        .update('zlist', zlist => zlist.push(itemId))
+    }
   },
   updateItems(updateItems: OrderedMap<ItemId, Item>): Action {
     return state => state.mergeIn(['items'], updateItems)

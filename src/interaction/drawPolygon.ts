@@ -5,7 +5,7 @@ import xs, { Stream } from 'xstream'
 import actions from '../actions'
 import { SENSE_RANGE } from '../constants'
 import { AdjustConfig, InteractionFn, Point, PolygonItem, Updater } from '../interfaces'
-import { distanceBetweenPointAndPoint, injectItemId } from '../utils/common'
+import { distanceBetweenPointAndPoint } from '../utils/common'
 import { selectionUtils } from '../utils/Selection'
 
 /** Implementation for drawing polygon interaction.
@@ -60,10 +60,7 @@ const drawPolygon: InteractionFn = ({
   // Step 3
   const close$ = mouse.click$.when(canClose$)
 
-  const newItem$ = close$
-    .peek(points$)
-    .map(PolygonItem.fromPoints)
-    .map(injectItemId)
+  const newItem$ = close$.peek(points$).map(PolygonItem.fromPoints)
 
   // Step 4
   const toIdleMode$ = newItem$.mapTo('idle')
