@@ -53,8 +53,8 @@ export default function VertexInsertIndicator({
   const highlightedSegment$ = highlightedSegmentIndex$
     .sampleCombine(segments$)
     .map(([i, segs]) => (i === -1 ? null : segs.get(i)))
-  const vdom$ = highlightedSegment$.map(
-    seg =>
+  const vdom$ = highlightedSegment$.sampleCombine(transform$).map(
+    ([seg, transform]) =>
       seg
         ? h('line', {
             attrs: {
@@ -63,7 +63,7 @@ export default function VertexInsertIndicator({
               x2: seg[1].x,
               y2: seg[1].y,
               stroke: '#14e01c',
-              'stroke-width': 5,
+              'stroke-width': 3 / transform.k,
             },
           })
         : null,

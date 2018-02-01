@@ -78,87 +78,60 @@ export default function Svg(sources: Sources): Sinks {
     .events('wheel')
     .map(e => ({ pos: e, deltaY: e.deltaY }))
 
-  const selectionIndicator = isolate(SelectionIndicator)({
-    DOM: domSource,
-    mouse,
-    state: state$,
-    sel: sel$,
-    transform: transform$,
-  })
+  const selectionIndicator = isolate(SelectionIndicator)(sources)
+  const verticesIndicator = isolate(VerticesIndicator)(sources)
+  const vertexInsertIndicator = isolate(VertexInsertIndicator)(sources)
+  const adjustIndicator = isolate(AdjustIndicator)(sources)
 
-  const verticesIndicator = isolate(VerticesIndicator)({
-    DOM: domSource,
-    state: state$,
-    mouse,
-    sel: sel$,
-    transform: transform$,
-  })
-
-  const vertexInsertIndicator = isolate(VertexInsertIndicator)({
-    DOM: domSource,
-    state: state$,
-    mouse,
-    keyboard,
-    sel: sel$,
-    transform: transform$,
-  })
-
-  const adjustIndicator = isolate(AdjustIndicator)({
-    DOM: domSource,
-    mouse,
-    transform: transform$,
-  })
-
-  const vdom$ = xs
+  const indicatorsVdom$ = xs
     .combine(
-      state$,
-      mouse.cursor$,
-      transform$,
-      sources.drawingItem,
       // TODO why the following streams need `startWith`
-      vertexInsertIndicator.DOM.startWith(null),
       selectionIndicator.DOM.startWith(null),
+      vertexInsertIndicator.DOM.startWith(null),
       verticesIndicator.DOM.startWith(null),
       adjustIndicator.DOM.startWith(null),
       sources.addons.polygonCloseIndicator$,
     )
-    .map(
-      ([
-        { items, zlist },
-        cursor,
-        transform,
-        drawingItem,
-        addPointIndicator,
-        selectionIndicator,
-        verticesIndicator,
-        polygonCloseIndicator,
-        adjustIndicator,
-      ]) =>
-        h('svg.svg', { style: { cursor } }, [
-          h('g', { attrs: { transform: String(transform) } }, [
-            h('line', { attrs: { x1: 0, y1: 0, x2: 300, y2: 0, stroke: 'red' } }),
-            h('line', { attrs: { x1: 0, y1: 0, x2: 0, y2: 300, stroke: 'red' } }),
-            h(
-              'g.items',
-              zlist
-                .map(itemId => items.get(itemId))
-                .map(item => item.render())
-                .toArray(),
-            ),
-            h('g.drawing-item', [drawingItem && drawingItem.render()].filter(Boolean)),
-            h(
-              'g.indicators',
-              [
-                addPointIndicator,
-                selectionIndicator,
-                verticesIndicator,
-                polygonCloseIndicator,
-                adjustIndicator,
-              ].filter(Boolean),
-            ),
-          ]),
-        ]),
+    .map(([s, vi, v, a, pc]) => h('g.indicators', [s, vi, v, a, pc].filter(Boolean)))
+
+  const itemsVdom$ = xs
+    .combine(state$, sel$, keyboard.isPressing('t'))
+    .map(([{ zlist, items }, sel, shallowSelected]) =>
+      h(
+        'g.items',
+        zlist
+          .map(itemId => items.get(itemId))
+          .map(item => {
+            const shallow = shallowSelected && sel.idSet.has(item.id)
+            if (shallow) {
+              return item.set('opacity', item.opacity * 0.6).render()
+            } else {
+              return item.render()
+            }
+          })
+          .toArray(),
+      ),
     )
+
+  const vdom$ = xs
+    .combine(itemsVdom$, mouse.cursor$, transform$, sources.drawingItem, indicatorsVdom$)
+    .map(([items, cursor, transform, drawingItem, indicators]) =>
+      h('svg.svg', { style: { cursor } }, [
+        h('g', { attrs: { transform: String(transform) } }, [
+          h('line', { attrs: { x1: 0, y1: 0, x2: 300, y2: 0, stroke: 'red' } }),
+          h('line', { attrs: { x1: 0, y1: 0, x2: 0, y2: 300, stroke: 'red' } }),
+          items,
+          h(
+            'g.drawing-item',
+            [drawingItem && drawingItem.set('opacity', drawingItem.opacity * 0.6).render()].filter(
+              Boolean,
+            ),
+          ),
+          indicators,
+        ]),
+      ]),
+    )
+
   return {
     DOM: vdom$,
     FILE: file$,

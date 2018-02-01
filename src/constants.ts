@@ -3,4 +3,4 @@ export const MAX_SCALE = 3
 export const INDICATOR_RECT_SIZE = 12
 export const INDICATOR_CIRCLE_RADIUS = 8
 // 自动对齐的距离
-export const SENSE_RANGE = 20
+export const SENSE_RANGE = 15

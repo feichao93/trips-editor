@@ -69,7 +69,7 @@ export default function makeFileDriver() {
                   content,
                 })
               }
-            } else if (['.jpg', '.bmp', '.webp'].some(ext => file.name.endsWith(ext))) {
+            } else if (['.jpg', '.bmp', '.webp', '.png'].some(ext => file.name.endsWith(ext))) {
               const url = URL.createObjectURL(file)
               const img = document.createElement('img')
               img.classList.add('ruler')

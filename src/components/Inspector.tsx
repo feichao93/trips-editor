@@ -159,10 +159,10 @@ export default function Inspector(sources: Sources): Sinks {
   const zIndexAction$ = domSource
     .select('*[data-action]')
     .events('click')
+    .map(e => e.ownerTarget.dataset.action)
+    .filter(action => ['z-inc', 'z-dec', 'z-top', 'z-bottom'].includes(action))
     .sampleCombine(sel$)
-    .map(([e, sel]) =>
-      actions.updateZIndex(sel, (e.ownerTarget as HTMLButtonElement).dataset.action as ZIndexOp),
-    )
+    .map(([action, sel]) => actions.updateZIndex(sel, action as ZIndexOp))
 
   const lockAction$ = domSource
     .select('*[data-action=lock]')
