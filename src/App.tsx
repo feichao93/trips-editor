@@ -16,11 +16,12 @@ import editPoints from './interaction/editPoints'
 import menubarInteractions from './interaction/menubarInteractions'
 import resizeItems from './interaction/resizeItems'
 import zoom from './interaction/zoom'
-import { AdjustConfig, InteractionFn, SaveConfig, Sel, SelUpdater, Updater } from './interfaces'
+import { AdjustConfig, InteractionFn, Item, SaveConfig, Sel, SelUpdater } from './interfaces'
 import { FileStat } from './makeFileDriver'
 import { KeyboardSource } from './makeKeyboardDriver'
 import './styles/app.styl'
 import AdjustedMouse from './utils/AdjustedMouse'
+import { mergeSinks } from './utils/common'
 import makeAdjuster from './utils/makeAdjuster'
 
 export interface Sources {
@@ -32,7 +33,7 @@ export interface Sources {
 }
 export interface Sinks {
   DOM: Stream<VNode>
-  FILE: Stream<File>
+  FILE: Stream<File | 'open-file-dialog'>
   SAVE: Stream<SaveConfig>
 }
 
@@ -45,11 +46,15 @@ export default function App(sources: Sources): Sinks {
   const actionProxy$ = xs.create<Action>()
   const nextModeProxy$ = xs.create<string>()
   const updateSelProxy$ = xs.create<SelUpdater>()
+  const nextDrawingItemProxy$ = xs.create<Item>()
   const nextResizerProxy$ = xs.create<string>()
   const nextVertexIndexProxy$ = xs.create<number>()
   const nextVertexInsertIndexProxy$ = xs.create<number>()
   const nextTransformProxy$ = xs.create<d3.ZoomTransform>()
   const nextAdjustConfigs$ = xs.create<AdjustConfig[]>()
+  const addonsProxy: { [key: string]: Stream<any> } = {
+    polygonCloseIndicator$: xs.create<VNode>(),
+  }
 
   const state$ = actionProxy$.fold((s, updater) => updater(s), initState)
   const transform$ = nextTransformProxy$.startWith(d3.zoomIdentity)
@@ -58,6 +63,10 @@ export default function App(sources: Sources): Sinks {
     .sampleCombine(state$)
     .fold((sel, [updater, state]) => updater(sel, state), new Sel())
   const adjustConfigs$ = nextAdjustConfigs$.startWith([])
+  const drawingItem$ = nextDrawingItemProxy$.startWith(null)
+  const addons = {
+    polygonCloseIndicator$: addonsProxy.polygonCloseIndicator$.startWith(null),
+  }
 
   const mouse = new AdjustedMouse(
     transform$,
@@ -68,6 +77,21 @@ export default function App(sources: Sources): Sinks {
     nextVertexInsertIndexProxy$,
   )
   const menubar = isolate(Menubar, 'menubar')({ DOM: domSource, sel: sel$ })
+
+  const subSources = {
+    FILE: sources.FILE,
+    DOM: domSource,
+    menubar,
+    mouse,
+    keyboard,
+    mode: mode$,
+    state: state$,
+    sel: sel$,
+    transform: transform$,
+    drawingItem: drawingItem$,
+    adjustConfigs: adjustConfigs$,
+    addons,
+  }
 
   const interactions: InteractionFn[] = [
     commonInteraction,
@@ -80,79 +104,36 @@ export default function App(sources: Sources): Sinks {
     drawLine,
     editPoints,
   ]
-  const sinksArray = interactions.map(fn =>
-    fn({
-      mode: mode$,
-      FILE: sources.FILE,
-      menubar,
-      mouse,
-      keyboard,
-      state: state$,
-      sel: sel$,
-      transform: transform$,
-    }),
-  )
-  const addons = Object.assign({}, ...sinksArray.map(sinks => sinks.addons))
 
-  // 目前正在绘制的元素 用于绘制预览
-  const drawingItem$ = xs.merge(...sinksArray.map(sinks => sinks.drawingItem).filter(Boolean))
+  const svg = isolate(Svg, 'svg')(subSources)
+  const inspector = isolate(Inspector, 'inspector')(subSources)
+  const statusBar = isolate(StatusBar, 'status-bar')(subSources)
 
-  const svg = isolate(Svg, 'svg')({
-    DOM: domSource,
-    FILE: sources.FILE,
-    mouse,
-    keyboard,
-    drawingItem: drawingItem$,
-    state: state$,
-    sel: sel$,
-    transform: transform$,
-    adjustConfigs: adjustConfigs$,
-    addons,
-  })
-  const inspector = isolate(Inspector, 'inspector')({
-    DOM: domSource,
-    sel: sel$,
-    state: state$,
-  })
-  const statusBar = isolate(StatusBar, 'status-bar')({
-    DOM: domSource,
-    state: state$,
-    transform: transform$,
-    mode: mode$,
-  })
+  const interactionSinks = interactions.map(fn => fn(subSources))
+  const allSinks = interactionSinks.concat([menubar, inspector, svg, statusBar])
 
-  actionProxy$.imitate(
-    xs.merge(
-      svg.action,
-      inspector.action,
-      ...sinksArray.map(sinks => sinks.action).filter(Boolean),
-    ),
-  )
-  nextModeProxy$.imitate(xs.merge(...sinksArray.map(sinks => sinks.nextMode).filter(Boolean)))
-  nextTransformProxy$.imitate(
-    xs.merge(
-      statusBar.nextTransform,
-      ...sinksArray.map(sinks => sinks.nextTransform).filter(Boolean),
-    ),
-  )
-  updateSelProxy$.imitate(xs.merge(...sinksArray.map(sinks => sinks.updateSel).filter(Boolean)))
-  nextAdjustConfigs$.imitate(
-    xs.merge(...sinksArray.map(sinks => sinks.nextAdjustConfigs).filter(Boolean)),
-  )
-  const save$: Stream<SaveConfig> = xs.merge(...sinksArray.map(sinks => sinks.SAVE).filter(Boolean))
-  const file$ = xs.merge(svg.FILE, ...sinksArray.map(sinks => sinks.FILE).filter(Boolean))
+  for (const key of Object.keys(addons)) {
+    addonsProxy[key].imitate(
+      xs.merge(...allSinks.map(sinks => sinks.addons && sinks.addons[key]).filter(Boolean)),
+    )
+  }
+
+  nextDrawingItemProxy$.imitate(mergeSinks(allSinks, 'drawingItem'))
+  actionProxy$.imitate(mergeSinks(allSinks, 'action'))
+  nextModeProxy$.imitate(mergeSinks(allSinks, 'nextMode'))
+  nextTransformProxy$.imitate(mergeSinks(allSinks, 'nextTransform'))
+  updateSelProxy$.imitate(mergeSinks(allSinks, 'updateSel'))
+  nextAdjustConfigs$.imitate(mergeSinks(allSinks, 'nextAdjustConfigs'))
+
+  const save$ = mergeSinks(allSinks, 'SAVE')
+  const file$ = mergeSinks(allSinks, 'FILE')
 
   mouse.imitate(svg.rawDown, svg.rawClick, svg.rawDblclick, svg.rawWheel)
   mouse.setAdjuster(makeAdjuster(keyboard, mouse, state$, transform$, adjustConfigs$))
 
-  nextResizerProxy$.imitate(svg.nextResizer)
-  nextVertexIndexProxy$.imitate(
-    xs.merge(
-      svg.nextVertexIndex,
-      ...sinksArray.map(sinks => sinks.nextVertexIndex).filter(Boolean),
-    ),
-  )
-  nextVertexInsertIndexProxy$.imitate(svg.nextVertexInsertIndex)
+  nextResizerProxy$.imitate(mergeSinks(allSinks, 'nextResizer'))
+  nextVertexIndexProxy$.imitate(mergeSinks(allSinks, 'nextVertexIndex'))
+  nextVertexInsertIndexProxy$.imitate(mergeSinks(allSinks, 'nextVertexInsertIndex'))
 
   const vdom$ = xs
     .combine(menubar.DOM, svg.DOM, inspector.DOM, statusBar.DOM)

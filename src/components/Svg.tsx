@@ -1,7 +1,7 @@
 import { DOMSource, h } from '@cycle/dom'
 import isolate from '@cycle/isolate'
 import { VNode } from 'snabbdom/vnode'
-import xs, { Stream } from 'xstream'
+import xs, { MemoryStream, Stream } from 'xstream'
 import AdjustIndicator from './AdjustIndicator'
 import SelectionIndicator from './SelectionIndicator'
 import VertexInsertIndicator from './VertexInsertIndicator'
@@ -24,7 +24,7 @@ export interface Sources {
   transform: Stream<d3.ZoomTransform>
   adjustConfigs: Stream<AdjustConfig[]>
   addons: {
-    polygonCloseIndicator: Stream<VNode>
+    polygonCloseIndicator$: MemoryStream<VNode>
   }
 }
 
@@ -120,7 +120,7 @@ export default function Svg(sources: Sources): Sinks {
       selectionIndicator.DOM.startWith(null),
       verticesIndicator.DOM.startWith(null),
       adjustIndicator.DOM.startWith(null),
-      sources.addons.polygonCloseIndicator,
+      sources.addons.polygonCloseIndicator$,
     )
     .map(
       ([

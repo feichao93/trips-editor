@@ -7,7 +7,10 @@ type Config = {
   preventDefault?: boolean
 }
 
+/** Another keyboard driver for cycle.js Driver. */
 export class KeyboardSource {
+  private streamMap = Map<string, Stream<any>>()
+
   shortcut(key: string | string[], config?: Config): Stream<KeyboardEvent> {
     return this.getStream(key, undefined, config)
   }
@@ -30,12 +33,11 @@ export class KeyboardSource {
         .merge(keypress$.mapTo(true), keyup$.mapTo(false))
         .startWith(false)
         .dropRepeats()
+        .remember()
       this.streamMap = this.streamMap.set(streamKey, stream)
     }
     return this.streamMap.get(streamKey)
   }
-
-  private streamMap = Map<string, Stream<any>>()
 
   private getStream<T>(key: string | string[], type: string, config?: Config) {
     config = config || {}

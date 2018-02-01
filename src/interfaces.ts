@@ -71,13 +71,16 @@ export interface InteractionFnSources {
 }
 
 export interface InteractionFnSinks {
+  DOM: Stream<VNode>
   action: Stream<Action>
   nextMode: Stream<string>
   nextTransform: Stream<d3.ZoomTransform>
   updateSel: Stream<SelUpdater>
   drawingItem: Stream<Item>
   nextVertexIndex: Stream<any>
+  nextVertexInsertIndex: Stream<any>
   nextAdjustConfigs: Stream<AdjustConfig[]>
+  nextResizer: Stream<string>
   SAVE: Stream<SaveConfig>
   FILE: Stream<File | 'open-file-dialog'>
   addons: { [key: string]: Stream<any> }
