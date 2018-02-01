@@ -3,10 +3,15 @@ meta:
   version: 0.7
 
 minScale: 0.5
-maxScale: 3
+maxScale: 5
 senseRange: 15
 
-labels:
+tags:
+  - name: base-map
+    lock: true
+    styles:
+      opacity: 0.3
+
   - name: '2*3 units'
     styles:
       fill: '#fefba8'

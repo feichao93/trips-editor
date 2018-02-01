@@ -10,8 +10,19 @@ import ImgItem from './utils/ImgItem'
 import PolygonItem from './utils/PolygonItem'
 import PolylineItem from './utils/PolylineItem'
 import Sel, { SelUpdater } from './utils/Sel'
+import Semantics from './utils/Semantics'
 
-export { StateRecord, Action, State, PolygonItem, PolylineItem, ImgItem, Sel, SelUpdater }
+export {
+  Semantics,
+  StateRecord,
+  Action,
+  State,
+  PolygonItem,
+  PolylineItem,
+  ImgItem,
+  Sel,
+  SelUpdater,
+}
 
 export interface Point {
   readonly x: number
@@ -134,7 +145,7 @@ export interface AppConfig {
   minScale: number
   maxScale: number
   senseRange: number
-  labels: {
+  tags: {
     name: string
     styles: {
       fill?: string

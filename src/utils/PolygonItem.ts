@@ -2,14 +2,16 @@ import { h } from '@cycle/dom'
 import { List, Record } from 'immutable'
 import { identity } from 'ramda'
 import { containsPoint, getCoordinateUpdater } from './common'
-import { Point, ResizeDirConfig, ItemMethods } from '../interfaces'
+import Semantics from './Semantics'
+import { ItemMethods, Point, ResizeDirConfig } from '../interfaces'
 
 const PolygonItemRecord = Record(
   {
     id: -1,
     locked: false,
+    semantics: new Semantics(),
     points: List<Point>(),
-    stroke: 'none',
+    stroke: 'black',
     strokeWidth: 1,
     opacity: 1,
     fill: '#888888',

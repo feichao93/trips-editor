@@ -1,5 +1,5 @@
-import { List, Map, OrderedMap, Record } from 'immutable'
-import { Item, ItemId, Point, ResizeDirConfig, Sel } from './interfaces'
+import { List, Map, Set, OrderedMap, Record } from 'immutable'
+import { Item, ItemId, Point, ResizeDirConfig, Sel, Updater } from './interfaces'
 import { getNextItemId } from './utils/common'
 
 export interface ResizingInfo {
@@ -17,9 +17,7 @@ export const StateRecord = Record({
 
 export const initState = StateRecord()
 export type State = typeof initState
-export interface Action {
-  (s: State): State
-}
+export type Action = Updater<State>
 export type ZIndexOp = 'z-inc' | 'z-dec' | 'z-top' | 'z-bottom'
 
 export default {
@@ -117,5 +115,19 @@ export default {
   },
   setState(state: State): Action {
     return () => state
+  },
+
+  toggleTag([tag, sel]: [string, Sel]): Action {
+    return state => {
+      const item = sel.item(state)
+      const updatedItem = item.updateIn(['semantics', 'tags'], (tags: Set<string>) => {
+        if (tags.includes(tag)) {
+          return tags.remove(tag)
+        } else {
+          return tags.add(tag)
+        }
+      })
+      return state.update('items', items => items.set(updatedItem.id, updatedItem))
+    }
   },
 }

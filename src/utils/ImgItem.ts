@@ -2,6 +2,7 @@ import { h } from '@cycle/dom'
 import { List, Record } from 'immutable'
 import { add, identity } from 'ramda'
 import { containsPoint, getCoordinateUpdater } from './common'
+import Semantics from './Semantics'
 import { ItemMethods, Point, ResizeDirConfig } from '../interfaces'
 import { ImgFileStat } from '../makeFileDriver'
 
@@ -9,6 +10,7 @@ const ImgItemRecord = Record(
   {
     id: -1,
     locked: false,
+    semantics: new Semantics(),
     opacity: 1,
     x: 0,
     y: 0,

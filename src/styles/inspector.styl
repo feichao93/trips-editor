@@ -4,11 +4,55 @@
   right 0
   bottom 0
   width 440px
-  border-left 1px solid #aaa
   background rgba(221, 221, 221, 0.7)
   overflow-y auto
 
- .row {
+  .tab-chooser {
+    display flex
+    background #282c34
+    .tab-chooser-item {
+      background inherit
+      border none
+      cursor pointer
+      color rgba(231, 231, 231, 0.5)
+      font-size 12px
+      height 32px
+      padding 4px 16px
+      text-transform uppercase
+      &:hover, &:active, &.active {
+        color #e7e7e7
+      }
+    }
+  }
+
+  .semantic-tab {
+    .tag-list-wrapper p {
+      margin 0
+      font-size 16px
+      line-height 32px
+      padding-left 8px
+    }
+    .tag-list {
+      list-style none
+      margin 0
+
+      .tag {
+        display flex
+        align-items center
+        font-size 16px
+        line-height 20px
+        label {
+          font-family Consolas, Monospaced, monospace
+          span {
+            display inline-block
+            width 120px
+          }
+        }
+      }
+    }
+  }
+
+  .row {
     display flex
     margin 10px
     overflow-x hidden
