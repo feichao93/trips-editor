@@ -1,9 +1,8 @@
 import { identical } from 'ramda'
 import xs from 'xstream'
 import actions from '../actions'
-import { AdjustConfig, InteractionFn, PolygonItem } from '../interfaces'
+import { AdjustConfig, InteractionFn, PolygonItem, Sel } from '../interfaces'
 import { getBoundingBoxOfPoints } from '../utils/common'
-import { selectionUtils } from '../utils/Selection'
 
 /**
  * Implementation for drawing rectangle interaction.
@@ -59,7 +58,7 @@ const drawRect: InteractionFn = ({ menubar, mouse, mode: mode$, keyboard }) => {
     drawingItem: drawingRect$,
     action: newItem$.map(actions.addItem),
     nextMode: nextMode$,
-    changeSelection: newItem$.map(selectionUtils.selectItem),
+    updateSel: newItem$.mapTo(Sel.selectLast()),
     nextAdjustConfigs: nextAdjustConfigs$,
   }
 }

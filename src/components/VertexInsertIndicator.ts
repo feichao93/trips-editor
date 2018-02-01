@@ -3,7 +3,7 @@ import { List } from 'immutable'
 import xs, { Stream } from 'xstream'
 import { State } from '../actions'
 import { SENSE_RANGE } from '../constants'
-import { Point, Selection } from '../interfaces'
+import { Point, Sel } from '../interfaces'
 import { KeyboardSource } from '../makeKeyboardDriver'
 import { distanceBetweenPointAndSegment } from '../utils/common'
 import Mouse from '../utils/Mouse'
@@ -13,7 +13,7 @@ export interface Sources {
   state: Stream<State>
   mouse: Mouse
   keyboard: KeyboardSource
-  selection: Stream<Selection>
+  sel: Stream<Sel>
   transform: Stream<d3.ZoomTransform>
 }
 
@@ -23,7 +23,7 @@ export interface Sinks {
 }
 
 export default function VertexInsertIndicator({
-  selection: sel$,
+  sel: sel$,
   mouse,
   keyboard,
   transform: transform$,

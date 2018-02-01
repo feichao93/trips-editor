@@ -4,21 +4,16 @@ import { InteractionFn, Rect, ResizeDirConfig } from '../interfaces'
 
 // TODO 该文件还可以进行优化
 
-const resizeItems: InteractionFn = ({
-  mouse,
-  mode: mode$,
-  state: state$,
-  selection: selection$,
-}) => {
+const resizeItems: InteractionFn = ({ mouse, mode: mode$, state: state$, sel: sel$ }) => {
   const resizer$ = mouse.resizer$
   const startInfo$ = mouse.down$
     .when(mode$, identical('idle'))
     .when(resizer$)
-    .sampleCombine(resizer$, state$, selection$)
-    .map(([pos, resizer, state, selection]) => {
-      const startItems = selection.selectedItems(state)
+    .sampleCombine(resizer$, state$, sel$)
+    .map(([pos, resizer, state, sel]) => {
+      const startItems = sel.items(state)
       // When resizer is not null, we can make sure that bbox is not null.
-      const bbox = selection.getBBox(state)
+      const bbox = sel.getBBox(state)
       return {
         startPos: pos,
         startItems,

@@ -4,8 +4,8 @@ import * as d3 from 'd3'
 import xs, { Stream } from 'xstream'
 import { Action, initState } from './actions'
 import Inspector from './components/Inspector'
-import StatusBar from './components/StatusBar'
 import Menubar from './components/Menubar'
+import StatusBar from './components/StatusBar'
 import Svg from './components/Svg'
 import commonInteraction from './interaction/commonInteraction'
 import dragItems from './interaction/dragItems'
@@ -16,13 +16,12 @@ import editPoints from './interaction/editPoints'
 import menubarInteractions from './interaction/menubarInteractions'
 import resizeItems from './interaction/resizeItems'
 import zoom from './interaction/zoom'
-import { AdjustConfig, InteractionFn, SaveConfig, Updater } from './interfaces'
+import { AdjustConfig, InteractionFn, SaveConfig, Sel, SelUpdater, Updater } from './interfaces'
 import { FileStat } from './makeFileDriver'
 import { KeyboardSource } from './makeKeyboardDriver'
 import './styles/app.styl'
 import AdjustedMouse from './utils/AdjustedMouse'
 import makeAdjuster from './utils/makeAdjuster'
-import Selection, { selectionRecord } from './utils/Selection'
 
 export interface Sources {
   DOM: DOMSource
@@ -45,7 +44,7 @@ export default function App(sources: Sources): Sinks {
 
   const actionProxy$ = xs.create<Action>()
   const nextModeProxy$ = xs.create<string>()
-  const changeSelectionProxy$ = xs.create<Updater<Selection>>()
+  const updateSelProxy$ = xs.create<SelUpdater>()
   const nextResizerProxy$ = xs.create<string>()
   const nextVertexIndexProxy$ = xs.create<number>()
   const nextVertexInsertIndexProxy$ = xs.create<number>()
@@ -55,7 +54,9 @@ export default function App(sources: Sources): Sinks {
   const state$ = actionProxy$.fold((s, updater) => updater(s), initState)
   const transform$ = nextTransformProxy$.startWith(d3.zoomIdentity)
   const mode$ = nextModeProxy$.startWith(initMode)
-  const selection$ = changeSelectionProxy$.fold((sel, updater) => updater(sel), selectionRecord)
+  const sel$ = updateSelProxy$
+    .sampleCombine(state$)
+    .fold((sel, [updater, state]) => updater(sel, state), new Sel())
   const adjustConfigs$ = nextAdjustConfigs$.startWith([])
 
   const mouse = new AdjustedMouse(
@@ -66,7 +67,7 @@ export default function App(sources: Sources): Sinks {
     nextVertexIndexProxy$,
     nextVertexInsertIndexProxy$,
   )
-  const menubar = isolate(Menubar, 'menubar')({ DOM: domSource, selection: selection$ })
+  const menubar = isolate(Menubar, 'menubar')({ DOM: domSource, sel: sel$ })
 
   const interactions: InteractionFn[] = [
     commonInteraction,
@@ -87,7 +88,7 @@ export default function App(sources: Sources): Sinks {
       mouse,
       keyboard,
       state: state$,
-      selection: selection$,
+      sel: sel$,
       transform: transform$,
     }),
   )
@@ -103,14 +104,14 @@ export default function App(sources: Sources): Sinks {
     keyboard,
     drawingItem: drawingItem$,
     state: state$,
-    selection: selection$,
+    sel: sel$,
     transform: transform$,
     adjustConfigs: adjustConfigs$,
     addons,
   })
   const inspector = isolate(Inspector, 'inspector')({
     DOM: domSource,
-    selection: selection$,
+    sel: sel$,
     state: state$,
   })
   const statusBar = isolate(StatusBar, 'status-bar')({
@@ -134,9 +135,7 @@ export default function App(sources: Sources): Sinks {
       ...sinksArray.map(sinks => sinks.nextTransform).filter(Boolean),
     ),
   )
-  changeSelectionProxy$.imitate(
-    xs.merge(...sinksArray.map(sinks => sinks.changeSelection).filter(Boolean)),
-  )
+  updateSelProxy$.imitate(xs.merge(...sinksArray.map(sinks => sinks.updateSel).filter(Boolean)))
   nextAdjustConfigs$.imitate(
     xs.merge(...sinksArray.map(sinks => sinks.nextAdjustConfigs).filter(Boolean)),
   )

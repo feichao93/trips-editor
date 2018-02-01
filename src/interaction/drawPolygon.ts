@@ -4,9 +4,8 @@ import { always, identical } from 'ramda'
 import xs, { Stream } from 'xstream'
 import actions from '../actions'
 import { SENSE_RANGE } from '../constants'
-import { AdjustConfig, InteractionFn, Point, PolygonItem, Updater } from '../interfaces'
+import { AdjustConfig, InteractionFn, Point, PolygonItem, Sel, Updater } from '../interfaces'
 import { distanceBetweenPointAndPoint } from '../utils/common'
-import { selectionUtils } from '../utils/Selection'
 
 /** Implementation for drawing polygon interaction.
  * Steps to draw a polygon:
@@ -135,7 +134,7 @@ const drawPolygon: InteractionFn = ({
     drawingItem: drawingPolygon$,
     action: addItem$,
     nextMode: nextMode$,
-    changeSelection: newItem$.map(selectionUtils.selectItem),
+    updateSel: newItem$.mapTo(Sel.selectLast()),
     nextAdjustConfigs: nextAdjustConfigs$,
     addons: { polygonCloseIndicator: closeIndicator$ },
   }

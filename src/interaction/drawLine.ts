@@ -1,8 +1,7 @@
 import { identical } from 'ramda'
 import xs from 'xstream'
 import actions from '../actions'
-import { InteractionFn, PolylineItem } from '../interfaces'
-import { selectionUtils } from '../utils/Selection'
+import { InteractionFn, PolylineItem, Sel } from '../interfaces'
 
 const drawLine: InteractionFn = ({ mouse, menubar, mode: mode$, keyboard }) => {
   const startPos$ = mouse.down$.when(mode$, identical('line.ready')).remember()
@@ -28,7 +27,7 @@ const drawLine: InteractionFn = ({ mouse, menubar, mode: mode$, keyboard }) => {
       startPos$.mapTo('line.drawing'),
       newItem$.mapTo('idle'),
     ),
-    changeSelection: newItem$.map(selectionUtils.selectItem),
+    updateSel: newItem$.mapTo(Sel.selectLast()),
   }
 }
 

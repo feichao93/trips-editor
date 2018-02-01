@@ -3,7 +3,7 @@ import { always } from 'ramda'
 import xs, { Stream } from 'xstream'
 import { State } from '../actions'
 import { INDICATOR_RECT_SIZE } from '../constants'
-import { Point, Selection } from '../interfaces'
+import { Point, Sel } from '../interfaces'
 import Mouse from '../utils/Mouse'
 
 const SmallCross = ({ x, y, k }: { x: number; y: number; k: number }) =>
@@ -68,7 +68,7 @@ export interface Sources {
   DOM: DOMSource
   mouse: Mouse
   state: Stream<State>
-  selection: Stream<Selection>
+  sel: Stream<Sel>
   transform: Stream<d3.ZoomTransform>
 }
 
@@ -79,17 +79,17 @@ export interface Sinks {
 
 export default function SelectedItemsIndicator({
   mouse,
-  selection: selection$,
+  sel: sel$,
   transform: transform$,
   state: state$,
 }: Sources): Sinks {
-  const bboxAndShapeType$ = xs.combine(selection$, state$).map(([sel, state]) => ({
+  const bboxAndShapeType$ = xs.combine(sel$, state$).map(([sel, state]) => ({
     bbox: sel.getBBox(state),
     Shape: sel.item(state) ? (sel.item(state).locked ? SmallCross : SmallRect) : null,
   }))
 
   const shapeConfig$ = xs
-    .combine(bboxAndShapeType$, transform$, selection$)
+    .combine(bboxAndShapeType$, transform$, sel$)
     .map(([{ bbox, Shape }, transform, sel]) => {
       if (bbox == null) {
         return null

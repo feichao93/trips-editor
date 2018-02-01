@@ -4,14 +4,14 @@ import { VNode } from 'snabbdom/vnode'
 import xs, { Stream } from 'xstream'
 import sampleCombine from 'xstream/extra/sampleCombine'
 import actions, { Action, State, ZIndexOp } from '../actions'
-import { Item, Selection } from '../interfaces'
+import { Item, Sel } from '../interfaces'
 import '../styles/inspector.styl'
 import { isPolygonItem, isPolylineItem, round3 } from '../utils/common'
 
 export interface Sources {
   DOM: DOMSource
   state: Stream<State>
-  selection: Stream<Selection>
+  sel: Stream<Sel>
 }
 
 export interface Sinks {
@@ -37,8 +37,8 @@ function EditableField({ label, type, value, field, ...otherProps }: EditableFie
   ])
 }
 
-function PositionAndSize(state: State, selection: Selection) {
-  const bbox = selection.getBBox(state)
+function PositionAndSize(state: State, sel: Sel) {
+  const bbox = sel.getBBox(state)
   if (bbox == null) {
     return null
   }
@@ -116,16 +116,16 @@ function Opacity(sitem: Item) {
   ])
 }
 
-function Z({ items, zlist }: State, selection: Selection) {
-  if (selection.isEmpty()) {
+function Z({ items, zlist }: State, sel: Sel) {
+  if (sel.isEmpty()) {
     return null
   }
-  const sidsList = selection.sids.toList()
-  const sidsCount = selection.sids.count()
+  const sidsList = sel.idSet.toList()
+  const sidsCount = sel.idSet.count()
   const isAtBottom = is(sidsList.sort(), zlist.take(sidsCount).sort())
   const isAtTop = is(sidsList.sort(), zlist.takeLast(sidsCount).sort())
 
-  const zIndex = zlist.indexOf(selection.sids.first())
+  const zIndex = zlist.indexOf(sel.idSet.first())
 
   return Row({ label: 'Z-index', key: 'z' }, [
     h('p', String(zIndex)),
@@ -155,11 +155,11 @@ function LockInfo(sitem: Item) {
 export default function Inspector(sources: Sources): Sinks {
   const domSource = sources.DOM
   const state$ = sources.state
-  const selection$ = sources.selection
+  const sel$ = sources.sel
   const zIndexAction$ = domSource
     .select('*[data-action]')
     .events('click')
-    .sampleCombine(selection$)
+    .sampleCombine(sel$)
     .map(([e, sel]) =>
       actions.updateZIndex(sel, (e.ownerTarget as HTMLButtonElement).dataset.action as ZIndexOp),
     )
@@ -167,29 +167,29 @@ export default function Inspector(sources: Sources): Sinks {
   const lockAction$ = domSource
     .select('*[data-action=lock]')
     .events('click')
-    .peek(selection$)
+    .peek(sel$)
     .map(actions.lockItems)
   const unlockAction$ = domSource
     .select('*[data-action=unlock]')
     .events('click')
-    .peek(selection$)
+    .peek(sel$)
     .map(actions.unlockItems)
 
   // TODO editAction还不完善，X和Y的编辑有点问题
   const editAction$ = domSource
     .select('.field input')
     .events('input')
-    .compose(sampleCombine(state$, selection$))
-    .map(([e, state, selection]) => {
+    .compose(sampleCombine(state$, sel$))
+    .map(([e, state, sel]) => {
       const input = e.ownerTarget as HTMLInputElement
       const field = input.dataset.field as any
       const value = input.type === 'number' ? Number(input.value) : input.value
-      const sitems = state.items.filter(item => selection.sids.has(item.id))
+      const sitems = state.items.filter(item => sel.idSet.has(item.id))
       const updatedItems = sitems.map(item => item.set(field, value as any))
       return actions.updateItems(updatedItems)
     })
 
-  const vdom$ = xs.combine(state$, selection$).map(([state, sel]) => {
+  const vdom$ = xs.combine(state$, sel$).map(([state, sel]) => {
     const sitem = sel.item(state)
     return h('div.inspector', { style: { display: sitem == null ? 'none' : 'block' } }, [
       PositionAndSize(state, sel),

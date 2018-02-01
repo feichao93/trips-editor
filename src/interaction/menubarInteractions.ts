@@ -1,9 +1,8 @@
 import * as d3 from 'd3'
 import xs from 'xstream'
 import actions from '../actions'
-import { InteractionFn } from '../interfaces'
+import { InteractionFn, Sel } from '../interfaces'
 import { openFileDialog, TextFileStat } from '../makeFileDriver'
-import { selectionUtils } from '../utils/Selection'
 import serializeUtils from '../utils/serializeUtils'
 
 const menubarInteractions: InteractionFn = ({ FILE, menubar, keyboard, state: state$ }) => {
@@ -25,14 +24,14 @@ const menubarInteractions: InteractionFn = ({ FILE, menubar, keyboard, state: st
     serializeUtils.fromJS(JSON.parse(stat.content)),
   )
   const resetState$ = loadedState$.map(actions.setState)
-  const resetSelection$ = loadedState$.map(selectionUtils.clearSids)
+  const resetSel$ = loadedState$.mapTo(Sel.reset())
   const toIdleMode$ = loadedState$.mapTo('idle')
 
   return {
     SAVE: save$,
     FILE: openDialog$,
     action: resetState$,
-    changeSelection: resetSelection$,
+    updateSel: resetSel$,
     nextMode: toIdleMode$,
   }
 }

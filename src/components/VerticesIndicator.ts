@@ -2,7 +2,7 @@ import { DOMSource, h, VNode } from '@cycle/dom'
 import xs, { Stream } from 'xstream'
 import { State } from '../actions'
 import { INDICATOR_CIRCLE_RADIUS } from '../constants'
-import { Point, Selection } from '../interfaces'
+import { Point, Sel } from '../interfaces'
 import { distanceBetweenPointAndPoint } from '../utils/common'
 import Mouse from '../utils/Mouse'
 
@@ -10,7 +10,7 @@ export interface Sources {
   DOM: DOMSource
   state: Stream<State>
   mouse: Mouse
-  selection: Stream<Selection>
+  sel: Stream<Sel>
   transform: Stream<d3.ZoomTransform>
 }
 
@@ -20,7 +20,7 @@ export interface Sinks {
 }
 
 export default function VerticesIndicator({
-  selection: sel$,
+  sel: sel$,
   mouse,
   transform: transform$,
   state: state$,

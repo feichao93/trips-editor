@@ -1,5 +1,5 @@
 import { List, Map, OrderedMap, Record } from 'immutable'
-import { Item, ItemId, Point, ResizeDirConfig, Selection } from './interfaces'
+import { Item, ItemId, Point, ResizeDirConfig, Sel } from './interfaces'
 import { getNextItemId } from './utils/common'
 
 export interface ResizingInfo {
@@ -23,24 +23,23 @@ export interface Action {
 export type ZIndexOp = 'z-inc' | 'z-dec' | 'z-top' | 'z-bottom'
 
 export default {
-  deleteVertex([sel, vertexIndex]: [Selection, number]): Action {
+  deleteVertex([sel, vertexIndex]: [Sel, number]): Action {
     return state =>
       state.update('items', items =>
         items.update(
-          sel.sids.first(),
+          sel.idSet.first(),
           item => (item.supportEditVertex() ? item.deleteVertex(vertexIndex) : item),
         ),
       )
   },
-  deleteSelection(sel: Selection): Action {
+  deleteSel(sel: Sel): Action {
     return state => {
-      const sids = sel.sids
-      if (sids.isEmpty()) {
+      if (sel.isEmpty()) {
         return state
       }
       return state
-        .update('items', items => items.filterNot(item => sids.has(item.id)))
-        .update('zlist', zlist => zlist.filterNot(itemId => sids.has(itemId)))
+        .update('items', items => items.filterNot(item => sel.idSet.has(item.id)))
+        .update('zlist', zlist => zlist.filterNot(itemId => sel.idSet.has(itemId)))
     }
   },
   moveItems(movedItems: OrderedMap<ItemId, Item>): Action {
@@ -64,13 +63,13 @@ export default {
   updateItems(updateItems: OrderedMap<ItemId, Item>): Action {
     return state => state.mergeIn(['items'], updateItems)
   },
-  updateZIndex(sel: Selection, op: ZIndexOp): Action {
+  updateZIndex(sel: Sel, op: ZIndexOp): Action {
     return state => {
-      const sids = sel.sids
-      if (sids.count() !== 1) {
+      const idSet = sel.idSet
+      if (idSet.count() !== 1) {
         return state
       } else {
-        const sid = sids.first()
+        const sid = idSet.first()
         const zlist = state.zlist
         const oldZ = zlist.indexOf(sid)
         const zs = zlist.delete(oldZ)
@@ -87,18 +86,18 @@ export default {
       }
     }
   },
-  lockItems(sel: Selection): Action {
+  lockItems(sel: Sel): Action {
     return state => {
       const lockedItems = state.items
-        .filter(item => sel.sids.has(item.id))
+        .filter(item => sel.idSet.has(item.id))
         .map(item => item.set('locked', true))
       return state.mergeIn(['items'], lockedItems)
     }
   },
-  unlockItems(sel: Selection): Action {
+  unlockItems(sel: Sel): Action {
     return state => {
       const unlockedItems = state.items
-        .filter(item => sel.sids.has(item.id))
+        .filter(item => sel.idSet.has(item.id))
         .map(item => item.set('locked', false))
       return state.mergeIn(['items'], unlockedItems)
     }
@@ -109,10 +108,10 @@ export default {
         items.set(item.id, item.supportEditVertex() ? item.moveVertex(vertexIndex, dx, dy) : item),
       )
   },
-  insertVertex([pos, sel, insertIndex]: [Point, Selection, number]): Action {
+  insertVertex([pos, sel, insertIndex]: [Point, Sel, number]): Action {
     return state =>
       state.updateIn(
-        ['items', sel.sids.first()],
+        ['items', sel.idSet.first()],
         (item: Item) => (item.supportEditVertex() ? item.insertVertex(insertIndex, pos) : item),
       )
   },

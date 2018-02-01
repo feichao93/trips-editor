@@ -2,9 +2,12 @@ import { List } from 'immutable'
 import { State } from '../actions'
 import { ImgItem, Item, Point, PolygonItem, PolylineItem, Rect } from '../interfaces'
 
+export function getMaxItemId(state: State) {
+  return state.items.map(item => item.id).max() || 0
+}
+
 export function getNextItemId(state: State) {
-  const maxId = state.items.map(item => item.id).max() || 0
-  return maxId + 1
+  return getMaxItemId(state) + 1
 }
 
 export function isPolygonItem(item: Item): item is PolygonItem {

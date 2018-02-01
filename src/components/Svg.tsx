@@ -7,7 +7,7 @@ import SelectionIndicator from './SelectionIndicator'
 import VertexInsertIndicator from './VertexInsertIndicator'
 import VerticesIndicator from './VerticesIndicator'
 import actions, { Action, State } from '../actions'
-import { AdjustConfig, ImgItem, Item, Point, Selection } from '../interfaces'
+import { AdjustConfig, ImgItem, Item, Point, Sel } from '../interfaces'
 import { FileStat } from '../makeFileDriver'
 import { KeyboardSource } from '../makeKeyboardDriver'
 import '../styles/svg.styl'
@@ -20,7 +20,7 @@ export interface Sources {
   keyboard: KeyboardSource
   drawingItem: Stream<Item>
   state: Stream<State>
-  selection: Stream<Selection>
+  sel: Stream<Sel>
   transform: Stream<d3.ZoomTransform>
   adjustConfigs: Stream<AdjustConfig[]>
   addons: {
@@ -48,7 +48,7 @@ export default function Svg(sources: Sources): Sinks {
   const mouse = sources.mouse
   const keyboard = sources.keyboard
   const transform$ = sources.transform
-  const selection$ = sources.selection
+  const sel$ = sources.sel
 
   svgdom.events('dragover', { preventDefault: true }).addListener({
     next(e) {
@@ -82,7 +82,7 @@ export default function Svg(sources: Sources): Sinks {
     DOM: domSource,
     mouse,
     state: state$,
-    selection: selection$,
+    sel: sel$,
     transform: transform$,
   })
 
@@ -90,7 +90,7 @@ export default function Svg(sources: Sources): Sinks {
     DOM: domSource,
     state: state$,
     mouse,
-    selection: selection$,
+    sel: sel$,
     transform: transform$,
   })
 
@@ -99,7 +99,7 @@ export default function Svg(sources: Sources): Sinks {
     state: state$,
     mouse,
     keyboard,
-    selection: selection$,
+    sel: sel$,
     transform: transform$,
   })
 

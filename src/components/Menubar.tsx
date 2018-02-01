@@ -1,12 +1,12 @@
 import { DOMSource, h, VNode } from '@cycle/dom'
 import { identical } from 'ramda'
 import xs, { Stream } from 'xstream'
-import { Selection } from '../interfaces'
+import { Sel } from '../interfaces'
 import '../styles/Menubar.styl'
 
 export interface Sources {
   DOM: DOMSource
-  selection: Stream<Selection>
+  sel: Stream<Sel>
 }
 
 export interface Sinks {
@@ -46,7 +46,7 @@ function MenuCategory({ active, category, items }: MenuCategoryProps) {
 
 export default function Menubar(sources: Sources): Sinks {
   const domSource = sources.DOM
-  const sel$ = sources.selection
+  const sel$ = sources.sel
   const nextActiveCategoryProxy$ = xs.create<string>()
 
   const activeCategory$ = nextActiveCategoryProxy$.dropRepeats().startWith(null)

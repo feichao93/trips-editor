@@ -2,8 +2,7 @@ import { is } from 'immutable'
 import { identical } from 'ramda'
 import xs from 'xstream'
 import actions from '../actions'
-import { InteractionFn } from '../interfaces'
-import { selectionUtils } from '../utils/Selection'
+import { InteractionFn, Sel } from '../interfaces'
 
 const commonInteraction: InteractionFn = ({
   mouse,
@@ -11,7 +10,7 @@ const commonInteraction: InteractionFn = ({
   menubar,
   mode: mode$,
   state: state$,
-  selection: sel$,
+  sel: sel$,
 }) => {
   const changeSids$ = mouse.down$
     .when(mode$, identical('idle'))
@@ -21,29 +20,29 @@ const commonInteraction: InteractionFn = ({
       const clickedItems = state.items.filter(item => item.containsPoint(pos))
       const targetItemId = state.zlist.findLast(itemId => clickedItems.has(itemId))
       if (targetItemId != null) {
-        return selectionUtils.setSids(targetItemId)
+        return Sel.select(targetItemId)
       } else {
-        return selectionUtils.clearSids()
+        return Sel.reset()
       }
     })
     .dropRepeats(is)
 
-  const deleteSelection$ = xs
+  const deleteSel$ = xs
     .merge(
       menubar.intent('delete'),
       keyboard.shortcut('d').when(sel$, sel => !sel.isEmpty() && sel.mode === 'bbox'),
     )
     .peek(sel$)
-    .map(actions.deleteSelection)
+    .map(actions.deleteSel)
 
   const toIdle$ = keyboard.shortcut('esc').mapTo('idle')
-  const changeSelection$ = xs.merge(changeSids$, deleteSelection$.mapTo(selectionUtils.clearSids()))
+  const updateSel$ = xs.merge(changeSids$, deleteSel$.mapTo(Sel.reset()))
 
   return {
-    action: deleteSelection$,
+    action: deleteSel$,
     nextMode: toIdle$,
     nextAdjustConfigs: toIdle$.mapTo([]),
-    changeSelection: changeSelection$,
+    updateSel: updateSel$,
   }
 }
 

@@ -9,9 +9,9 @@ import AdjustedMouse from './utils/AdjustedMouse'
 import ImgItem from './utils/ImgItem'
 import PolygonItem from './utils/PolygonItem'
 import PolylineItem from './utils/PolylineItem'
-import Selection from './utils/Selection'
+import Sel, { SelUpdater } from './utils/Sel'
 
-export { StateRecord, Action, State, PolygonItem, PolylineItem, ImgItem, Selection }
+export { StateRecord, Action, State, PolygonItem, PolylineItem, ImgItem, Sel, SelUpdater }
 
 export interface Point {
   readonly x: number
@@ -24,8 +24,8 @@ export interface Rect {
   readonly height: number
 }
 
-export interface Updater<T> {
-  (t: T): T
+export interface Updater<T, S = null> {
+  (t: T, s?: S): T
 }
 
 export interface ItemMethods {
@@ -63,7 +63,7 @@ export interface InteractionFnSources {
   mouse: AdjustedMouse
   mode: MemoryStream<string>
   state: MemoryStream<State>
-  selection: MemoryStream<Selection>
+  sel: MemoryStream<Sel>
   transform: MemoryStream<d3.ZoomTransform>
   keyboard: KeyboardSource
   menubar: MenubarSinks
@@ -74,7 +74,7 @@ export interface InteractionFnSinks {
   action: Stream<Action>
   nextMode: Stream<string>
   nextTransform: Stream<d3.ZoomTransform>
-  changeSelection: Stream<Updater<Selection>>
+  updateSel: Stream<SelUpdater>
   drawingItem: Stream<Item>
   nextVertexIndex: Stream<any>
   nextAdjustConfigs: Stream<AdjustConfig[]>
