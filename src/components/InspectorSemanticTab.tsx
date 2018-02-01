@@ -8,43 +8,8 @@ import actions, { Action, State, ZIndexOp } from '../actions'
 import { Item, Sel } from '../interfaces'
 import { isPolygonItem, isPolylineItem, round3 } from '../utils/common'
 
-export default function InspectorGeometricTab(sources: Sources): Sinks {
-  const toggleTag$ = sources.DOM.select('.tag input')
-    .events('change')
-    .map(e => e.ownerTarget.dataset.tag)
-    .sampleCombine(sources.sel)
-    .map(actions.toggleTag)
+export default function InspectorSemanticTab(sources: Sources): Sinks {
+  const vdom$ = xs.of(h('div.tab.semantic-tab', [h('h1', 'This tab is WIP')]))
 
-  const config$ = sources.config
-  const sitem$ = xs.combine(sources.state, sources.sel).map(([state, sel]) => sel.item(state))
-
-  const vdom$ = xs.combine(sitem$, config$).map(
-    ([sitem, config]) =>
-      sitem ? (
-        <div className="tab semantic-tab">
-          <div className="tag-list-wrapper">
-            <p>Tag List</p>
-            <ul className="tag-list">
-              {config.tags.map(tag => (
-                <li className="tag">
-                  <label>
-                    <span>{tag.name}</span>
-                    <input
-                      type="checkbox"
-                      data-tag={tag.name}
-                      checked={sitem.semantics.tags.includes(tag.name)}
-                    />
-                  </label>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      ) : null,
-  )
-
-  return {
-    DOM: vdom$,
-    action: toggleTag$,
-  }
+  return { DOM: vdom$, action: xs.never() }
 }

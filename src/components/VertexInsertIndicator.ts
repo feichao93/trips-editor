@@ -30,21 +30,26 @@ export default function VertexInsertIndicator({
   state: state$,
   config: config$,
 }: Sources): Sinks {
-  const vertices$ = xs.combine(sel$, state$).map(([sel, state]) => sel.vertices(state))
-  const segments$ = vertices$.map(
-    vs =>
-      vs.isEmpty()
+  const verticesAndEditable$ = xs.combine(sel$, state$).map(([sel, state]) => {
+    const item = sel.item(state)
+    const vertices = sel.vertices(state)
+    const editable = item && !item.locked
+    return { editable, vertices }
+  })
+  const segments$ = verticesAndEditable$.map(
+    ({ vertices, editable }) =>
+      vertices.isEmpty()
         ? List<[Point, Point]>()
-        : vs
+        : vertices
             .butLast()
-            .zip(vs.rest())
-            .push([vs.last(), vs.first()]),
+            .zip(vertices.rest())
+            .push([vertices.last(), vertices.first()]),
   )
   const highlightedSegmentIndex$ = xs
-    .combine(config$, mouse.move$, segments$, transform$, mouse.vertexIndex$)
+    .combine(verticesAndEditable$, config$, mouse.move$, segments$, transform$, mouse.vertexIndex$)
     .map(
-      ([config, pos, segments, transform, vertexIndex]) =>
-        vertexIndex === -1
+      ([{ editable }, config, pos, segments, transform, vertexIndex]) =>
+        vertexIndex === -1 && editable
           ? segments.findIndex(
               seg =>
                 distanceBetweenPointAndSegment(pos, seg[0], seg[1]) <=
@@ -70,11 +75,11 @@ export default function VertexInsertIndicator({
           })
         : null,
   )
-
+  const nextVertexInsertIndex$ = highlightedSegmentIndex$.map(
+    segIndex => (segIndex === -1 ? -1 : segIndex + 1),
+  )
   return {
     DOM: vdom$,
-    nextVertexInsertIndex: highlightedSegmentIndex$.map(
-      segIndex => (segIndex === -1 ? -1 : segIndex + 1),
-    ),
+    nextVertexInsertIndex: nextVertexInsertIndex$,
   }
 }

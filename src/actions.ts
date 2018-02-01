@@ -130,4 +130,17 @@ export default {
       return state.update('items', items => items.set(updatedItem.id, updatedItem))
     }
   },
+
+  applyStyles(sel: Sel, styles: any): Action {
+    return state => {
+      const item: any = sel.item(state)
+      return state.mergeIn(['items', item.id], item.merge(styles))
+    }
+  },
+  toggleLock(sel: Sel): Action {
+    return state => {
+      const item = sel.item(state)
+      return state.update('items', items => items.set(item.id, item.set('locked', !item.locked)))
+    }
+  },
 }

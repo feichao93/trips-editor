@@ -5,7 +5,7 @@ import { InteractionFn, Sel } from '../interfaces'
 import { openFileDialog, TextFileStat } from '../makeFileDriver'
 import serializeUtils from '../utils/serializeUtils'
 
-const menubarInteractions: InteractionFn = ({ FILE, menubar, keyboard, state: state$ }) => {
+const menubarInteractions: InteractionFn = ({ FILE, menubar, keyboard, state: state$, sel: sel$ }) => {
   /* File -> Save as JSON */
   const save$ = xs
     .merge(menubar.intent('save'), keyboard.shortcut('mod+s', { preventDefault: true }))
@@ -27,10 +27,16 @@ const menubarInteractions: InteractionFn = ({ FILE, menubar, keyboard, state: st
   const resetSel$ = loadedState$.mapTo(Sel.reset())
   const toIdleMode$ = loadedState$.mapTo('idle')
 
+  /* Edit -> Toggle Lock */
+  const toggleLock$ = xs
+    .merge(menubar.intent('toggle-lock'), keyboard.shortcut('l'))
+    .peek(sel$)
+    .map(actions.toggleLock)
+
   return {
     SAVE: save$,
     FILE: openDialog$,
-    action: resetState$,
+    action: xs.merge(resetState$, toggleLock$),
     updateSel: resetSel$,
     nextMode: toIdleMode$,
   }

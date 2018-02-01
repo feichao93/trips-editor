@@ -113,7 +113,7 @@ export default function App(sources: Sources): Sinks {
     zoom,
     drawRect,
     drawPolygon,
-    drawLine,
+    // drawLine,
     editPoints,
   ]
 

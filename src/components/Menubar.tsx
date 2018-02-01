@@ -109,7 +109,7 @@ export default function Menubar(sources: Sources): Sinks {
           { name: 'Delete Selection', disabled: sel.isEmpty(), hint: 'D', intent: 'delete' },
           { name: 'Add Rectangle', hint: 'R', intent: 'rect' },
           { name: 'Add Polygon', hint: 'P', intent: 'polygon' },
-          { name: 'Add Line', hint: 'L', intent: 'line' },
+          { name: 'Toggle Lock', disabled: sel.isEmpty(), hint: 'L', intent: 'toggle-lock' },
         ],
       }),
     ]),

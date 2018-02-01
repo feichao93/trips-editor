@@ -145,10 +145,11 @@ export interface AppConfig {
   minScale: number
   maxScale: number
   senseRange: number
-  tags: {
+  stylePresets: {
     name: string
     styles: {
       fill?: string
+      stroke?: string
       opacity?: number
     }
   }[]

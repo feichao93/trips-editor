@@ -2,39 +2,72 @@ import { DOMSource, h, VNode } from '@cycle/dom'
 import { always } from 'ramda'
 import xs, { Stream } from 'xstream'
 import { State } from '../actions'
-import { INDICATOR_RECT_SIZE } from '../constants'
-import { Point, Sel } from '../interfaces'
+import { INDICATOR_RECT_SIZE, INDICATOR_CIRCLE_RADIUS } from '../constants'
+import { Point, Rect, Sel } from '../interfaces'
 import Mouse from '../utils/Mouse'
 
-const SmallCross = ({ x, y, k }: { x: number; y: number; k: number }) =>
-  h('g', { attrs: { transform: `translate(${x}, ${y})` } }, [
-    h('line', {
-      attrs: {
-        x1: 0,
-        y1: 0,
-        x2: INDICATOR_RECT_SIZE / k,
-        y2: INDICATOR_RECT_SIZE / k,
-        stroke: 'black',
-        'stroke-width': 2 / k,
-      },
-    }),
-    h('line', {
-      attrs: {
-        x1: INDICATOR_RECT_SIZE / k,
-        y1: 0,
-        x2: 0,
-        y2: INDICATOR_RECT_SIZE / k,
-        stroke: 'black',
-        'stroke-width': 2 / k,
-      },
-    }),
-  ])
+export interface SmallShapeProps {
+  x: number
+  y: number
+  k: number
+  style?: { [key: string]: string }
+  dataset?: { [key: string]: string }
+  attrs?: { [key: string]: string | number | boolean }
+}
 
-const SmallRect = ({ x, y, k }: { x: number; y: number; k: number }) =>
+export const SmallCircle = ({ x, y, k, style, dataset, attrs }: SmallShapeProps) =>
+  h('circle', {
+    attrs: {
+      cx: x,
+      cy: y,
+      r: INDICATOR_CIRCLE_RADIUS / k,
+      'fill-opacity': 0.5,
+      stroke: 'black',
+      'stroke-width': 2 / k,
+      ...attrs,
+    },
+    style,
+    dataset,
+  })
+
+export const SmallCross = ({ x, y, k }: SmallShapeProps) =>
+  h(
+    'g',
+    {
+      attrs: {
+        transform: `translate(${x - INDICATOR_RECT_SIZE / k / 2}, ${y -
+          INDICATOR_RECT_SIZE / k / 2})`,
+      },
+    },
+    [
+      h('line', {
+        attrs: {
+          x1: 0,
+          y1: 0,
+          x2: INDICATOR_RECT_SIZE / k,
+          y2: INDICATOR_RECT_SIZE / k,
+          stroke: 'black',
+          'stroke-width': 2 / k,
+        },
+      }),
+      h('line', {
+        attrs: {
+          x1: INDICATOR_RECT_SIZE / k,
+          y1: 0,
+          x2: 0,
+          y2: INDICATOR_RECT_SIZE / k,
+          stroke: 'black',
+          'stroke-width': 2 / k,
+        },
+      }),
+    ],
+  )
+
+export const SmallRect = ({ x, y, k }: { x: number; y: number; k: number }) =>
   h('rect', {
     attrs: {
-      x,
-      y,
+      x: x - INDICATOR_RECT_SIZE / k / 2,
+      y: y - INDICATOR_RECT_SIZE / k / 2,
       width: INDICATOR_RECT_SIZE / k,
       height: INDICATOR_RECT_SIZE / k,
       stroke: '#666666',
@@ -43,7 +76,7 @@ const SmallRect = ({ x, y, k }: { x: number; y: number; k: number }) =>
     },
   })
 
-interface BorderLineProps {
+export interface BBoxLineProps {
   x1: number
   y1: number
   x2: number
@@ -51,7 +84,7 @@ interface BorderLineProps {
   k: number
 }
 
-const BorderLine = ({ k, x1, y1, x2, y2 }: BorderLineProps) =>
+export const BBoxLine = ({ k, x1, y1, x2, y2 }: BBoxLineProps) =>
   h('line', {
     attrs: {
       stroke: '#aaaaaa',
@@ -63,6 +96,15 @@ const BorderLine = ({ k, x1, y1, x2, y2 }: BorderLineProps) =>
       y2,
     },
   })
+
+export const BBoxIndicator = ({ k, bbox: { x, y, width, height } }: { bbox: Rect; k: number }) => (
+  <g className="bbox-indicator">
+    <BBoxLine k={k} x1={x} y1={y} x2={x + width} y2={y} />
+    <BBoxLine k={k} x1={x + width} y1={y} x2={x + width} y2={y + height} />
+    <BBoxLine k={k} x1={x + width} y1={y + height} x2={x} y2={y + height} />
+    <BBoxLine k={k} x1={x} y1={y + height} x2={x} y2={y} />
+  </g>
+)
 
 export interface Sources {
   DOM: DOMSource
@@ -140,23 +182,21 @@ export default function SelectedItemsIndicator({
     if (shapeConfig == null) {
       return null
     }
-    const { k, x0, y0, bbox: { x, y, width, height }, Shape, showShape } = shapeConfig
+    const { k, bbox, Shape, showShape } = shapeConfig
+    const { x, y, width, height } = bbox
     return (
       <g role="selected-items-indicator">
-        <BorderLine k={k} x1={x} y1={y} x2={x + width} y2={y} />
-        <BorderLine k={k} x1={x + width} y1={y} x2={x + width} y2={y + height} />
-        <BorderLine k={k} x1={x + width} y1={y + height} x2={x} y2={y + height} />
-        <BorderLine k={k} x1={x} y1={y + height} x2={x} y2={y} />
+        <BBoxIndicator bbox={bbox} k={k} />
         {showShape ? (
           <g>
-            <Shape k={k} x={x0} y={y0} />
-            <Shape k={k} x={x0 + width / 2} y={y0} />
-            <Shape k={k} x={x0 + width} y={y0} />
-            <Shape k={k} x={x0} y={y0 + height / 2} />
-            <Shape k={k} x={x0 + width} y={y0 + height / 2} />
-            <Shape k={k} x={x0} y={y0 + height} />
-            <Shape k={k} x={x0 + width / 2} y={y0 + height} />
-            <Shape k={k} x={x0 + width} y={y0 + height} />
+            <Shape k={k} x={x} y={y} />
+            <Shape k={k} x={x + width / 2} y={y} />
+            <Shape k={k} x={x + width} y={y} />
+            <Shape k={k} x={x} y={y + height / 2} />
+            <Shape k={k} x={x + width} y={y + height / 2} />
+            <Shape k={k} x={x} y={y + height} />
+            <Shape k={k} x={x + width / 2} y={y + height} />
+            <Shape k={k} x={x + width} y={y + height} />
           </g>
         ) : (
           <g />

@@ -76,9 +76,9 @@ export default class Mouse {
     // Calculate other streams
     this.pressing$ = xs.merge(this.rawDown$.mapTo(true), this.rawUp$.mapTo(false)).startWith(false)
     this.cursor$ = xs
-      .combine(this.vertexIndex$, this.resizer$)
-      .map(([vertexIndex, resizer]) => {
-        if (vertexIndex !== -1) {
+      .combine(this.resizer$, this.vertexIndex$, this.vertexInsertIndex$)
+      .map(([resizer, vertexIndex, vertexInsertIndex]) => {
+        if (vertexIndex !== -1 || vertexInsertIndex !== -1) {
           return 'crosshair'
         }
         return resizer || 'default'

@@ -1,5 +1,6 @@
 import { DOMSource, h, VNode } from '@cycle/dom'
 import xs, { Stream } from 'xstream'
+import { SmallCircle, SmallCross } from './SelectionIndicator'
 import { State } from '../actions'
 import { INDICATOR_CIRCLE_RADIUS } from '../constants'
 import { Point, Sel } from '../interfaces'
@@ -25,37 +26,44 @@ export default function VerticesIndicator({
   transform: transform$,
   state: state$,
 }: Sources): Sinks {
-  const vertices$ = xs.combine(sel$, state$).map(([sel, state]) => sel.vertices(state))
+  const verticesAndEditable$ = xs.combine(sel$, state$).map(([sel, state]) => {
+    const item = sel.item(state)
+    const vertices = sel.vertices(state)
+    const editable = item && !item.locked
+    return { editable, vertices }
+  })
   const nextVertexIndex$ = xs
-    .combine(vertices$, mouse.move$, transform$)
+    .combine(verticesAndEditable$, mouse.move$, transform$)
     .whenNot(mouse.pressing$)
-    .map(([vertices, p, transform]) =>
-      vertices.findIndex(
-        v => distanceBetweenPointAndPoint(v, p) <= INDICATOR_CIRCLE_RADIUS / transform.k,
-      ),
+    .map(
+      ([{ editable, vertices }, p, transform]) =>
+        editable
+          ? vertices.findIndex(
+              v => distanceBetweenPointAndPoint(v, p) <= INDICATOR_CIRCLE_RADIUS / transform.k,
+            )
+          : -1,
     )
   const vdom$ = xs
-    .combine(vertices$, transform$, mouse.vertexIndex$)
-    .map(([vertices, transform, vertexIndex]) =>
-      h(
+    .combine(verticesAndEditable$, transform$, mouse.vertexIndex$)
+    .map(([{ vertices, editable }, transform, vertexIndex]) => {
+      const Shape = editable ? SmallCircle : SmallCross
+      return h(
         'g.vertices-indicator',
         { key: 'vertices-indicator' },
         vertices.toArray().map((p, i) =>
-          h('circle.vertex', {
-            attrs: {
-              cx: p.x,
-              cy: p.y,
-              r: INDICATOR_CIRCLE_RADIUS / transform.k,
-              'fill-opacity': 0.5,
-              fill: i === vertexIndex ? 'red' : 'white',
-              stroke: 'black',
-              'stroke-width': 2 / transform.k,
-            },
+          Shape({
+            x: p.x,
+            y: p.y,
+            k: transform.k,
             dataset: { pointIndex: String(i) },
+            attrs: {
+              fill: i === vertexIndex ? 'red' : 'white',
+              className: 'vertex',
+            },
           }),
         ),
-      ),
-    )
+      )
+    })
 
   return {
     DOM: vdom$,

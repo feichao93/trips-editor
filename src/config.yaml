@@ -6,22 +6,42 @@ minScale: 0.5
 maxScale: 5
 senseRange: 15
 
-tags:
+stylePresets:
   - name: base-map
-    lock: true
     styles:
+      locked: true
       opacity: 0.3
-
   - name: '2*3 units'
     styles:
       fill: '#fefba8'
-      opacity: 0.6
-
   - name: '3*5 units'
-    style:
+    styles:
       fill: '#739998'
-      opacity: 0.6
+  - name: '4*4 units'
+    styles:
+      fill: '#cccc99'
+  - name: '4*5 units'
+    styles:
+      fill: '#ccccff'
+  - name: '5*5 units'
+    styles:
+      fill: '#66cc99'
+  - name: '10*10 units'
+    styles:
+      fill: '#6699cc'
 
   - name: 'region I'
-    style:
+    styles:
       fill: '#e8686d'
+  - name: 'region II'
+    styles:
+      fill: '#99ff66'
+  - name: 'region III'
+    styles:
+      fill: '#ff99ff'
+  - name: 'region IV'
+    styles:
+      fill: '#ccffff'
+  - name: 'region V'
+    styles:
+      fill: '#66ccff'

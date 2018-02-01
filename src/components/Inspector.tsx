@@ -2,8 +2,11 @@ import { DOMSource, h, VNode } from '@cycle/dom'
 import xs, { Stream } from 'xstream'
 import InspectorGeometricTab from './InspectorGeometricTab'
 import InspectorSemanticTab from './InspectorSemanticTab'
+import InspectorStylesTab from './InspectorStylesTab'
 import { Action, AppConfig, Sel, State } from '../interfaces'
 import '../styles/inspector.styl'
+
+type UIIntent = null
 
 export interface Sources {
   DOM: DOMSource
@@ -15,29 +18,40 @@ export interface Sources {
 export interface Sinks {
   DOM: Stream<VNode>
   action: Stream<Action>
+  intent?: Stream<UIIntent>
 }
 
-type InspectorTab = 'geometric' | 'semantic' // TODO working-style & config
+type InspectorTabName = 'geometric' | 'styles' | 'semantic' // TODO working-style & config
 
-function TabChooser(currentTab: InspectorTab) {
+function TabChooserItem({
+  currentTab,
+  tabName,
+}: {
+  currentTab: string
+  tabName: InspectorTabName
+}) {
+  return h(
+    'button.tab-chooser-item',
+    {
+      class: { active: currentTab === tabName },
+      dataset: { tab: tabName },
+    },
+    tabName,
+  )
+}
+
+function TabChooser(currentTab: InspectorTabName) {
   return h('div.tab-chooser', [
-    h(
-      'button.tab-chooser-item',
-      { class: { active: currentTab === 'geometric' }, dataset: { tab: 'geometric' } },
-      'Geometric',
-    ),
-    h(
-      'button.tab-chooser-item',
-      { class: { active: currentTab === 'semantic' }, dataset: { tab: 'semantic' } },
-      'Semantic',
-    ),
+    TabChooserItem({ currentTab, tabName: 'geometric' }),
+    TabChooserItem({ currentTab, tabName: 'styles' }),
+    TabChooserItem({ currentTab, tabName: 'semantic' }),
   ])
 }
 
 export default function Inspector(sources: Sources): Sinks {
   const nextTab$ = sources.DOM.select('.tab-chooser-item')
     .events('click')
-    .map(e => e.ownerTarget.dataset.tab as InspectorTab)
+    .map(e => e.ownerTarget.dataset.tab as InspectorTabName)
 
   const tab$ = nextTab$
     .startWith('geometric')
@@ -47,6 +61,8 @@ export default function Inspector(sources: Sources): Sinks {
   const tabComponent$ = tab$.map(tab => {
     if (tab === 'geometric') {
       return { comp: InspectorGeometricTab(sources), tab }
+    } else if (tab === 'styles') {
+      return { comp: InspectorStylesTab(sources), tab }
     } else {
       return { comp: InspectorSemanticTab(sources), tab }
     }

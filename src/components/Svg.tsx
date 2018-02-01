@@ -96,20 +96,13 @@ export default function Svg(sources: Sources): Sinks {
     .map(([s, vi, v, a, pc]) => h('g.indicators', [s, vi, v, a, pc].filter(Boolean)))
 
   const itemsVdom$ = xs
-    .combine(state$, sel$, keyboard.isPressing('t'))
-    .map(([{ zlist, items }, sel, shallowSelected]) =>
+    .combine(state$, sel$, keyboard.isPressing('`'))
+    .map(([{ zlist, items }, sel, reverseZList]) =>
       h(
         'g.items',
-        zlist
+        (reverseZList ? zlist.reverse() : zlist)
           .map(itemId => items.get(itemId))
-          .map(item => {
-            const shallow = shallowSelected && sel.idSet.has(item.id)
-            if (shallow) {
-              return item.set('opacity', item.opacity * 0.6).render()
-            } else {
-              return item.render()
-            }
-          })
+          .map(item => item.render())
           .toArray(),
       ),
     )
