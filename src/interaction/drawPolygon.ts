@@ -3,7 +3,6 @@ import { List } from 'immutable'
 import { always, identical } from 'ramda'
 import xs, { Stream } from 'xstream'
 import actions from '../actions'
-import { SENSE_RANGE } from '../constants'
 import { AdjustConfig, InteractionFn, Point, PolygonItem, Sel, Updater } from '../interfaces'
 import { distanceBetweenPointAndPoint } from '../utils/common'
 
@@ -23,6 +22,7 @@ const drawPolygon: InteractionFn = ({
   menubar,
   mode: mode$,
   transform: transform$,
+  config: config$,
 }) => {
   const addPointProxy$ = xs.create<Point>()
   const resetPointsProxy$ = xs.create()
@@ -37,12 +37,12 @@ const drawPolygon: InteractionFn = ({
 
   // Whether the user can close the polygon and add a new polygon item
   const canClose$ = xs
-    .combine(mouse.move$, transform$)
+    .combine(mouse.move$, transform$, config$)
     .sampleCombine(points$)
     .map(
-      ([[movingPos, transform], points]) =>
+      ([[movingPos, transform, config], points]) =>
         points.count() >= 3 &&
-        distanceBetweenPointAndPoint(points.first(), movingPos) < SENSE_RANGE / transform.k,
+        distanceBetweenPointAndPoint(points.first(), movingPos) < config.senseRange / transform.k,
     )
     .dropRepeats()
     .startWith(false)
@@ -89,14 +89,14 @@ const drawPolygon: InteractionFn = ({
       () => points$.map(points => points.first()),
     )
     .checkedFlatMap(p =>
-      transform$.map(transform =>
+      xs.combine(transform$, config$).map(([transform, config]) =>
         h('circle.close-indicator', {
           attrs: {
             cx: p.x,
             cy: p.y,
             fill: 'red',
             opacity: 0.3,
-            r: SENSE_RANGE / transform.k,
+            r: config.senseRange / transform.k,
           },
         }),
       ),

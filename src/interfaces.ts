@@ -60,6 +60,7 @@ export interface ResizeDirConfig {
 }
 
 export interface InteractionFnSources {
+  config: MemoryStream<AppConfig>
   mouse: AdjustedMouse
   mode: MemoryStream<string>
   state: MemoryStream<State>
@@ -74,6 +75,7 @@ export interface InteractionFnSinks {
   DOM: Stream<VNode>
   action: Stream<Action>
   nextMode: Stream<string>
+  nextConfig: Stream<AppConfig>
   nextTransform: Stream<d3.ZoomTransform>
   updateSel: Stream<SelUpdater>
   drawingItem: Stream<Item>
@@ -123,3 +125,20 @@ export type AdjustResultExtraInfo = Partial<{
   horizontalPoint: Point
   verticalPoint: Point
 }>
+
+export interface AppConfig {
+  meta: {
+    type: 'editor-config'
+    vertion: 0.7
+  }
+  minScale: number
+  maxScale: number
+  senseRange: number
+  labels: {
+    name: string
+    styles: {
+      fill?: string
+      opacity?: number
+    }
+  }[]
+}

@@ -1,12 +1,13 @@
 import { DOMSource, h, VNode } from '@cycle/dom'
 import xs, { Stream } from 'xstream'
-import { SENSE_RANGE } from '../constants'
+import { AppConfig } from '../interfaces'
 import AdjustedMouse from '../utils/AdjustedMouse'
 
 export interface Sources {
   DOM: DOMSource
   transform: Stream<d3.ZoomTransform>
   mouse: AdjustedMouse
+  config: Stream<AppConfig>
 }
 
 export interface Sinks {
@@ -15,15 +16,15 @@ export interface Sinks {
 
 export default function AdjustIndicator(sources: Sources): Sinks {
   const vdom$ = xs
-    .combine(sources.mouse.adjustedMoveInfo$, sources.transform)
-    .map(([adjustResult, transform]) => {
+    .combine(sources.mouse.adjustedMoveInfo$, sources.transform, sources.config)
+    .map(([adjustResult, transform, config]) => {
       const cement = adjustResult.applied.includes('cement')
         ? h('circle', {
             key: 'adjust-cement',
             attrs: {
               cx: adjustResult.point.x,
               cy: adjustResult.point.y,
-              r: SENSE_RANGE / transform.k,
+              r: config.senseRange / transform.k,
               fill: 'red',
               opacity: 0.4,
             },

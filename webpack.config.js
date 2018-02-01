@@ -27,6 +27,7 @@ module.exports = env => {
         { test: /\.tsx?$/, loaders: ['ts-loader'] },
         { test: /\.css$/, loaders: ['style-loader', 'css-loader'] },
         { test: /\.styl$/, loaders: ['style-loader', 'css-loader', 'stylus-loader'] },
+        { test: /\.ya?ml$/, loaders: ['json-loader', 'yaml-loader'] },
       ],
     },
 

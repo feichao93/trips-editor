@@ -7,7 +7,7 @@ import SelectionIndicator from './SelectionIndicator'
 import VertexInsertIndicator from './VertexInsertIndicator'
 import VerticesIndicator from './VerticesIndicator'
 import actions, { Action, State } from '../actions'
-import { AdjustConfig, ImgItem, Item, Point, Sel } from '../interfaces'
+import { AdjustConfig, ImgItem, Item, Point, Sel, AppConfig } from '../interfaces'
 import { FileStat } from '../makeFileDriver'
 import { KeyboardSource } from '../makeKeyboardDriver'
 import '../styles/svg.styl'
@@ -23,6 +23,7 @@ export interface Sources {
   sel: Stream<Sel>
   transform: Stream<d3.ZoomTransform>
   adjustConfigs: Stream<AdjustConfig[]>
+  config: Stream<AppConfig>
   addons: {
     polygonCloseIndicator$: MemoryStream<VNode>
   }
@@ -131,7 +132,6 @@ export default function Svg(sources: Sources): Sinks {
         ]),
       ]),
     )
-
   return {
     DOM: vdom$,
     FILE: file$,

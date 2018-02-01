@@ -1,11 +1,16 @@
 import * as d3 from 'd3'
 import { clamp, identical } from 'ramda'
 import xs from 'xstream'
-import { MAX_SCALE, MIN_SCALE } from '../constants'
 import { InteractionFn } from '../interfaces'
 import transition from '../utils/transition'
 
-const zoom: InteractionFn = ({ mouse, mode: mode$, state: state$, transform: transform$ }) => {
+const zoom: InteractionFn = ({
+  mouse,
+  config: config$,
+  mode: mode$,
+  state: state$,
+  transform: transform$,
+}) => {
   const dragStart$ = mouse.rawDown$
     .when(mode$, identical('idle'))
     .whenNot(mouse.isBusy$)
@@ -41,10 +46,10 @@ const zoom: InteractionFn = ({ mouse, mode: mode$, state: state$, transform: tra
   }))
   const zoom$ = xs
     .merge(zoomFromDblclick$, zoomFromWheel$)
-    .sampleCombine(transform$)
-    .map(([{ pos: rawPos, delta, useTransition }, transform]) => {
+    .sampleCombine(transform$, config$)
+    .map(([{ pos: rawPos, delta, useTransition }, transform, config]) => {
       const { x, y, k } = transform
-      const nextK = clamp(MIN_SCALE, MAX_SCALE, k * delta)
+      const nextK = clamp(config.minScale, config.maxScale, k * delta)
       const factor = nextK / k // 实际的放大率
       const nextX = factor * (x - rawPos.x) + rawPos.x
       const nextY = factor * (y - rawPos.y) + rawPos.y

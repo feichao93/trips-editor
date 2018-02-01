@@ -2,8 +2,7 @@ import { DOMSource, h, VNode } from '@cycle/dom'
 import { List } from 'immutable'
 import xs, { Stream } from 'xstream'
 import { State } from '../actions'
-import { SENSE_RANGE } from '../constants'
-import { Point, Sel } from '../interfaces'
+import { AppConfig, Point, Sel } from '../interfaces'
 import { KeyboardSource } from '../makeKeyboardDriver'
 import { distanceBetweenPointAndSegment } from '../utils/common'
 import Mouse from '../utils/Mouse'
@@ -15,6 +14,7 @@ export interface Sources {
   keyboard: KeyboardSource
   sel: Stream<Sel>
   transform: Stream<d3.ZoomTransform>
+  config: Stream<AppConfig>
 }
 
 export interface Sinks {
@@ -28,6 +28,7 @@ export default function VertexInsertIndicator({
   keyboard,
   transform: transform$,
   state: state$,
+  config: config$,
 }: Sources): Sinks {
   const vertices$ = xs.combine(sel$, state$).map(([sel, state]) => sel.vertices(state))
   const segments$ = vertices$.map(
@@ -40,13 +41,14 @@ export default function VertexInsertIndicator({
             .push([vs.last(), vs.first()]),
   )
   const highlightedSegmentIndex$ = xs
-    .combine(mouse.move$, segments$, transform$, mouse.vertexIndex$)
+    .combine(config$, mouse.move$, segments$, transform$, mouse.vertexIndex$)
     .map(
-      ([pos, segments, transform, vertexIndex]) =>
+      ([config, pos, segments, transform, vertexIndex]) =>
         vertexIndex === -1
           ? segments.findIndex(
               seg =>
-                distanceBetweenPointAndSegment(pos, seg[0], seg[1]) <= SENSE_RANGE / transform.k,
+                distanceBetweenPointAndSegment(pos, seg[0], seg[1]) <=
+                config.senseRange / transform.k,
             )
           : -1,
     )

@@ -16,13 +16,21 @@ import editPoints from './interaction/editPoints'
 import menubarInteractions from './interaction/menubarInteractions'
 import resizeItems from './interaction/resizeItems'
 import zoom from './interaction/zoom'
-import { AdjustConfig, InteractionFn, Item, SaveConfig, Sel, SelUpdater } from './interfaces'
 import { FileStat } from './makeFileDriver'
 import { KeyboardSource } from './makeKeyboardDriver'
 import './styles/app.styl'
 import AdjustedMouse from './utils/AdjustedMouse'
 import { mergeSinks } from './utils/common'
 import makeAdjuster from './utils/makeAdjuster'
+import {
+  AdjustConfig,
+  InteractionFn,
+  Item,
+  SaveConfig,
+  Sel,
+  SelUpdater,
+  AppConfig,
+} from './interfaces'
 
 export interface Sources {
   DOM: DOMSource
@@ -38,11 +46,13 @@ export interface Sinks {
 }
 
 const initMode = 'idle'
+const initConfig: AppConfig = require('./config.yaml')
 
 export default function App(sources: Sources): Sinks {
   const domSource = sources.DOM
   const keyboard = sources.keyboard
 
+  const nextConfigProxy$ = xs.create<AppConfig>()
   const actionProxy$ = xs.create<Action>()
   const nextModeProxy$ = xs.create<string>()
   const updateSelProxy$ = xs.create<SelUpdater>()
@@ -56,6 +66,7 @@ export default function App(sources: Sources): Sinks {
     polygonCloseIndicator$: xs.create<VNode>(),
   }
 
+  const config$ = nextConfigProxy$.startWith(initConfig)
   const state$ = actionProxy$.fold((s, updater) => updater(s), initState)
   const transform$ = nextTransformProxy$.startWith(d3.zoomIdentity)
   const mode$ = nextModeProxy$.startWith(initMode)
@@ -84,6 +95,7 @@ export default function App(sources: Sources): Sinks {
     menubar,
     mouse,
     keyboard,
+    config: config$,
     mode: mode$,
     state: state$,
     sel: sel$,
@@ -118,6 +130,7 @@ export default function App(sources: Sources): Sinks {
     )
   }
 
+  nextConfigProxy$.imitate(mergeSinks(allSinks, 'nextConfig'))
   nextDrawingItemProxy$.imitate(mergeSinks(allSinks, 'drawingItem'))
   actionProxy$.imitate(mergeSinks(allSinks, 'action'))
   nextModeProxy$.imitate(mergeSinks(allSinks, 'nextMode'))
@@ -129,7 +142,7 @@ export default function App(sources: Sources): Sinks {
   const file$ = mergeSinks(allSinks, 'FILE')
 
   mouse.imitate(svg.rawDown, svg.rawClick, svg.rawDblclick, svg.rawWheel)
-  mouse.setAdjuster(makeAdjuster(keyboard, mouse, state$, transform$, adjustConfigs$))
+  mouse.setAdjuster(makeAdjuster(keyboard, mouse, state$, transform$, adjustConfigs$, config$))
 
   nextResizerProxy$.imitate(mergeSinks(allSinks, 'nextResizer'))
   nextVertexIndexProxy$.imitate(mergeSinks(allSinks, 'nextVertexIndex'))

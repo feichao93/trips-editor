@@ -4,7 +4,6 @@ import xs, { Stream } from 'xstream'
 import { distanceBetweenPointAndPoint } from './common'
 import Mouse from './Mouse'
 import { State } from '../actions'
-import { SENSE_RANGE } from '../constants'
 import { KeyboardSource } from '../makeKeyboardDriver'
 import {
   AdjustConfig,
@@ -13,11 +12,13 @@ import {
   AdjustConfigRestrict,
   AdjustResult,
   Point,
+  AppConfig,
 } from '../interfaces'
 
 const PointRecord = Record({ x: 0, y: 0 })
 
 type AdjustFn = (
+  appConfig: AppConfig,
   point: Point,
   transform: d3.ZoomTransform,
   config: AdjustConfig,
@@ -72,7 +73,7 @@ class PointSet {
 }
 
 const adjustFn: { [key in AdjustConfig['type']]: AdjustFn } = {
-  cement(point, transform, config, points) {
+  cement(appConfig, point, transform, config, points) {
     config = config as AdjustConfigCement
     if (config != null) {
       const pointSet = new PointSet(points)
@@ -81,7 +82,7 @@ const adjustFn: { [key in AdjustConfig['type']]: AdjustFn } = {
       const nearestPoint = pointSet.minBy(p => distanceBetweenPointAndPoint(point, p))
       if (nearestPoint != null) {
         const nearestDistance = distanceBetweenPointAndPoint(point, nearestPoint)
-        if (nearestDistance <= SENSE_RANGE / transform.k) {
+        if (nearestDistance <= appConfig.senseRange / transform.k) {
           return { point: nearestPoint, ensure: T }
         }
       }
@@ -89,9 +90,9 @@ const adjustFn: { [key in AdjustConfig['type']]: AdjustFn } = {
     return null
   },
 
-  align(point, transform, config, points) {
+  align(appConfig, point, transform, config, points) {
     config = config as AdjustConfigAlign
-    const sense = SENSE_RANGE / transform.k
+    const sense = appConfig.senseRange / transform.k
     const { exclude = [], include = [] } = config
     const pointSet = new PointSet(points).subtract(exclude).union(include)
 
@@ -135,7 +136,7 @@ const adjustFn: { [key in AdjustConfig['type']]: AdjustFn } = {
     return null
   },
 
-  restrict(point, transform, config, points) {
+  restrict(appConfig, point, transform, config, points) {
     config = config as AdjustConfigRestrict
     const pointRecord = PointRecord(point)
     const { anchor } = config
@@ -154,14 +155,15 @@ export default function makeAdjuster(
   state$: Stream<State>,
   transform$: Stream<d3.ZoomTransform>,
   configs$: Stream<AdjustConfig[]>,
+  appConfig$: Stream<AppConfig>,
 ) {
   const allPoints$ = state$.map(state => state.items.toList().flatMap(item => item.getVertices()))
 
   return xs
-    .combine(keyboard.isPressing('z'), configs$, transform$, allPoints$)
-    .map(([disabled, configs, transform, allPoints]) => (targetPoint: Point) => {
+    .combine(appConfig$, keyboard.isPressing('z'), configs$, transform$, allPoints$)
+    .map(([appConfig, disabled, configs, transform, allPoints]) => (targetPoint: Point) => {
       function reduceFn(reduction: AdjustResult, config: AdjustConfig): AdjustResult {
-        const next = adjustFn[config.type](reduction.point, transform, config, allPoints)
+        const next = adjustFn[config.type](appConfig, reduction.point, transform, config, allPoints)
         if (next != null && reduction.ensure(next.point)) {
           return {
             point: next.point,

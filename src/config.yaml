@@ -1,0 +1,22 @@
+meta:
+  type: editor-config
+  version: 0.7
+
+minScale: 0.5
+maxScale: 3
+senseRange: 15
+
+labels:
+  - name: '2*3 units'
+    styles:
+      fill: '#fefba8'
+      opacity: 0.6
+
+  - name: '3*5 units'
+    style:
+      fill: '#739998'
+      opacity: 0.6
+
+  - name: 'region I'
+    style:
+      fill: '#e8686d'
