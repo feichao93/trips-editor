@@ -17,21 +17,31 @@
       color rgba(231, 231, 231, 0.5)
       font-size 12px
       height 32px
+      line-height 24px
       padding 4px 16px
       text-transform uppercase
+      outline none
       &:hover, &:active, &.active {
         color #e7e7e7
+      }
+      &.active {
+        border-bottom 2px solid white
       }
     }
   }
 
   .styles-tab {
-    .preset-list-wrapper p {
+    .preset-list-wrapper > p {
       margin 0
       font-size 16px
-      line-height 32px
+      line-height 40px
       padding-left 8px
     }
+
+    .preset-list-wrapper .manage {
+      margin-left 16px
+    }
+
     .preset-list {
       list-style none
       margin 0
@@ -42,9 +52,17 @@
         font-size 16px
         line-height 20px
         .name {
-          width 100px
+          margin 0
+          line-height 32px
+          padding-left 8px
+          width 150px
           font-family Consolas, Monospaced, monospace
         }
+      }
+
+      .preview {
+        width 24px
+        height 24px
       }
     }
   }

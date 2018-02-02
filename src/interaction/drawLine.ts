@@ -1,9 +1,8 @@
 import { identical } from 'ramda'
 import xs from 'xstream'
-import actions from '../actions'
-import { InteractionFn, PolylineItem, Sel } from '../interfaces'
+import { InteractionFn, PolylineItem, Sel, State } from '../interfaces'
 
-const drawLine: InteractionFn = ({ mouse, menubar, mode: mode$, keyboard }) => {
+const drawLine: InteractionFn = ({ mouse, UI, mode: mode$, keyboard }) => {
   const startPos$ = mouse.down$.when(mode$, identical('line.ready')).remember()
 
   const movingPos$ = startPos$
@@ -20,9 +19,9 @@ const drawLine: InteractionFn = ({ mouse, menubar, mode: mode$, keyboard }) => {
 
   return {
     drawingItem: drawingLine$,
-    action: newItem$.map(actions.addItem),
+    action: newItem$.map(State.addItem),
     nextMode: xs.merge(
-      menubar.intent('line').mapTo('line.ready'),
+      UI.intent('line').mapTo('line.ready'),
       keyboard.shortcut('l').mapTo('line.ready'),
       startPos$.mapTo('line.drawing'),
       newItem$.mapTo('idle'),

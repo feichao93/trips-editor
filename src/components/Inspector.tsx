@@ -1,12 +1,10 @@
 import { DOMSource, h, VNode } from '@cycle/dom'
-import xs, { Stream } from 'xstream'
+import { Stream } from 'xstream'
 import InspectorGeometricTab from './InspectorGeometricTab'
 import InspectorSemanticTab from './InspectorSemanticTab'
 import InspectorStylesTab from './InspectorStylesTab'
-import { Action, AppConfig, Sel, State } from '../interfaces'
+import { AppConfig, Sel, State, UIIntent } from '../interfaces'
 import '../styles/inspector.styl'
-
-type UIIntent = null
 
 export interface Sources {
   DOM: DOMSource
@@ -17,66 +15,57 @@ export interface Sources {
 
 export interface Sinks {
   DOM: Stream<VNode>
-  action: Stream<Action>
-  intent?: Stream<UIIntent>
+  intent: Stream<UIIntent>
 }
 
-type InspectorTabName = 'geometric' | 'styles' | 'semantic' // TODO working-style & config
+// TODO working-style & config
+type TabName = 'geometric' | 'styles' | 'semantic'
+const allTabNames: TabName[] = ['geometric', 'styles', 'semantic']
 
-function TabChooserItem({
-  currentTab,
-  tabName,
-}: {
-  currentTab: string
-  tabName: InspectorTabName
-}) {
+function TabChooserItem({ cntTabName, tabName }: { cntTabName: string; tabName: TabName }) {
   return h(
     'button.tab-chooser-item',
     {
-      class: { active: currentTab === tabName },
+      class: { active: cntTabName === tabName },
       dataset: { tab: tabName },
     },
     tabName,
   )
 }
 
-function TabChooser(currentTab: InspectorTabName) {
-  return h('div.tab-chooser', [
-    TabChooserItem({ currentTab, tabName: 'geometric' }),
-    TabChooserItem({ currentTab, tabName: 'styles' }),
-    TabChooserItem({ currentTab, tabName: 'semantic' }),
-  ])
+function TabChooser(cntTabName: TabName) {
+  return h('div.tab-chooser', allTabNames.map(tabName => TabChooserItem({ cntTabName, tabName })))
 }
 
 export default function Inspector(sources: Sources): Sinks {
-  const nextTab$ = sources.DOM.select('.tab-chooser-item')
+  const nextTabName$ = sources.DOM.select('.tab-chooser-item')
     .events('click')
-    .map(e => e.ownerTarget.dataset.tab as InspectorTabName)
+    .map(e => e.ownerTarget.dataset.tab as TabName)
 
-  const tab$ = nextTab$
+  const tabName$ = nextTabName$
     .startWith('geometric')
     .dropRepeats()
     .remember()
 
-  const tabComponent$ = tab$.map(tab => {
-    if (tab === 'geometric') {
-      return { comp: InspectorGeometricTab(sources), tab }
-    } else if (tab === 'styles') {
-      return { comp: InspectorStylesTab(sources), tab }
+  const tabWrapper$ = tabName$.map(tabName => {
+    if (tabName === 'geometric') {
+      return { inst: InspectorGeometricTab(sources), tabName }
+    } else if (tabName === 'styles') {
+      return { inst: InspectorStylesTab(sources), tabName }
     } else {
-      return { comp: InspectorSemanticTab(sources), tab }
+      return { inst: InspectorSemanticTab(sources), tabName }
     }
   })
 
-  const vdom$ = tabComponent$
-    .map(({ comp: { DOM: tabContent$ }, tab }) =>
+  const vdom$ = tabWrapper$
+    .map(({ inst: { DOM: tabContent$ }, tabName }) =>
       tabContent$.map(tabContent =>
-        h('div.inspector', [TabChooser(tab), tabContent].filter(Boolean)),
+        h('div.inspector', [TabChooser(tabName), tabContent].filter(Boolean)),
       ),
     )
     .flatten()
 
-  const action$ = tabComponent$.map(({ comp: { action } }) => action).flatten()
+  const intent$ = tabWrapper$.map(({ inst: { intent } }) => intent).flatten()
 
-  return { DOM: vdom$, action: action$ }
+  return { DOM: vdom$, intent: intent$ }
 }

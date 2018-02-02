@@ -1,7 +1,6 @@
 import { DOMSource, h, VNode } from '@cycle/dom'
-import { identical } from 'ramda'
 import xs, { Stream } from 'xstream'
-import { Sel } from '../interfaces'
+import { Sel, UIIntent } from '../interfaces'
 import '../styles/Menubar.styl'
 
 export interface Sources {
@@ -11,7 +10,7 @@ export interface Sources {
 
 export interface Sinks {
   DOM: Stream<VNode>
-  intent: (interested: string) => Stream<string>
+  intent: Stream<UIIntent>
 }
 
 export interface MenuItem {
@@ -88,7 +87,7 @@ export default function Menubar(sources: Sources): Sinks {
     .select('*[data-intent]')
     .events('click')
     .filter(e => !e.ownerTarget.classList.contains('disabled'))
-    .map(e => e.ownerTarget.dataset.intent)
+    .map(e => e.ownerTarget.dataset.intent as UIIntent)
 
   const vdom$ = xs.combine(activeCategory$, sel$).map(([activeCategory, sel]) =>
     h('div.menubar', { attrs: { tabIndex: 1 } }, [
@@ -117,6 +116,6 @@ export default function Menubar(sources: Sources): Sinks {
 
   return {
     DOM: vdom$,
-    intent: interested => intent$.filter(identical(interested)),
+    intent: intent$,
   }
 }

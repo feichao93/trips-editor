@@ -1,7 +1,6 @@
 import { identical } from 'ramda'
 import xs, { Stream } from 'xstream'
-import actions from '../actions'
-import { InteractionFn, Item, Point, Sel } from '../interfaces'
+import { InteractionFn, Item, Point, Sel, State } from '../interfaces'
 
 interface EditPointStartInfo {
   startPos: Point
@@ -71,17 +70,17 @@ const editPoints: InteractionFn = ({ mouse, state: state$, mode: mode$, keyboard
         .endWhen(mouse.up$),
     )
     .flatten()
-  const movePoint$ = movingInfo$.map(actions.moveVertex)
+  const movePoint$ = movingInfo$.map(State.moveVertex)
 
   const deletePoint$ = keyboard
     .keyup('d')
     .whenNot(mouse.vertexIndex$, identical(-1))
     .peek(xs.combine(sel$, mouse.vertexIndex$))
-    .map(actions.deleteVertex)
+    .map(State.deleteVertex)
 
   return {
     updateSel: toggleSelMode$,
-    action: xs.merge(movePoint$, addPointConfig$.map(actions.insertVertex), deletePoint$),
+    action: xs.merge(movePoint$, addPointConfig$.map(State.insertVertex), deletePoint$),
     nextVertexIndex: xs.merge(
       deletePoint$.mapTo(-1),
       startFromAdd$.map(startInfo => startInfo.vertexIndex),

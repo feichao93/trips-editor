@@ -1,7 +1,7 @@
 import { DOMSource, h, VNode } from '@cycle/dom'
 import * as d3 from 'd3'
 import xs, { Stream } from 'xstream'
-import { State } from '../actions'
+import { State } from '../utils/State'
 import '../styles/StatusBar.styl'
 import transition from '../utils/transition'
 

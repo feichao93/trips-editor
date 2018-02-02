@@ -6,8 +6,7 @@ import AdjustIndicator from './AdjustIndicator'
 import SelectionIndicator from './SelectionIndicator'
 import VertexInsertIndicator from './VertexInsertIndicator'
 import VerticesIndicator from './VerticesIndicator'
-import actions, { Action, State } from '../actions'
-import { AdjustConfig, ImgItem, Item, Point, Sel, AppConfig } from '../interfaces'
+import { Action, State, AdjustConfig, ImgItem, Item, Point, Sel, AppConfig } from '../interfaces'
 import { FileStat } from '../makeFileDriver'
 import { KeyboardSource } from '../makeKeyboardDriver'
 import '../styles/svg.styl'
@@ -67,7 +66,7 @@ export default function Svg(sources: Sources): Sinks {
       sources.FILE.filter(stat => stat.file === file)
         .take(1)
         .map(ImgItem.fromImgFileStat)
-        .map(actions.addItem),
+        .map(State.addItem),
     )
     .flatten()
 

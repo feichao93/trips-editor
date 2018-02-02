@@ -1,12 +1,10 @@
-import { DOMSource, h } from '@cycle/dom'
+import { h, VNode } from '@cycle/dom'
 import { is } from 'immutable'
-import { VNode } from 'snabbdom/vnode'
 import xs, { Stream } from 'xstream'
-import sampleCombine from 'xstream/extra/sampleCombine'
 import { Sinks, Sources } from './Inspector'
-import actions, { Action, State, ZIndexOp } from '../actions'
-import { Item, Sel } from '../interfaces'
+import { Item, Sel, UIIntent } from '../interfaces'
 import { isPolygonItem, isPolylineItem, round3 } from '../utils/common'
+import { State, ZIndexOp } from '../utils/State'
 
 function Row({ label, key }: { label: string; key: string }, children: VNode[]) {
   return h('div.row', { key }, [h('h2', label), ...children])
@@ -136,8 +134,8 @@ function LockInfo(sitem: Item) {
   return Row(
     { label: 'Lock', key: 'lock' },
     sitem.locked
-      ? [h('h2', 'locked'), h('button', { dataset: { action: 'unlock' } }, 'Unlock')]
-      : [h('h2', 'not locked'), h('button', { dataset: { action: 'lock' } }, 'Lock')],
+      ? [h('h2', 'locked'), h('button', { dataset: { action: 'toggle-lock' } }, 'Unlock')]
+      : [h('h2', 'not locked'), h('button', { dataset: { action: 'toggle-lock' } }, 'Lock')],
   )
 }
 
@@ -145,36 +143,25 @@ export default function InspectorGeometricTab(sources: Sources): Sinks {
   const domSource = sources.DOM
   const state$ = sources.state
   const sel$ = sources.sel
-  const zIndexAction$ = domSource
+
+  const zIndexIntent$ = domSource
     .select('*[data-action]')
     .events('click')
     .map(e => e.ownerTarget.dataset.action)
-    .filter(action => ['z-inc', 'z-dec', 'z-top', 'z-bottom'].includes(action))
-    .sampleCombine(sel$)
-    .map(([action, sel]) => actions.updateZIndex(sel, action as ZIndexOp))
+    .filter(action => ['z-inc', 'z-dec', 'z-top', 'z-bottom'].includes(action)) as Stream<ZIndexOp>
 
-  const lockAction$ = domSource
-    .select('*[data-action=lock]')
+  const toggleLockIntent$ = domSource
+    .select('*[data-action=toggle-lock]')
     .events('click')
-    .peek(sel$)
-    .map(actions.lockItems)
-  const unlockAction$ = domSource
-    .select('*[data-action=unlock]')
-    .events('click')
-    .peek(sel$)
-    .map(actions.unlockItems)
+    .mapTo<'toggle-lock'>('toggle-lock')
 
-  const editAction$ = domSource
+  const editIntent$ = domSource
     .select('.field input')
     .events('input')
-    .compose(sampleCombine(state$, sel$))
-    .map(([e, state, sel]) => {
+    .map<UIIntent.Edit>(e => {
       const input = e.ownerTarget as HTMLInputElement
-      const field = input.dataset.field as any
-      const value = input.type === 'number' ? Number(input.value) : input.value
-      const sitems = state.items.filter(item => sel.idSet.has(item.id))
-      const updatedItems = sitems.map(item => item.set(field, value as any))
-      return actions.updateItems(updatedItems)
+      const field = input.dataset.field
+      return { type: 'edit', field, value: input.value }
     })
 
   const vdom$ = xs.combine(state$, sel$).map(([state, sel]) => {
@@ -194,6 +181,6 @@ export default function InspectorGeometricTab(sources: Sources): Sinks {
 
   return {
     DOM: vdom$,
-    action: xs.merge(editAction$, zIndexAction$, lockAction$, unlockAction$),
+    intent: xs.merge(editIntent$, zIndexIntent$, toggleLockIntent$),
   }
 }

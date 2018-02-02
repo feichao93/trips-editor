@@ -3,7 +3,7 @@ import { T } from 'ramda'
 import xs, { Stream } from 'xstream'
 import { distanceBetweenPointAndPoint } from './common'
 import Mouse from './Mouse'
-import { State } from '../actions'
+import { State } from './State'
 import { KeyboardSource } from '../makeKeyboardDriver'
 import {
   AdjustConfig,

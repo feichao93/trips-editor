@@ -1,18 +1,18 @@
 import { is } from 'immutable'
 import { identical } from 'ramda'
 import xs from 'xstream'
-import actions from '../actions'
-import { InteractionFn, Sel } from '../interfaces'
+import { InteractionFn, Sel, State, UIIntent } from '../interfaces'
 
-const commonInteraction: InteractionFn = ({
+const selInteraction: InteractionFn = ({
   mouse,
   keyboard,
-  menubar,
+  UI,
   mode: mode$,
   state: state$,
   sel: sel$,
+  config: config$,
 }) => {
-  const changeSids$ = mouse.down$
+  const changeSel$ = mouse.down$
     .when(mode$, identical('idle'))
     .whenNot(mouse.isBusy$)
     .sampleCombine(state$)
@@ -29,21 +29,37 @@ const commonInteraction: InteractionFn = ({
 
   const deleteSel$ = xs
     .merge(
-      menubar.intent('delete'),
+      UI.intent('delete'),
       keyboard.shortcut('d').when(sel$, sel => !sel.isEmpty() && sel.mode === 'bbox'),
     )
     .peek(sel$)
-    .map(actions.deleteSel)
+    .map(State.deleteSel)
+
+  // Toggle Lock
+  const toggleLock$ = xs
+    .merge(UI.intent('toggle-lock'), keyboard.shortcut('l'))
+    .peek(sel$)
+    .map(State.toggleLock)
+
+  // TODO edit/z-index-op
+
+  const applyStylePreset$ = UI.intent<UIIntent.ApplyStylePreset>('apply-style-preset')
+    .whenNot(sel$, sel => sel.isEmpty())
+    .sampleCombine(sel$, config$)
+    .map(([{ name }, sel, config]) => {
+      const preset = config.stylePresets.find(preset => preset.name === name)
+      return State.applyStyles(sel, preset.styles)
+    })
 
   const toIdle$ = keyboard.shortcut('esc').mapTo('idle')
-  const updateSel$ = xs.merge(changeSids$, deleteSel$.mapTo(Sel.reset()))
+  const updateSel$ = xs.merge(changeSel$, deleteSel$.mapTo(Sel.reset()))
 
   return {
-    action: deleteSel$,
+    action: xs.merge(deleteSel$, toggleLock$, applyStylePreset$),
     nextMode: toIdle$,
     nextAdjustConfigs: toIdle$.mapTo([]),
     updateSel: updateSel$,
   }
 }
 
-export default commonInteraction
+export default selInteraction

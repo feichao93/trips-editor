@@ -1,6 +1,5 @@
 import { identical } from 'ramda'
-import actions from '../actions'
-import { InteractionFn } from '../interfaces'
+import { InteractionFn, State } from '../interfaces'
 
 const dragItems: InteractionFn = ({ mouse, mode: mode$, state: state$ }) => {
   const dragStart$ = mouse.down$
@@ -26,7 +25,7 @@ const dragItems: InteractionFn = ({ mouse, mode: mode$, state: state$ }) => {
           const dx = pos.x - startPos.x
           const dy = pos.y - startPos.y
           const movedItems = startItems.map(item => item.move(dx, dy))
-          return actions.moveItems(movedItems)
+          return State.moveItems(movedItems)
         })
         .endWhen(mouse.up$),
     )

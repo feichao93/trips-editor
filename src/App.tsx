@@ -2,34 +2,27 @@ import { DOMSource, h, VNode } from '@cycle/dom'
 import isolate from '@cycle/isolate'
 import * as d3 from 'd3'
 import xs, { Stream } from 'xstream'
-import { Action, initState } from './actions'
 import Inspector from './components/Inspector'
 import Menubar from './components/Menubar'
 import StatusBar from './components/StatusBar'
 import Svg from './components/Svg'
-import commonInteraction from './interaction/commonInteraction'
-import dragItems from './interaction/dragItems'
-import drawLine from './interaction/drawLine'
-import drawPolygon from './interaction/drawPolygon'
-import drawRect from './interaction/drawRect'
-import editPoints from './interaction/editPoints'
-import menubarInteractions from './interaction/menubarInteractions'
-import resizeItems from './interaction/resizeItems'
-import zoom from './interaction/zoom'
+import interactions from './interaction'
 import { FileStat } from './makeFileDriver'
 import { KeyboardSource } from './makeKeyboardDriver'
 import './styles/app.styl'
 import AdjustedMouse from './utils/AdjustedMouse'
 import { mergeSinks } from './utils/common'
 import makeAdjuster from './utils/makeAdjuster'
+import UIClass from './utils/UI'
 import {
+  Action,
   AdjustConfig,
-  InteractionFn,
+  AppConfig,
   Item,
   SaveConfig,
   Sel,
   SelUpdater,
-  AppConfig,
+  State,
 } from './interfaces'
 
 export interface Sources {
@@ -39,6 +32,7 @@ export interface Sources {
   mouseup: Stream<MouseEvent>
   mousemove: Stream<MouseEvent>
 }
+
 export interface Sinks {
   DOM: Stream<VNode>
   FILE: Stream<File | 'open-file-dialog'>
@@ -67,7 +61,7 @@ export default function App(sources: Sources): Sinks {
   }
 
   const config$ = nextConfigProxy$.startWith(initConfig)
-  const state$ = actionProxy$.fold((s, updater) => updater(s), initState)
+  const state$ = actionProxy$.fold((s, updater) => updater(s), new State())
   const transform$ = nextTransformProxy$.startWith(d3.zoomIdentity)
   const mode$ = nextModeProxy$.startWith(initMode)
   const sel$ = updateSelProxy$
@@ -79,6 +73,7 @@ export default function App(sources: Sources): Sinks {
     polygonCloseIndicator$: addonsProxy.polygonCloseIndicator$.startWith(null),
   }
 
+  const UI = new UIClass()
   const mouse = new AdjustedMouse(
     transform$,
     sources.mousemove,
@@ -87,12 +82,11 @@ export default function App(sources: Sources): Sinks {
     nextVertexIndexProxy$,
     nextVertexInsertIndexProxy$,
   )
-  const menubar = isolate(Menubar, 'menubar')({ DOM: domSource, sel: sel$ })
 
-  const subSources = {
+  const compSources = {
     FILE: sources.FILE,
     DOM: domSource,
-    menubar,
+    UI,
     mouse,
     keyboard,
     config: config$,
@@ -105,23 +99,12 @@ export default function App(sources: Sources): Sinks {
     addons,
   }
 
-  const interactions: InteractionFn[] = [
-    commonInteraction,
-    menubarInteractions,
-    dragItems,
-    resizeItems,
-    zoom,
-    drawRect,
-    drawPolygon,
-    // drawLine,
-    editPoints,
-  ]
+  const menubar = isolate(Menubar, 'menubar')({ DOM: domSource, sel: sel$ })
+  const svg = isolate(Svg, 'svg')(compSources)
+  const inspector = isolate(Inspector, 'inspector')(compSources)
+  const statusBar = isolate(StatusBar, 'status-bar')(compSources)
 
-  const svg = isolate(Svg, 'svg')(subSources)
-  const inspector = isolate(Inspector, 'inspector')(subSources)
-  const statusBar = isolate(StatusBar, 'status-bar')(subSources)
-
-  const interactionSinks = interactions.map(fn => fn(subSources))
+  const interactionSinks = interactions.map(fn => fn(compSources))
   const allSinks = interactionSinks.concat([menubar, inspector, svg, statusBar])
 
   for (const key of Object.keys(addons)) {
@@ -143,7 +126,7 @@ export default function App(sources: Sources): Sinks {
 
   mouse.imitate(svg.rawDown, svg.rawClick, svg.rawDblclick, svg.rawWheel)
   mouse.setAdjuster(makeAdjuster(keyboard, mouse, state$, transform$, adjustConfigs$, config$))
-
+  UI.imitate(xs.merge(inspector.intent, menubar.intent))
   nextResizerProxy$.imitate(mergeSinks(allSinks, 'nextResizer'))
   nextVertexIndexProxy$.imitate(mergeSinks(allSinks, 'nextVertexIndex'))
   nextVertexInsertIndexProxy$.imitate(mergeSinks(allSinks, 'nextVertexInsertIndex'))

@@ -1,14 +1,12 @@
-import * as d3 from 'd3'
 import xs from 'xstream'
-import actions from '../actions'
-import { InteractionFn, Sel } from '../interfaces'
+import { InteractionFn, Sel, State } from '../interfaces'
 import { openFileDialog, TextFileStat } from '../makeFileDriver'
 import serializeUtils from '../utils/serializeUtils'
 
-const menubarInteractions: InteractionFn = ({ FILE, menubar, keyboard, state: state$, sel: sel$ }) => {
+const file: InteractionFn = ({ FILE, UI, keyboard, state: state$, sel: sel$ }) => {
   /* File -> Save as JSON */
   const save$ = xs
-    .merge(menubar.intent('save'), keyboard.shortcut('mod+s', { preventDefault: true }))
+    .merge(UI.intent('save'), keyboard.shortcut('mod+s', { preventDefault: true }))
     .peek(state$)
     .map(state => ({
       blob: new Blob([JSON.stringify(serializeUtils.toJS(state))], {
@@ -18,28 +16,22 @@ const menubarInteractions: InteractionFn = ({ FILE, menubar, keyboard, state: st
     }))
 
   /* File -> Load */
-  const openDialog$ = menubar.intent('load').mapTo<'open-file-dialog'>(openFileDialog)
+  const openDialog$ = UI.intent('load').mapTo<'open-file-dialog'>(openFileDialog)
   const fileStat$ = openDialog$.map(() => FILE.take(1)).flatten()
   const loadedState$ = fileStat$.map((stat: TextFileStat) =>
     serializeUtils.fromJS(JSON.parse(stat.content)),
   )
-  const resetState$ = loadedState$.map(actions.setState)
+  const resetState$ = loadedState$.map(State.setState)
   const resetSel$ = loadedState$.mapTo(Sel.reset())
   const toIdleMode$ = loadedState$.mapTo('idle')
-
-  /* Edit -> Toggle Lock */
-  const toggleLock$ = xs
-    .merge(menubar.intent('toggle-lock'), keyboard.shortcut('l'))
-    .peek(sel$)
-    .map(actions.toggleLock)
 
   return {
     SAVE: save$,
     FILE: openDialog$,
-    action: xs.merge(resetState$, toggleLock$),
+    action: resetState$,
     updateSel: resetSel$,
     nextMode: toIdleMode$,
   }
 }
 
-export default menubarInteractions
+export default file

@@ -22,8 +22,8 @@
     "@cycle/run": "^4.1.0",
     "@types/d3": "^4.12.0",
     "@types/file-saver": "^1.3.0",
-    "@types/ramda": "^0.25.13",
-    "d3": "^4.12.2",
+    "@types/ramda": "^0.25.16",
+    "d3": "^4.13.0",
     "file-saver": "^1.3.3",
     "immutable": "4.0.0-rc.9",
     "mousetrap": "^1.6.1",
@@ -31,23 +31,23 @@
     "ramda": "^0.25.0",
     "snabbdom": "^0.7.1",
     "snabbdom-pragma": "^2.6.0",
-    "xstream": "^11.1.0"
+    "xstream": "^11.2.0"
   },
   "devDependencies": {
-    "@types/node": "^8.5.5",
-    "css-loader": "^0.28.7",
+    "@types/node": "^9.4.0",
+    "css-loader": "^0.28.9",
     "cycle-restart": "^0.2.2",
     "html-webpack-plugin": "^2.30.1",
     "json-loader": "^0.5.7",
     "prettier": "^1.9.2",
-    "style-loader": "^0.19.1",
+    "style-loader": "^0.20.1",
     "stylus": "^0.54.5",
     "stylus-loader": "^3.0.1",
-    "ts-loader": "^3.2.0",
-    "typescript": "^2.6.2",
-    "uglifyjs-webpack-plugin": "^1.1.6",
+    "ts-loader": "^3.4.0",
+    "typescript": "^2.7.1",
+    "uglifyjs-webpack-plugin": "^1.1.8",
     "webpack": "^3.10.0",
-    "webpack-dev-server": "^2.9.7",
+    "webpack-dev-server": "^2.11.1",
     "yaml-loader": "^0.5.0"
   }
 }

@@ -1,8 +1,6 @@
-import { VNode } from '@cycle/dom'
+import { DOMSource, VNode } from '@cycle/dom'
 import { List } from 'immutable'
 import { MemoryStream, Stream } from 'xstream'
-import { Action, State, StateRecord } from './actions'
-import { Sinks as MenubarSinks } from './components/Menubar'
 import { FileStat } from './makeFileDriver'
 import { KeyboardSource } from './makeKeyboardDriver'
 import AdjustedMouse from './utils/AdjustedMouse'
@@ -10,19 +8,10 @@ import ImgItem from './utils/ImgItem'
 import PolygonItem from './utils/PolygonItem'
 import PolylineItem from './utils/PolylineItem'
 import Sel, { SelUpdater } from './utils/Sel'
-import Semantics from './utils/Semantics'
+import { Action, State } from './utils/State'
+import UIClass, { UIIntent } from './utils/UI'
 
-export {
-  Semantics,
-  StateRecord,
-  Action,
-  State,
-  PolygonItem,
-  PolylineItem,
-  ImgItem,
-  Sel,
-  SelUpdater,
-}
+export { UIIntent, Action, State, PolygonItem, PolylineItem, ImgItem, Sel, SelUpdater }
 
 export interface Point {
   readonly x: number
@@ -64,6 +53,7 @@ export interface RecordSetter<K, V> {
 }
 
 export type ItemId = number
+export type NodeId = number
 
 export interface ResizeDirConfig {
   h: boolean
@@ -71,6 +61,8 @@ export interface ResizeDirConfig {
 }
 
 export interface InteractionFnSources {
+  DOM: DOMSource
+  UI: UIClass
   config: MemoryStream<AppConfig>
   mouse: AdjustedMouse
   mode: MemoryStream<string>
@@ -78,7 +70,6 @@ export interface InteractionFnSources {
   sel: MemoryStream<Sel>
   transform: MemoryStream<d3.ZoomTransform>
   keyboard: KeyboardSource
-  menubar: MenubarSinks
   FILE: Stream<FileStat>
 }
 
@@ -145,12 +136,14 @@ export interface AppConfig {
   minScale: number
   maxScale: number
   senseRange: number
-  stylePresets: {
-    name: string
-    styles: {
-      fill?: string
-      stroke?: string
-      opacity?: number
-    }
-  }[]
+  stylePresets: StylePreset[]
+}
+
+export interface StylePreset {
+  name: string
+  styles: {
+    fill?: string
+    stroke?: string
+    opacity?: number
+  }
 }

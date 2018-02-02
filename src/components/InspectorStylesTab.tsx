@@ -1,12 +1,24 @@
-import { DOMSource, h } from '@cycle/dom'
-import { is } from 'immutable'
-import { VNode } from 'snabbdom/vnode'
-import xs, { Stream } from 'xstream'
-import sampleCombine from 'xstream/extra/sampleCombine'
+import { h } from '@cycle/dom'
+import xs from 'xstream'
 import { Sinks, Sources } from './Inspector'
-import actions, { Action, State, ZIndexOp } from '../actions'
-import { Item, Sel } from '../interfaces'
-import { isPolygonItem, isPolylineItem, round3 } from '../utils/common'
+import { StylePreset, UIIntent } from '../interfaces'
+
+function generatePreview({ styles }: StylePreset) {
+  const result: any = {}
+  if (styles.fill != null) {
+    if (styles.fill === 'none') {
+      result.border = '1px solid black'
+    } else {
+      result.background = styles.fill
+    }
+  } else {
+    result.background = '#888888'
+  }
+  if (styles.opacity != null) {
+    result.opacity = styles.opacity
+  }
+  return result
+}
 
 export default function InspectorStylesTab({
   DOM: domSource,
@@ -14,18 +26,13 @@ export default function InspectorStylesTab({
   config: config$,
   state: state$,
 }: Sources): Sinks {
-  const applyStylePresetIntent$ = domSource
+  const intent$ = domSource
     .select('.preset .apply')
     .events('click')
-    .map(e => e.ownerTarget.parentElement.dataset.stylePreset)
-
-  const action$ = applyStylePresetIntent$
-    .whenNot(sel$, sel => sel.isEmpty())
-    .sampleCombine(sel$, config$)
-    .map(([presetName, sel, config]) => {
-      const preset = config.stylePresets.find(preset => preset.name === presetName)
-      return actions.applyStyles(sel, preset.styles)
-    })
+    .map<UIIntent.ApplyStylePreset>(e => ({
+      type: 'apply-style-preset',
+      name: e.ownerTarget.parentElement.dataset.stylePreset,
+    }))
 
   const sitem$ = xs.combine(state$, sel$).map(([state, sel]) => sel.item(state))
 
@@ -33,14 +40,16 @@ export default function InspectorStylesTab({
     <div className="preset-list-wrapper">
       <p>
         Style Presets
-        <button disabled>manage</button>
+        <button className="manage" disabled>
+          manage
+        </button>
       </p>
       <ul className="preset-list">
         {config.stylePresets.map(preset => (
           <li className="preset" data-stylePreset={preset.name}>
+            <div className="preview" style={generatePreview(preset)} />
             <p className="name">{preset.name}</p>
             <button className="apply">Apply</button>
-            <button style={{ marginLeft: '8px' }}>Remove</button>
           </li>
         ))}
       </ul>
@@ -53,6 +62,6 @@ export default function InspectorStylesTab({
 
   return {
     DOM: vdom$,
-    action: action$,
+    intent: intent$,
   }
 }

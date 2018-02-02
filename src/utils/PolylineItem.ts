@@ -2,14 +2,12 @@ import { h } from '@cycle/dom'
 import { List, Record } from 'immutable'
 import { identity } from 'ramda'
 import { distanceBetweenPointAndSegment, getCoordinateUpdater } from './common'
-import Semantics from './Semantics'
 import { ItemMethods, Point, ResizeDirConfig } from '../interfaces'
 
 const PolylineItemRecord = Record(
   {
     id: -1,
     locked: false,
-    semantics: new Semantics(),
     points: List<Point>(),
     stroke: '#000000',
     strokeWidth: 5,

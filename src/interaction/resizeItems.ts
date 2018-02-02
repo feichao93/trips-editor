@@ -1,6 +1,5 @@
 import { identical } from 'ramda'
-import actions from '../actions'
-import { InteractionFn, Rect, ResizeDirConfig } from '../interfaces'
+import { InteractionFn, Rect, ResizeDirConfig, State } from '../interfaces'
 
 // TODO 该文件还可以进行优化
 
@@ -26,7 +25,7 @@ const resizeItems: InteractionFn = ({ mouse, mode: mode$, state: state$, sel: se
     .checkedFlatMap(startInfo =>
       mouse.move$.map(movingPos => ({ movingPos, ...startInfo })).endWhen(mouse.up$),
     )
-    .map(actions.resizeItems)
+    .map(State.resizeItems)
 
   return {
     action: resizeAction$,

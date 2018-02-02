@@ -1,9 +1,7 @@
 import { DOMSource, h, VNode } from '@cycle/dom'
-import { always } from 'ramda'
 import xs, { Stream } from 'xstream'
-import { State } from '../actions'
-import { INDICATOR_RECT_SIZE, INDICATOR_CIRCLE_RADIUS } from '../constants'
-import { Point, Rect, Sel } from '../interfaces'
+import { INDICATOR_CIRCLE_RADIUS, INDICATOR_RECT_SIZE } from '../constants'
+import { Rect, Sel, State } from '../interfaces'
 import Mouse from '../utils/Mouse'
 
 export interface SmallShapeProps {

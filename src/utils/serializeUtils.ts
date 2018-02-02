@@ -1,5 +1,5 @@
 import { List, Seq } from 'immutable'
-import { Item, PolygonItem, PolylineItem, State, StateRecord } from '../interfaces'
+import { Item, PolygonItem, PolylineItem, State} from '../interfaces'
 
 const serializeUtils = {
   toJS(state: State) {
@@ -36,7 +36,7 @@ const serializeUtils = {
       .mapKeys((_: any, item: Item) => item.id)
     const zlist: any = List(object.zlist)
 
-    return StateRecord({ items, zlist })
+    return new State({ items, zlist })
   },
 }
 

@@ -2,8 +2,7 @@ import { h, VNode } from '@cycle/dom'
 import { List } from 'immutable'
 import { always, identical } from 'ramda'
 import xs, { Stream } from 'xstream'
-import actions from '../actions'
-import { AdjustConfig, InteractionFn, Point, PolygonItem, Sel, Updater } from '../interfaces'
+import { AdjustConfig, InteractionFn, Point, PolygonItem, Sel, State, Updater } from '../interfaces'
 import { distanceBetweenPointAndPoint } from '../utils/common'
 
 /** Implementation for drawing polygon interaction.
@@ -19,7 +18,7 @@ import { distanceBetweenPointAndPoint } from '../utils/common'
 const drawPolygon: InteractionFn = ({
   mouse,
   keyboard,
-  menubar,
+  UI,
   mode: mode$,
   transform: transform$,
   config: config$,
@@ -48,9 +47,7 @@ const drawPolygon: InteractionFn = ({
     .startWith(false)
 
   // Step 1
-  const toPolygonMode$ = xs
-    .merge(keyboard.shortcut('p'), menubar.intent('polygon'))
-    .mapTo('polygon')
+  const toPolygonMode$ = xs.merge(keyboard.shortcut('p'), UI.intent('polygon')).mapTo('polygon')
 
   // Step 2
   const addPoint$ = mouse.aclick$.when(mode$, identical('polygon')).whenNot(canClose$)
@@ -64,7 +61,7 @@ const drawPolygon: InteractionFn = ({
   // Step 4
   const toIdleMode$ = newItem$.mapTo('idle')
 
-  const addItem$ = newItem$.map(actions.addItem)
+  const addItem$ = newItem$.map(State.addItem)
   resetPointsProxy$.imitate(xs.merge(addItem$, toPolygonMode$))
 
   // 记录当前正在绘制的多边形的预览

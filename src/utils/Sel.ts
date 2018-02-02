@@ -1,6 +1,5 @@
 import { List, OrderedSet, Record } from 'immutable'
-import { Stream } from 'xstream'
-import { getBoundingBoxOfPoints, getNextItemId, getMaxItemId } from './common'
+import { getBoundingBoxOfPoints, getMaxItemId } from './common'
 import { ItemId, State, Updater } from '../interfaces'
 
 type SelMode = 'bbox' | 'vertices'

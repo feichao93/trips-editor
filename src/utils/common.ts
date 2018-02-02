@@ -1,6 +1,14 @@
 import { List } from 'immutable'
-import { State } from '../actions'
-import { ImgItem, InteractionFnSinks, Item, Point, PolygonItem, PolylineItem, Rect } from '../interfaces'
+import { State } from './State'
+import {
+  ImgItem,
+  InteractionFnSinks,
+  Item,
+  Point,
+  PolygonItem,
+  PolylineItem,
+  Rect,
+} from '../interfaces'
 import xs from 'xstream'
 
 export function getMaxItemId(state: State) {
@@ -100,5 +108,5 @@ export function mergeSinks<K extends keyof InteractionFnSinks>(
   sinksArray: Partial<InteractionFnSinks>[],
   key: K,
 ): InteractionFnSinks[K] {
-  return xs.merge(...sinksArray.map(sinks => sinks[key]).filter(Boolean))
+  return xs.merge(...(sinksArray.map(sinks => sinks[key]).filter(Boolean) as any))
 }

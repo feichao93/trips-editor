@@ -1,9 +1,8 @@
 import { DOMSource, h, VNode } from '@cycle/dom'
 import xs, { Stream } from 'xstream'
 import { SmallCircle, SmallCross } from './SelectionIndicator'
-import { State } from '../actions'
 import { INDICATOR_CIRCLE_RADIUS } from '../constants'
-import { Point, Sel } from '../interfaces'
+import { Sel, State } from '../interfaces'
 import { distanceBetweenPointAndPoint } from '../utils/common'
 import Mouse from '../utils/Mouse'
 

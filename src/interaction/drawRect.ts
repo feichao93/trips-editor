@@ -1,7 +1,6 @@
 import { identical } from 'ramda'
 import xs from 'xstream'
-import actions from '../actions'
-import { AdjustConfig, InteractionFn, PolygonItem, Sel } from '../interfaces'
+import { AdjustConfig, InteractionFn, PolygonItem, Sel, State } from '../interfaces'
 import { getBoundingBoxOfPoints } from '../utils/common'
 
 /**
@@ -18,10 +17,8 @@ import { getBoundingBoxOfPoints } from '../utils/common'
  * Note that we set `adjustConfigs` when drawing a new rect, so we use `mouse.adown$`
  *  instead of `mouse.down$`.
  */
-const drawRect: InteractionFn = ({ menubar, mouse, mode: mode$, keyboard }) => {
-  const toRectReadyMode$ = xs
-    .merge(menubar.intent('rect'), keyboard.shortcut('r'))
-    .mapTo('rect.ready')
+const drawRect: InteractionFn = ({ UI, mouse, mode: mode$, keyboard }) => {
+  const toRectReadyMode$ = xs.merge(UI.intent('rect'), keyboard.shortcut('r')).mapTo('rect.ready')
 
   const startPos$ = mouse.adown$.when(mode$, identical('rect.ready'))
   const toRectDrawingMode$ = startPos$.mapTo('rect.drawing')
@@ -56,7 +53,7 @@ const drawRect: InteractionFn = ({ menubar, mouse, mode: mode$, keyboard }) => {
 
   return {
     drawingItem: drawingRect$,
-    action: newItem$.map(actions.addItem),
+    action: newItem$.map(State.addItem),
     nextMode: nextMode$,
     updateSel: newItem$.mapTo(Sel.selectLast()),
     nextAdjustConfigs: nextAdjustConfigs$,
