@@ -1,10 +1,9 @@
 import { h, VNode } from '@cycle/dom'
 import { is } from 'immutable'
-import xs, { Stream } from 'xstream'
+import xs from 'xstream'
 import { Sinks, Sources } from './Inspector'
-import { Item, Sel, UIIntent } from '../interfaces'
+import { Item, Sel, State, UIIntent } from '../interfaces'
 import { isPolygonItem, isPolylineItem, round3 } from '../utils/common'
-import { State, ZIndexOp } from '../utils/State'
 
 function Row({ label, key }: { label: string; key: string }, children: VNode[]) {
   return h('div.row', { key }, [h('h2', label), ...children])
@@ -17,6 +16,7 @@ type EditableFieldProps = {
   value: number | string
   [key: string]: any
 }
+
 function EditableField({ label, type, value, field, ...otherProps }: EditableFieldProps) {
   return h('div.field', [
     h('input', { dataset: { field }, attrs: { type, value, ...otherProps } }),
@@ -116,14 +116,10 @@ function Z({ items, zlist }: State, sel: Sel) {
 
   return Row({ label: 'Z-index', key: 'z' }, [
     h('p', String(zIndex)),
-    h(
-      'button.btn',
-      { attrs: { disabled: isAtBottom }, dataset: { action: 'z-bottom' } },
-      '置于底层',
-    ),
-    h('button.btn', { attrs: { disabled: isAtBottom }, dataset: { action: 'z-dec' } }, '降低一层'),
-    h('button.btn', { attrs: { disabled: isAtTop }, dataset: { action: 'z-inc' } }, '提高一层'),
-    h('button.btn', { attrs: { disabled: isAtTop }, dataset: { action: 'z-top' } }, '置于顶层'),
+    h('button.btn.z', { attrs: { disabled: isAtBottom }, dataset: { op: 'bottom' } }, '置于底层'),
+    h('button.btn.z', { attrs: { disabled: isAtBottom }, dataset: { op: 'dec' } }, '降低一层'),
+    h('button.btn.z', { attrs: { disabled: isAtTop }, dataset: { op: 'inc' } }, '提高一层'),
+    h('button.btn.z', { attrs: { disabled: isAtTop }, dataset: { op: 'top' } }, '置于顶层'),
   ])
 }
 
@@ -134,8 +130,8 @@ function LockInfo(sitem: Item) {
   return Row(
     { label: 'Lock', key: 'lock' },
     sitem.locked
-      ? [h('h2', 'locked'), h('button', { dataset: { action: 'toggle-lock' } }, 'Unlock')]
-      : [h('h2', 'not locked'), h('button', { dataset: { action: 'toggle-lock' } }, 'Lock')],
+      ? [h('h2', 'locked'), h('button.toggle-lock', 'Unlock')]
+      : [h('h2', 'not locked'), h('button.toggle-lock', 'Lock')],
   )
 }
 
@@ -144,14 +140,14 @@ export default function InspectorGeometricTab(sources: Sources): Sinks {
   const state$ = sources.state
   const sel$ = sources.sel
 
-  const zIndexIntent$ = domSource
-    .select('*[data-action]')
+  const changeZIndexIntent$ = domSource
+    .select('.btn.z')
     .events('click')
-    .map(e => e.ownerTarget.dataset.action)
-    .filter(action => ['z-inc', 'z-dec', 'z-top', 'z-bottom'].includes(action)) as Stream<ZIndexOp>
+    .map(e => e.ownerTarget.dataset.op)
+    .map(op => ({ type: 'change-z-index', op } as UIIntent.ChangeZIndex))
 
   const toggleLockIntent$ = domSource
-    .select('*[data-action=toggle-lock]')
+    .select('.toggle-lock')
     .events('click')
     .mapTo<'toggle-lock'>('toggle-lock')
 
@@ -181,6 +177,6 @@ export default function InspectorGeometricTab(sources: Sources): Sinks {
 
   return {
     DOM: vdom$,
-    intent: xs.merge(editIntent$, zIndexIntent$, toggleLockIntent$),
+    intent: xs.merge(editIntent$, changeZIndexIntent$, toggleLockIntent$),
   }
 }

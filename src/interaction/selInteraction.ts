@@ -35,13 +35,23 @@ const selInteraction: InteractionFn = ({
     .peek(sel$)
     .map(State.deleteSel)
 
-  // Toggle Lock
   const toggleLock$ = xs
     .merge(UI.intent('toggle-lock'), keyboard.shortcut('l'))
     .peek(sel$)
     .map(State.toggleLock)
 
-  // TODO edit/z-index-op
+  const edit$ = UI.intent<UIIntent.Edit>('edit')
+    .sampleCombine(sel$, state$)
+    .map(([{ field, value }, sel, state]) => {
+      const useNumberValue = ['stroke', 'opacity'].includes(field)
+      const val: any = useNumberValue ? Number(value) : value
+      const updatedItems = sel.items(state).map(item => item.set(field as any, val))
+      return State.updateItems(updatedItems)
+    })
+
+  const changeZIndex$ = UI.intent<UIIntent.ChangeZIndex>('change-z-index')
+    .sampleCombine(sel$)
+    .map(([{ op }, sel]) => State.updateZIndex(sel, op))
 
   const applyStylePreset$ = UI.intent<UIIntent.ApplyStylePreset>('apply-style-preset')
     .whenNot(sel$, sel => sel.isEmpty())
@@ -55,7 +65,7 @@ const selInteraction: InteractionFn = ({
   const updateSel$ = xs.merge(changeSel$, deleteSel$.mapTo(Sel.reset()))
 
   return {
-    action: xs.merge(deleteSel$, toggleLock$, applyStylePreset$),
+    action: xs.merge(deleteSel$, toggleLock$, edit$, changeZIndex$, applyStylePreset$),
     nextMode: toIdle$,
     nextAdjustConfigs: toIdle$.mapTo([]),
     updateSel: updateSel$,

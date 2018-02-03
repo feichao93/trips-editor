@@ -6,7 +6,17 @@ import AdjustIndicator from './AdjustIndicator'
 import SelectionIndicator from './SelectionIndicator'
 import VertexInsertIndicator from './VertexInsertIndicator'
 import VerticesIndicator from './VerticesIndicator'
-import { Action, State, AdjustConfig, ImgItem, Item, Point, Sel, AppConfig } from '../interfaces'
+import {
+  Action,
+  State,
+  AdjustConfig,
+  ImgItem,
+  Item,
+  Point,
+  Sel,
+  AppConfig,
+  SelUpdater,
+} from '../interfaces'
 import { FileStat } from '../makeFileDriver'
 import { KeyboardSource } from '../makeKeyboardDriver'
 import '../styles/svg.styl'
@@ -32,6 +42,7 @@ export interface Sinks {
   DOM: Stream<VNode>
   FILE: Stream<File>
   action: Stream<Action>
+  updateSel: Stream<SelUpdater>
   rawDown: Stream<Point>
   rawClick: Stream<Point>
   rawDblclick: Stream<Point>
@@ -61,7 +72,7 @@ export default function Svg(sources: Sources): Sinks {
     .map(e => e.dataTransfer.files[0])
     .filter(Boolean)
 
-  const addItem$ = file$
+  const addImgItem$ = file$
     .map(file =>
       sources.FILE.filter(stat => stat.file === file)
         .take(1)
@@ -127,7 +138,8 @@ export default function Svg(sources: Sources): Sinks {
   return {
     DOM: vdom$,
     FILE: file$,
-    action: addItem$,
+    action: addImgItem$,
+    updateSel: addImgItem$.mapTo(Sel.selectLast()),
     rawDown: rawDown$,
     rawDblclick: rawDblclick$,
     rawClick: rawClick$,

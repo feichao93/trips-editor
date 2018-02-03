@@ -16,7 +16,7 @@ const StateRecord = Record({
 })
 
 export type Action = Updater<State>
-export type ZIndexOp = 'z-inc' | 'z-dec' | 'z-top' | 'z-bottom'
+export type ZIndexOp = 'inc' | 'dec' | 'top' | 'bottom'
 
 export class State extends StateRecord {
   static deleteVertex([sel, vertexIndex]: [Sel, number]): Action {
@@ -81,14 +81,14 @@ export class State extends StateRecord {
         const zlist = state.zlist
         const oldZ = zlist.indexOf(sid)
         const zs = zlist.delete(oldZ)
-        if (op === 'z-inc') {
+        if (op === 'inc') {
           return state.set('zlist', zs.insert(oldZ + 1, sid))
-        } else if (op === 'z-dec') {
+        } else if (op === 'dec') {
           return oldZ === 0 ? state : state.set('zlist', zs.insert(oldZ - 1, sid))
-        } else if (op === 'z-top') {
+        } else if (op === 'top') {
           return state.set('zlist', zs.push(sid))
         } else {
-          // z-bottom
+          // bottom
           return state.set('zlist', zs.unshift(sid))
         }
       }

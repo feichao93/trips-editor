@@ -15,6 +15,8 @@ export type TextFileStat = {
   content: string
 }
 
+const imgFileExtensions = ['.jpg', '.bmp', '.webp', '.png', '.svg']
+
 export const openFileDialog = 'open-file-dialog'
 
 /** Driver that opens files of different types.
@@ -22,7 +24,7 @@ export const openFileDialog = 'open-file-dialog'
  * Input can be a `File` object or a open-file-dialog request.
  *
  * Output depends on the type of the files:
- * 1. For image files (jpg/bmp/webp), this driver uses `URL.createObjectURL` to create a url for
+ * 1. For image files (jpg/bmp/webp/svg), this driver uses `URL.createObjectURL` to create a url for
  *  this image, then measure the natural width/height of the image, and returns back a
  *  `ImgFileStat` object.
  * 2. For text files (json/txt...), this driver uses `FileReader` to read the content and
@@ -69,7 +71,7 @@ export default function makeFileDriver() {
                   content,
                 })
               }
-            } else if (['.jpg', '.bmp', '.webp', '.png'].some(ext => file.name.endsWith(ext))) {
+            } else if (imgFileExtensions.some(ext => file.name.endsWith(ext))) {
               const url = URL.createObjectURL(file)
               const img = document.createElement('img')
               img.classList.add('ruler')
