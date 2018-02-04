@@ -34,9 +34,7 @@ export default function InspectorStylesTab({
       name: e.ownerTarget.parentElement.dataset.stylePreset,
     }))
 
-  const sitem$ = xs.combine(state$, sel$).map(([state, sel]) => sel.item(state))
-
-  const stylePresetVdom$ = xs.combine(sitem$, config$).map(([sitem, config]) => (
+  const stylePresetVdom$ = config$.map(config => (
     <div className="preset-list-wrapper">
       <p>
         Style Presets

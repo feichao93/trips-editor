@@ -161,18 +161,21 @@ export default function InspectorGeometricTab(sources: Sources): Sinks {
     })
 
   const vdom$ = xs.combine(state$, sel$).map(([state, sel]) => {
+    let children: VNode[]
     const sitem = sel.item(state)
     if (sitem == null) {
-      return null
+      children = [h('p.empty-prompt', 'No Selected Items.')]
+    } else {
+      children = [
+        PositionAndSize(state, sel),
+        Fill(sitem),
+        Stroke(sitem),
+        Opacity(sitem),
+        Z(state, sel),
+        LockInfo(sitem),
+      ]
     }
-    return h('div.tab.geometric-tab', [
-      PositionAndSize(state, sel),
-      Fill(sitem),
-      Stroke(sitem),
-      Opacity(sitem),
-      Z(state, sel),
-      LockInfo(sitem),
-    ])
+    return h('div.tab.geometric-tab', children)
   })
 
   return {

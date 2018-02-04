@@ -4,7 +4,7 @@ import { ZIndexOp } from './State'
 export type UIIntent = UIIntent.ALL
 
 export namespace UIIntent {
-  export type ALL = 'toggle-lock' | Edit | ApplyStylePreset | ChangeZIndex
+  export type ALL = 'toggle-lock' | Edit | ApplyStylePreset | ChangeZIndex | ToggleSemanticLabel
 
   export interface Edit {
     type: 'edit'
@@ -20,6 +20,11 @@ export namespace UIIntent {
   export interface ChangeZIndex {
     type: 'change-z-index'
     op: ZIndexOp
+  }
+
+  export interface ToggleSemanticLabel {
+    type: 'toggle-semantic-label'
+    label: string
   }
 }
 

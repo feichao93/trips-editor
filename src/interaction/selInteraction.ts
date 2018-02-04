@@ -61,11 +61,22 @@ const selInteraction: InteractionFn = ({
       return State.applyStyles(sel, preset.styles)
     })
 
+  const toggleSemanticLabel$ = UI.intent<UIIntent.ToggleSemanticLabel>('toggle-semantic-label')
+    .sampleCombine(sel$)
+    .map(([{ label }, sel]) => State.toggleSemanticLabel(sel, label))
+
   const toIdle$ = keyboard.shortcut('esc').mapTo('idle')
   const updateSel$ = xs.merge(changeSel$, deleteSel$.mapTo(Sel.reset()))
 
   return {
-    action: xs.merge(deleteSel$, toggleLock$, edit$, changeZIndex$, applyStylePreset$),
+    action: xs.merge(
+      deleteSel$,
+      toggleLock$,
+      edit$,
+      changeZIndex$,
+      applyStylePreset$,
+      toggleSemanticLabel$,
+    ),
     nextMode: toIdle$,
     nextAdjustConfigs: toIdle$.mapTo([]),
     updateSel: updateSel$,

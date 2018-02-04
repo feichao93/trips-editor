@@ -1,5 +1,5 @@
 import { h } from '@cycle/dom'
-import { List, Record } from 'immutable'
+import { List, Record, Set } from 'immutable'
 import { identity } from 'ramda'
 import { distanceBetweenPointAndSegment, getCoordinateUpdater } from './common'
 import { ItemMethods, Point, ResizeDirConfig } from '../interfaces'
@@ -8,6 +8,7 @@ const PolylineItemRecord = Record(
   {
     id: -1,
     locked: false,
+    labels: Set<string>(),
     points: List<Point>(),
     stroke: '#000000',
     strokeWidth: 5,

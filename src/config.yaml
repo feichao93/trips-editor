@@ -6,6 +6,9 @@ minScale: 0.5
 maxScale: 5
 senseRange: 15
 
+semantics:
+  labels: [room, staircase, hallway, wall]
+
 stylePresets:
   - name: base-map
     styles:

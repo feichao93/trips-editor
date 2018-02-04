@@ -145,4 +145,15 @@ export class State extends StateRecord {
       return state.update('items', items => items.set(item.id, item.set('locked', !item.locked)))
     }
   }
+
+  static toggleSemanticLabel(sel: Sel, label: string): Action {
+    return state => {
+      const item = sel.item(state)
+      const updatedItem = item.set(
+        'labels',
+        item.labels.has(label) ? item.labels.remove(label) : item.labels.add(label),
+      )
+      return state.update('items', items => items.set(item.id, updatedItem))
+    }
+  }
 }

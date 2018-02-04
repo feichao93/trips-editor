@@ -1,5 +1,5 @@
 import { h } from '@cycle/dom'
-import { List, Record } from 'immutable'
+import { List, Record, Set } from 'immutable'
 import { add, identity } from 'ramda'
 import { containsPoint, getCoordinateUpdater } from './common'
 import { ItemMethods, Point, ResizeDirConfig } from '../interfaces'
@@ -9,6 +9,7 @@ const ImgItemRecord = Record(
   {
     id: -1,
     locked: false,
+    labels: Set<string>(),
     opacity: 1,
     x: 0,
     y: 0,

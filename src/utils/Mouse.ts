@@ -81,9 +81,9 @@ export default class Mouse {
         if (vertexIndex !== -1 || vertexInsertIndex !== -1) {
           return 'crosshair'
         }
-        return resizer || 'default'
+        return resizer || 'auto'
       })
-      .startWith('default')
+      .startWith('auto')
   }
 
   private convert(rawPoint$: Stream<Point>) {

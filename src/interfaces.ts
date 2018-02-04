@@ -1,5 +1,5 @@
 import { DOMSource, VNode } from '@cycle/dom'
-import { List } from 'immutable'
+import { List, Set } from 'immutable'
 import { MemoryStream, Stream } from 'xstream'
 import { FileStat } from './makeFileDriver'
 import { KeyboardSource } from './makeKeyboardDriver'
@@ -44,7 +44,8 @@ export interface ItemMethods {
 
 export type CommonRecordSetter = RecordSetter<'id', number> &
   RecordSetter<'locked', boolean> &
-  RecordSetter<'opacity', number>
+  RecordSetter<'opacity', number> &
+  RecordSetter<'labels', Set<string>>
 
 export type Item = (PolygonItem | PolylineItem | ImgItem) & CommonRecordSetter & ItemMethods
 
@@ -137,6 +138,9 @@ export interface AppConfig {
   maxScale: number
   senseRange: number
   stylePresets: StylePreset[]
+  semantics: {
+    labels: string[]
+  }
 }
 
 export interface StylePreset {

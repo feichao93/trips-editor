@@ -3,42 +3,55 @@ import { is } from 'immutable'
 import { VNode } from 'snabbdom/vnode'
 import xs, { Stream } from 'xstream'
 import sampleCombine from 'xstream/extra/sampleCombine'
+import Checkbox from './common/Checkbox'
 import { Sinks, Sources } from './Inspector'
-import { Item, Sel } from '../interfaces'
+import { Item, Sel, UIIntent } from '../interfaces'
 import { isPolygonItem, isPolylineItem, round3 } from '../utils/common'
 
 export default function InspectorSemanticTab({
   state: state$,
   sel: sel$,
+  config: config$,
   DOM: domSource,
 }: Sources): Sinks {
-  const vdom$ = xs.of(h('div.tab.semantic-tab', [h('h1', 'This tab is working in progress')]))
-  // const newNode$ = domSource.select('*[data-intent=new-node]').events('click')
-  // const destroyNode$ = domSource.select('*[data-intent=destroy=node]').events('click')
+  const toggleSemanticLabelIntent$ = domSource
+    .select('.label-list .checkbox')
+    .events('click')
+    .map<UIIntent.ToggleSemanticLabel>(e => ({
+      type: 'toggle-semantic-label',
+      label: e.ownerTarget.dataset.name,
+    }))
 
-  // const itemsAndNodes$ = xs.combine(state$, sel$).map(([state, sel]) => {
-  //   const items = sel.items(state)
-  //   const nodes = state.nodes.filter(node => items.some(item => node.idSet.includes(item.id)))
-  //   return { items, nodes }
-  // })
+  const labelsVdom$ = xs.combine(config$, state$, sel$).map(([config, state, sel]) => {
+    const sitem = sel.item(state)
+    if (sitem == null) {
+      return h('p.empty-prompt', 'No Selected Items.')
+    }
+    return (
+      <div className="label-list-wrapper">
+        <p>
+          Semantic Labels
+          <button className="manage" disabled>
+            Manage
+          </button>
+        </p>
+        <ul className="label-list">
+          {config.semantics.labels.map(label => (
+            <li className="label" data-label={label}>
+              <p className="name">{label}</p>
+              <Checkbox name={label} checked={sitem.labels.has(label)} />
+            </li>
+          ))}
+          <li className="label" />
+        </ul>
+      </div>
+    )
+  })
 
-  // const vdom$ = itemsAndNodes$.map(({ items, nodes }) => {
-  //   let buttons = null
-  //   if (nodes.isEmpty()) {
-  //     buttons = h('div.buttons', [
-  //       h('button', { dataset: { intent: 'new-node' } }, 'Create a New Semantic Node'),
-  //     ])
-  //   } else {
-  //     buttons = h('div.buttons', [h('button', { dataset: { intent: 'destroy-node' } }, 'Destroy')])
-  //   }
-  //   return h(
-  //     'div.tab.semantic-tab',
-  //     [buttons, h('div', JSON.stringify(items)), h('div', JSON.stringify(nodes))].filter(Boolean),
-  //   )
-  // })
+  const vdom$ = xs.combine(labelsVdom$).map(([labels]) => h('div.tab.semantic-tab', [labels]))
 
   return {
     DOM: vdom$,
-    intent: xs.never(),
+    intent: toggleSemanticLabelIntent$,
   }
 }
