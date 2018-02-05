@@ -7,44 +7,19 @@ maxScale: 5
 senseRange: 15
 
 semantics:
-  tags: [room, staircase, hallway, wall]
-
-stylePresets:
-  - name: base-map
-    styles:
-      locked: true
-      opacity: 0.3
-  - name: '2*3 units'
-    styles:
-      fill: '#fefba8'
-  - name: '3*5 units'
-    styles:
-      fill: '#739998'
-  - name: '4*4 units'
-    styles:
-      fill: '#cccc99'
-  - name: '4*5 units'
-    styles:
-      fill: '#ccccff'
-  - name: '5*5 units'
-    styles:
-      fill: '#66cc99'
-  - name: '10*10 units'
-    styles:
-      fill: '#6699cc'
-
-  - name: 'region I'
-    styles:
-      fill: '#e8686d'
-  - name: 'region II'
-    styles:
-      fill: '#99ff66'
-  - name: 'region III'
-    styles:
-      fill: '#ff99ff'
-  - name: 'region IV'
-    styles:
-      fill: '#ccffff'
-  - name: 'region V'
-    styles:
-      fill: '#66ccff'
+  tags:
+    - name: room
+      styles:
+        fill: '#f4f4f4'
+        stroke: '#cccccc'
+    - name: staircase
+      styles:
+        fill: '#d4eb8b'
+        stroke: '#cccccc'
+    - name: hallway
+      styles:
+        fill: '#ffffff'
+        stroke: 'none'
+    - name: door
+      styles:
+        stroke: '#a2a1a1'

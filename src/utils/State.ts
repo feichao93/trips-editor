@@ -1,6 +1,6 @@
-import { List, Map, OrderedMap, Record, Set } from 'immutable'
+import { List, Map, OrderedMap, Record } from 'immutable'
 import { getNextItemId } from './common'
-import { Item, ItemId, NodeId, Point, ResizeDirConfig, Sel, Updater } from '../interfaces'
+import { Item, ItemId, Point, ResizeDirConfig, Sel, Updater } from '../interfaces'
 
 export interface ResizingInfo {
   movingPos: Point
@@ -95,24 +95,6 @@ export class State extends StateRecord {
     }
   }
 
-  static lockItems(sel: Sel): Action {
-    return state => {
-      const lockedItems = state.items
-        .filter(item => sel.idSet.has(item.id))
-        .map(item => item.set('locked', true))
-      return state.mergeIn(['items'], lockedItems)
-    }
-  }
-
-  static unlockItems(sel: Sel): Action {
-    return state => {
-      const unlockedItems = state.items
-        .filter(item => sel.idSet.has(item.id))
-        .map(item => item.set('locked', false))
-      return state.mergeIn(['items'], unlockedItems)
-    }
-  }
-
   static moveVertex([item, vertexIndex, dx, dy]: [Item, number, number, number]): Action {
     return state =>
       state.update('items', items =>
@@ -132,28 +114,10 @@ export class State extends StateRecord {
     return () => state
   }
 
-  static applyStyles(sel: Sel, styles: any): Action {
-    return state => {
-      const item: any = sel.item(state)
-      return state.mergeIn(['items', item.id], item.merge(styles))
-    }
-  }
-
   static toggleLock(sel: Sel): Action {
     return state => {
       const item = sel.item(state)
       return state.update('items', items => items.set(item.id, item.set('locked', !item.locked)))
-    }
-  }
-
-  static toggleSemanticTag(sel: Sel, tag: string): Action {
-    return state => {
-      const item = sel.item(state)
-      const updatedItem = item.set(
-        'tags',
-        item.tags.has(tag) ? item.tags.remove(tag) : item.tags.add(tag),
-      )
-      return state.update('items', items => items.set(item.id, updatedItem))
     }
   }
 }

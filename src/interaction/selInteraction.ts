@@ -1,7 +1,7 @@
-import { is } from 'immutable'
+import { is, OrderedMap } from 'immutable'
 import { identical } from 'ramda'
 import xs from 'xstream'
-import { InteractionFn, Sel, State, UIIntent } from '../interfaces'
+import { InteractionFn, Item, ItemId, Sel, State, UIIntent } from '../interfaces'
 
 const selInteraction: InteractionFn = ({
   mouse,
@@ -54,30 +54,25 @@ const selInteraction: InteractionFn = ({
     .sampleCombine(sel$)
     .map(([{ op }, sel]) => State.updateZIndex(sel, op))
 
-  const applyStylePreset$ = UI.intent<UIIntent.ApplyStylePreset>('apply-style-preset')
-    .whenNot(sel$, sel => sel.isEmpty())
-    .sampleCombine(sel$, config$)
-    .map(([{ name }, sel, config]) => {
-      const preset = config.stylePresets.find(preset => preset.name === name)
-      return State.applyStyles(sel, preset.styles)
-    })
-
   const toggleSemanticTag$ = UI.intent<UIIntent.ToggleSemanticTag>('toggle-semantic-tag')
-    .sampleCombine(sel$)
-    .map(([{ tag }, sel]) => State.toggleSemanticTag(sel, tag))
+    .whenNot(sel$, sel => sel.isEmpty())
+    .sampleCombine(sel$, state$, config$)
+    .map(([{ tagName }, sel, state, config]) => {
+      const tagConfig = config.semantics.tags.find(tag => tag.name === tagName)
+      const item = sel.item(state)
+      const updatedItem = item.tags.has(tagName)
+        ? // Remove tag
+          item.update('tags', tags => tags.remove(tagName))
+        : // Add tag and apply the styles
+          item.update('tags', tags => tags.add(tagName)).merge(tagConfig.styles)
+      return State.updateItems(OrderedMap<ItemId, Item>().set(item.id, updatedItem))
+    })
 
   const toIdle$ = keyboard.shortcut('esc').mapTo('idle')
   const updateSel$ = xs.merge(changeSel$, deleteSel$.mapTo(Sel.reset()))
 
   return {
-    action: xs.merge(
-      deleteSel$,
-      toggleLock$,
-      edit$,
-      changeZIndex$,
-      applyStylePreset$,
-      toggleSemanticTag$,
-    ),
+    action: xs.merge(deleteSel$, toggleLock$, edit$, changeZIndex$, toggleSemanticTag$),
     nextMode: toIdle$,
     nextAdjustConfigs: toIdle$.mapTo([]),
     updateSel: updateSel$,

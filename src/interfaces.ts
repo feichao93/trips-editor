@@ -42,15 +42,17 @@ export interface ItemMethods {
   moveVertex?(vertexIndex: number, dx: number, dy: number): this
 }
 
-export type CommonRecordSetter = RecordSetter<'id', number> &
-  RecordSetter<'locked', boolean> &
-  RecordSetter<'opacity', number> &
-  RecordSetter<'tags', Set<string>>
+export type CommonRecordUpdaters = RecordUpdater<'id', number> &
+  RecordUpdater<'locked', boolean> &
+  RecordUpdater<'opacity', number> &
+  RecordUpdater<'tags', Set<string>>
 
-export type Item = (PolygonItem | PolylineItem | ImgItem) & CommonRecordSetter & ItemMethods
+export type Item = (PolygonItem | PolylineItem | ImgItem) & CommonRecordUpdaters & ItemMethods
 
-export interface RecordSetter<K, V> {
+export interface RecordUpdater<K, V> {
   set(key: K, value: V): this
+  update(key: K, fn: (old: V) => V): this
+  merge(...args: any[]): this
 }
 
 export type ItemId = number
@@ -137,17 +139,16 @@ export interface AppConfig {
   minScale: number
   maxScale: number
   senseRange: number
-  stylePresets: StylePreset[]
   semantics: {
-    tags: string[]
+    tags: SemanticTagConfig[]
   }
 }
 
-export interface StylePreset {
+export interface SemanticTagConfig {
   name: string
   styles: {
     fill?: string
     stroke?: string
-    opacity?: number
+    strokeWdith?: number
   }
 }

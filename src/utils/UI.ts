@@ -24,7 +24,7 @@ export namespace UIIntent {
 
   export interface ToggleSemanticTag {
     type: 'toggle-semantic-tag'
-    tag: string
+    tagName: string
   }
 }
 

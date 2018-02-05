@@ -2,8 +2,8 @@ import { DOMSource, h, VNode } from '@cycle/dom'
 import { Stream } from 'xstream'
 import InspectorGeometricTab from './InspectorGeometricTab'
 import InspectorSemanticTab from './InspectorSemanticTab'
-import InspectorStylesTab from './InspectorStylesTab'
 import { AppConfig, Sel, State, UIIntent } from '../interfaces'
+import { KeyboardSource } from '../makeKeyboardDriver'
 import '../styles/inspector.styl'
 
 export interface Sources {
@@ -11,6 +11,7 @@ export interface Sources {
   state: Stream<State>
   sel: Stream<Sel>
   config: Stream<AppConfig>
+  keyboard: KeyboardSource
 }
 
 export interface Sinks {
@@ -19,8 +20,8 @@ export interface Sinks {
 }
 
 // TODO working-style & config
-type TabName = 'geometric' | 'style presets' | 'semantic'
-const allTabNames: TabName[] = ['geometric', 'style presets', 'semantic']
+type TabName = 'geometric' | 'semantic'
+const allTabNames: TabName[] = ['geometric', 'semantic']
 
 function TabChooserItem({ cntTabName, tabName }: { cntTabName: string; tabName: TabName }) {
   return h(
@@ -50,8 +51,6 @@ export default function Inspector(sources: Sources): Sinks {
   const tabWrapper$ = tabName$.map(tabName => {
     if (tabName === 'geometric') {
       return { inst: InspectorGeometricTab(sources), tabName }
-    } else if (tabName === 'style presets') {
-      return { inst: InspectorStylesTab(sources), tabName }
     } else {
       return { inst: InspectorSemanticTab(sources), tabName }
     }
