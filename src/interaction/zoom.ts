@@ -4,12 +4,15 @@ import xs from 'xstream'
 import { InteractionFn } from '../interfaces'
 import transition from '../utils/transition'
 
+// TODO use d3.interpolateZoom instead of d3.interpolate
+
 const zoom: InteractionFn = ({
   mouse,
   config: config$,
   mode: mode$,
   state: state$,
   transform: transform$,
+  UI,
 }) => {
   const dragStart$ = mouse.rawDown$
     .when(mode$, identical('idle'))
@@ -62,7 +65,13 @@ const zoom: InteractionFn = ({
     .flatten()
     .map(([x, y, k]) => d3.zoomIdentity.translate(x, y).scale(k))
 
-  return { nextTransform: xs.merge(zoom$, drag$) }
+  const resetZoom$ = UI.intent('reset-zoom')
+    .peek(transform$)
+    .map(cnt => transition(250, [cnt.x, cnt.y, cnt.k], [0, 0, 1]))
+    .flatten()
+    .map(([x, y, k]) => d3.zoomIdentity.translate(x, y).scale(k))
+
+  return { nextTransform: xs.merge(zoom$, drag$, resetZoom$) }
 }
 
 export default zoom

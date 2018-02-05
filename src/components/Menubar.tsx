@@ -112,6 +112,14 @@ export default function Menubar(sources: Sources): Sinks {
           { name: 'Toggle Lock', disabled: sel.isEmpty(), hint: 'Ctrl+B', intent: 'toggle-lock' },
         ],
       }),
+      MenuCategory({
+        category: 'View',
+        active: activeCategory === 'View',
+        items: [
+          { name: 'Reset Zoom', intent: 'reset-zoom' },
+          { name: 'Centralize Selection', disabled: true },
+        ],
+      }),
     ]),
   )
 

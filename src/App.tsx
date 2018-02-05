@@ -126,7 +126,7 @@ export default function App(sources: Sources): Sinks {
 
   mouse.imitate(svg.rawDown, svg.rawClick, svg.rawDblclick, svg.rawWheel)
   mouse.setAdjuster(makeAdjuster(keyboard, mouse, state$, transform$, adjustConfigs$, config$))
-  UI.imitate(xs.merge(inspector.intent, menubar.intent))
+  UI.imitate(xs.merge(inspector.intent, menubar.intent, statusBar.intent))
   nextResizerProxy$.imitate(mergeSinks(allSinks, 'nextResizer'))
   nextVertexIndexProxy$.imitate(mergeSinks(allSinks, 'nextVertexIndex'))
   nextVertexInsertIndexProxy$.imitate(mergeSinks(allSinks, 'nextVertexInsertIndex'))
