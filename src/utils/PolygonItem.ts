@@ -7,7 +7,7 @@ import { ItemMethods, Point, ResizeDirConfig } from '../interfaces'
 const PolygonItemRecord = Record(
   {
     id: -1,
-    locked: false,
+    locked: true,
     tags: Set<string>(),
     points: List<Point>(),
     stroke: 'black',
@@ -25,7 +25,7 @@ export default class PolygonItem extends PolygonItemRecord implements ItemMethod
     return superJS
   }
   static fromJS(object: any) {
-    return new PolygonItem(object).update('points', List)
+    return new PolygonItem(object).update('points', List).update('tags', Set)
   }
 
   static rectFromPoints(startPos: Point, endPos: Point) {

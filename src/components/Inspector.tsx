@@ -1,5 +1,5 @@
 import { DOMSource, h, VNode } from '@cycle/dom'
-import { Stream } from 'xstream'
+import xs, { Stream } from 'xstream'
 import InspectorGeometricTab from './InspectorGeometricTab'
 import InspectorSemanticTab from './InspectorSemanticTab'
 import { AppConfig, Sel, State, UIIntent } from '../interfaces'
@@ -39,9 +39,15 @@ function TabChooser(cntTabName: TabName) {
 }
 
 export default function Inspector(sources: Sources): Sinks {
-  const nextTabName$ = sources.DOM.select('.tab-chooser-item')
-    .events('click')
-    .map(e => e.ownerTarget.dataset.tab as TabName)
+  const keyboard = sources.keyboard
+
+  const nextTabName$ = xs.merge(
+    sources.DOM.select('.tab-chooser-item')
+      .events('click')
+      .map(e => e.ownerTarget.dataset.tab as TabName),
+    keyboard.shortcut('s').mapTo<TabName>('semantic'),
+    keyboard.shortcut('g').mapTo<TabName>('geometric'),
+  )
 
   const tabName$ = nextTabName$
     .startWith('geometric')

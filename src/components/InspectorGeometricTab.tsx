@@ -115,11 +115,11 @@ function Z({ items, zlist }: State, sel: Sel) {
   const zIndex = zlist.indexOf(sel.idSet.first())
 
   return Row({ label: 'Z-index', key: 'z' }, [
-    h('p', String(zIndex)),
-    h('button.btn.z', { attrs: { disabled: isAtBottom }, dataset: { op: 'bottom' } }, '置于底层'),
-    h('button.btn.z', { attrs: { disabled: isAtBottom }, dataset: { op: 'dec' } }, '降低一层'),
-    h('button.btn.z', { attrs: { disabled: isAtTop }, dataset: { op: 'inc' } }, '提高一层'),
-    h('button.btn.z', { attrs: { disabled: isAtTop }, dataset: { op: 'top' } }, '置于顶层'),
+    h('p', { style: { 'align-self': 'center', 'margin-right': '8px' } }, String(zIndex)),
+    h('button.btn.z', { attrs: { disabled: isAtBottom }, dataset: { op: 'bottom' } }, 'bottom'),
+    h('button.btn.z', { attrs: { disabled: isAtBottom }, dataset: { op: 'dec' } }, '-1'),
+    h('button.btn.z', { attrs: { disabled: isAtTop }, dataset: { op: 'inc' } }, '+1'),
+    h('button.btn.z', { attrs: { disabled: isAtTop }, dataset: { op: 'top' } }, 'top'),
   ])
 }
 

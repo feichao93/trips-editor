@@ -2,7 +2,7 @@ meta:
   type: editor-config
   version: 0.7
 
-minScale: 0.5
+minScale: 0.25
 maxScale: 5
 senseRange: 15
 
@@ -10,16 +10,19 @@ semantics:
   tags:
     - name: room
       styles:
-        fill: '#f4f4f4'
-        stroke: '#cccccc'
+        fill: '#cccccc'
+        stroke: '#999999'
+        strokeWidth: 2
     - name: staircase
       styles:
         fill: '#d4eb8b'
-        stroke: '#cccccc'
+        stroke: '#999999'
+        strokeWidth: 2
     - name: hallway
       styles:
         fill: '#ffffff'
         stroke: 'none'
     - name: door
       styles:
-        stroke: '#a2a1a1'
+        stroke: '#666666'
+        strokeWidth: 4
