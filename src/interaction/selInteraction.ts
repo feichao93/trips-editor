@@ -36,14 +36,15 @@ const selInteraction: InteractionFn = ({
     .map(State.deleteSel)
 
   const toggleLock$ = xs
-    .merge(UI.intent('toggle-lock'), keyboard.shortcut('l'))
+    .merge(UI.intent('toggle-lock'), keyboard.shortcut('ctrl+b'))
+    .whenNot(sel$, sel => sel.isEmpty())
     .peek(sel$)
     .map(State.toggleLock)
 
   const edit$ = UI.intent<UIIntent.Edit>('edit')
     .sampleCombine(sel$, state$)
     .map(([{ field, value }, sel, state]) => {
-      const useNumberValue = ['stroke', 'opacity'].includes(field)
+      const useNumberValue = ['strokeWidth', 'opacity'].includes(field)
       const val: any = useNumberValue ? Number(value) : value
       const updatedItems = sel.items(state).map(item => item.set(field as any, val))
       return State.updateItems(updatedItems)

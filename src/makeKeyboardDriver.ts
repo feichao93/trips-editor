@@ -4,7 +4,7 @@ import xs, { Stream } from 'xstream'
 const MouseTrap = require('mousetrap')
 
 type Config = {
-  preventDefault?: boolean
+  noPreventDefault?: boolean
 }
 
 /** Another keyboard driver for cycle.js Driver. */
@@ -49,10 +49,10 @@ export class KeyboardSource {
             key,
             (e: KeyboardEvent, combo: string | string[]) => {
               listener.next(e)
-              if (config.preventDefault) {
-                return false
-              } else {
+              if (config.noPreventDefault) {
                 return true
+              } else {
+                return false
               }
             },
             type,

@@ -1,4 +1,5 @@
 import dragItems from './dragItems'
+import drawLine from './drawLine'
 import drawPolygon from './drawPolygon'
 import drawRect from './drawRect'
 import editPoints from './editPoints'
@@ -15,6 +16,6 @@ export default [
   zoom,
   drawRect,
   drawPolygon,
-  // drawLine,
+  drawLine,
   editPoints,
 ]

@@ -3,10 +3,10 @@ import { InteractionFn, Sel, State } from '../interfaces'
 import { openFileDialog, TextFileStat } from '../makeFileDriver'
 import serializeUtils from '../utils/serializeUtils'
 
-const file: InteractionFn = ({ FILE, UI, keyboard, state: state$, sel: sel$ }) => {
+const file: InteractionFn = ({ FILE, UI, keyboard, state: state$ }) => {
   /* File -> Save as JSON */
   const save$ = xs
-    .merge(UI.intent('save'), keyboard.shortcut('mod+s', { preventDefault: true }))
+    .merge(UI.intent('save'), keyboard.shortcut('mod+s'))
     .peek(state$)
     .map(state => ({
       blob: new Blob([JSON.stringify(serializeUtils.toJS(state))], {
