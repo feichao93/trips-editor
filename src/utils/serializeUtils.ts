@@ -1,4 +1,4 @@
-import { List, Seq } from 'immutable'
+import { List, Seq, Set } from 'immutable'
 import { Item, PolygonItem, PolylineItem, State } from '../interfaces'
 
 const serializeUtils = {
@@ -16,7 +16,9 @@ const serializeUtils = {
         }),
       )
       .toJS()
-    object.items = Object.values(object.items)
+    object.items = Object.values(object.items).filter(Boolean)
+    const validItemIdSet = Set(object.items.map((item: any) => item.id))
+    object.zlist = object.zlist.filter((itemId: number) => validItemIdSet.has(itemId))
     return object
   },
 
