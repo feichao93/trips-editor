@@ -146,12 +146,12 @@ export class State extends StateRecord {
     }
   }
 
-  static toggleSemanticLabel(sel: Sel, label: string): Action {
+  static toggleSemanticTag(sel: Sel, tag: string): Action {
     return state => {
       const item = sel.item(state)
       const updatedItem = item.set(
-        'labels',
-        item.labels.has(label) ? item.labels.remove(label) : item.labels.add(label),
+        'tags',
+        item.tags.has(tag) ? item.tags.remove(tag) : item.tags.add(tag),
       )
       return state.update('items', items => items.set(item.id, updatedItem))
     }

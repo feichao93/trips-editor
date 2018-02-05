@@ -45,7 +45,7 @@ export interface ItemMethods {
 export type CommonRecordSetter = RecordSetter<'id', number> &
   RecordSetter<'locked', boolean> &
   RecordSetter<'opacity', number> &
-  RecordSetter<'labels', Set<string>>
+  RecordSetter<'tags', Set<string>>
 
 export type Item = (PolygonItem | PolylineItem | ImgItem) & CommonRecordSetter & ItemMethods
 
@@ -139,7 +139,7 @@ export interface AppConfig {
   senseRange: number
   stylePresets: StylePreset[]
   semantics: {
-    labels: string[]
+    tags: string[]
   }
 }
 

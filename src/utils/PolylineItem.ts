@@ -8,7 +8,7 @@ const PolylineItemRecord = Record(
   {
     id: -1,
     locked: false,
-    labels: Set<string>(),
+    tags: Set<string>(),
     points: List<Point>(),
     stroke: '#000000',
     strokeWidth: 5,

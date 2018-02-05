@@ -1,5 +1,5 @@
 import { List, Seq } from 'immutable'
-import { Item, PolygonItem, PolylineItem, State} from '../interfaces'
+import { Item, PolygonItem, PolylineItem, State } from '../interfaces'
 
 const serializeUtils = {
   toJS(state: State) {

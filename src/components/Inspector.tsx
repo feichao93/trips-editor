@@ -19,8 +19,8 @@ export interface Sinks {
 }
 
 // TODO working-style & config
-type TabName = 'geometric' | 'styles' | 'semantic'
-const allTabNames: TabName[] = ['geometric', 'styles', 'semantic']
+type TabName = 'geometric' | 'style presets' | 'semantic'
+const allTabNames: TabName[] = ['geometric', 'style presets', 'semantic']
 
 function TabChooserItem({ cntTabName, tabName }: { cntTabName: string; tabName: TabName }) {
   return h(
@@ -50,7 +50,7 @@ export default function Inspector(sources: Sources): Sinks {
   const tabWrapper$ = tabName$.map(tabName => {
     if (tabName === 'geometric') {
       return { inst: InspectorGeometricTab(sources), tabName }
-    } else if (tabName === 'styles') {
+    } else if (tabName === 'style presets') {
       return { inst: InspectorStylesTab(sources), tabName }
     } else {
       return { inst: InspectorSemanticTab(sources), tabName }

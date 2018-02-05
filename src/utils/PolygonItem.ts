@@ -8,7 +8,7 @@ const PolygonItemRecord = Record(
   {
     id: -1,
     locked: false,
-    labels: Set<string>(),
+    tags: Set<string>(),
     points: List<Point>(),
     stroke: 'black',
     strokeWidth: 1,
