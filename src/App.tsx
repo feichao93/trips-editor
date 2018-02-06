@@ -7,7 +7,7 @@ import Menubar from './components/Menubar'
 import StatusBar from './components/StatusBar'
 import Svg from './components/Svg'
 import interactions from './interaction'
-import { FileStat } from './makeFileDriver'
+import { DialogRequest, FileStat } from './makeFileDriver'
 import { KeyboardSource } from './makeKeyboardDriver'
 import './styles/app.styl'
 import AdjustedMouse from './utils/AdjustedMouse'
@@ -35,7 +35,7 @@ export interface Sources {
 
 export interface Sinks {
   DOM: Stream<VNode>
-  FILE: Stream<File | 'open-file-dialog'>
+  FILE: Stream<File | DialogRequest>
   SAVE: Stream<SaveConfig>
 }
 

@@ -15,13 +15,18 @@ export type TextFileStat = {
   content: string
 }
 
+const textFileExtensions = ['.json', '.yaml', '.yml', '.txt']
 const imgFileExtensions = ['.jpg', '.bmp', '.webp', '.png', '.svg']
 
-export const openFileDialog = 'open-file-dialog'
+export interface DialogRequest {
+  type: 'dialog'
+  accept?: string
+  multiple?: boolean
+}
 
 /** Driver that opens files of different types.
  *
- * Input can be a `File` object or a open-file-dialog request.
+ * Input can be a `File` object or a `dialog request`.
  *
  * Output depends on the type of the files:
  * 1. For image files (jpg/bmp/webp/svg), this driver uses `URL.createObjectURL` to create a url for
@@ -31,14 +36,18 @@ export const openFileDialog = 'open-file-dialog'
  *  return a `TextFileStat` object.
  */
 export default function makeFileDriver() {
-  return function fileDriver(file$: Stream<File | 'open-file-dialog'>) {
-    const dialog$ = file$.filter(identical<'open-file-dialog'>('open-file-dialog'))
+  return function fileDriver(file$: Stream<File | DialogRequest>) {
+    const dialogRequest$ = file$.filter(file => file.type === 'dialog') as Stream<DialogRequest>
     const fileFromDialog$ = xs.create<File>({
       start(listener) {
-        dialog$.addListener({
-          next() {
+        dialogRequest$.addListener({
+          next({ accept, multiple = false }) {
             const input = document.createElement('input')
             input.type = 'file'
+            if (input != null) {
+              input.accept = accept
+            }
+            input.multiple = multiple
             input.click()
             input.onchange = f => {
               const file = input.files[0]
@@ -61,7 +70,7 @@ export default function makeFileDriver() {
       start(listener) {
         xs.merge(fileFromDialog$, fileFromAppSinks$).addListener({
           next(file) {
-            if (file.name.endsWith('.json')) {
+            if (textFileExtensions.some(ext => file.name.endsWith(ext))) {
               const reader = new FileReader()
               reader.readAsText(file)
               reader.onloadend = () => {

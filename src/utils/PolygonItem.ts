@@ -8,6 +8,7 @@ const PolygonItemRecord = Record(
   {
     id: -1,
     locked: true,
+    label: '',
     tags: Set<string>(),
     points: List<Point>(),
     stroke: 'black',
@@ -70,17 +71,42 @@ export default class PolygonItem extends PolygonItemRecord implements ItemMethod
   }
 
   render() {
-    return h('polygon', {
-      key: this.id,
-      attrs: {
-        stroke: this.stroke,
-        'stroke-linejoin': 'round',
-        'stroke-width': this.strokeWidth,
-        opacity: this.opacity,
-        fill: this.fill,
-        points: this.points.map(p => `${p.x},${p.y}`).join(' '),
-      },
-    })
+    const vertices = this.getVertices()
+    const x = vertices.map(v => v.x).min()
+    const y = vertices.map(v => v.y).min()
+    return h(
+      'g',
+      { key: this.id },
+      [
+        h('polygon', {
+          key: 'shape',
+          attrs: {
+            stroke: this.stroke,
+            'stroke-linejoin': 'round',
+            'stroke-width': this.strokeWidth,
+            opacity: this.opacity,
+            fill: this.fill,
+            points: this.points.map(p => `${p.x},${p.y}`).join(' '),
+          },
+        }),
+        this.label
+          ? h(
+              'text',
+              {
+                key: 'label',
+                attrs: {
+                  x,
+                  y,
+                  dx: 2,
+                  dy: 17,
+                  'font-size': 20,
+                },
+              },
+              this.label,
+            )
+          : null,
+      ].filter(Boolean),
+    )
   }
 
   getVertices() {

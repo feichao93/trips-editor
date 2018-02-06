@@ -13,33 +13,29 @@ export interface Sinks {
   intent: Stream<UIIntent>
 }
 
-export interface MenuItem {
+export interface MenuCategoryProps {
+  active: boolean
+  category: string
+}
+
+function MenuCategory({ active, category }: MenuCategoryProps, children: VNode[]) {
+  return h('div.category', [
+    h('div.title', { dataset: { category }, class: { active } }, category),
+    h('ol.menu-item-list', { style: { display: active ? 'block' : 'none' } }, children),
+  ])
+}
+
+export interface MenuItemProps {
   name: string
   hint?: string
   intent?: string
   disabled?: boolean
 }
 
-export interface MenuCategoryProps {
-  active: boolean
-  category: string
-  items: MenuItem[]
-}
-
-function MenuCategory({ active, category, items }: MenuCategoryProps) {
-  return h('div.category', [
-    h('div.title', { dataset: { category }, class: { active } }, category),
-    h(
-      'ol.menu-item-list',
-      { style: { display: active ? 'block' : 'none' } },
-      items.map(({ name, hint, intent, disabled }) =>
-        h(
-          'li.menu-item',
-          { dataset: { intent }, class: { disabled } },
-          [h('p', name), hint ? h('p.hint', hint) : null].filter(Boolean),
-        ),
-      ),
-    ),
+function MenuItem({ name, hint, intent, disabled }: MenuItemProps) {
+  return h('li.menu-item', { dataset: { intent }, class: { disabled } }, [
+    h('p', name),
+    h('p.hint', hint || ''),
   ])
 }
 
@@ -89,39 +85,27 @@ export default function Menubar(sources: Sources): Sinks {
     .filter(e => !e.ownerTarget.classList.contains('disabled'))
     .map(e => e.ownerTarget.dataset.intent as UIIntent)
 
-  const vdom$ = xs.combine(activeCategory$, sel$).map(([activeCategory, sel]) =>
-    h('div.menubar', { attrs: { tabIndex: 1 } }, [
-      MenuCategory({
-        category: 'File',
-        active: activeCategory === 'File',
-        items: [
-          { name: 'Save as JSON', intent: 'save', hint: 'Ctrl+S' },
-          { name: 'Load JSON', intent: 'load' },
-          { name: 'Export as SVG', disabled: true },
-          { name: 'Load Image', disabled: true },
-        ],
-      }),
-      MenuCategory({
-        category: 'Edit',
-        active: activeCategory === 'Edit',
-        items: [
-          { name: 'Delete Selection', disabled: sel.isEmpty(), hint: 'D', intent: 'delete' },
-          { name: 'Add Rectangle', hint: 'R', intent: 'rect' },
-          { name: 'Add Polygon', hint: 'P', intent: 'polygon' },
-          { name: 'Add Line', hint: 'L', intent: 'line' },
-          { name: 'Toggle Lock', disabled: sel.isEmpty(), hint: 'Ctrl+B', intent: 'toggle-lock' },
-        ],
-      }),
-      MenuCategory({
-        category: 'View',
-        active: activeCategory === 'View',
-        items: [
-          { name: 'Reset Zoom', intent: 'reset-zoom' },
-          { name: 'Centralize Selection', disabled: true },
-        ],
-      }),
-    ]),
-  )
+  const vdom$ = xs.combine(activeCategory$, sel$).map(([activeCategory, sel]) => (
+    <div className="menubar" tabIndex="1">
+      <MenuCategory category="File" active={activeCategory === 'File'}>
+        <MenuItem name="Save as JSON" intent="save" hint="Ctrl+S" />
+        <MenuItem name="Load JSON" intent="load-data" />
+        <MenuItem name="Export as SVG" disabled />
+        <MenuItem name="Load Image" intent="load-image" />
+      </MenuCategory>
+      <MenuCategory category="Edit" active={activeCategory === 'Edit'}>
+        <MenuItem name="Delete Selection" disabled={sel.isEmpty()} hint="D" intent="delete" />
+        <MenuItem name="Toggle Lock" disabled={sel.isEmpty()} hint="B" intent="toggle-lock" />
+        <MenuItem name="Add Rectangle" hint="R" intent="rect" />
+        <MenuItem name="Add Polygon" hint="P" intent="polygon" />
+        <MenuItem name="Add Line" hint="L" intent="line" />
+      </MenuCategory>
+      <MenuCategory category="View" active={activeCategory === 'View'}>
+        <MenuItem name="Reset Zoom" intent="reset-zoom" />
+        <MenuItem name="Centralize Selection" disabled />
+      </MenuCategory>
+    </div>
+  ))
 
   return {
     DOM: vdom$,

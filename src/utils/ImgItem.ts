@@ -9,6 +9,7 @@ const ImgItemRecord = Record(
   {
     id: -1,
     locked: true,
+    label: '',
     tags: Set<string>(),
     opacity: 1,
     x: 0,

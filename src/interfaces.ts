@@ -1,7 +1,7 @@
 import { DOMSource, VNode } from '@cycle/dom'
 import { List, Set } from 'immutable'
 import { MemoryStream, Stream } from 'xstream'
-import { FileStat } from './makeFileDriver'
+import { DialogRequest, FileStat } from './makeFileDriver'
 import { KeyboardSource } from './makeKeyboardDriver'
 import AdjustedMouse from './utils/AdjustedMouse'
 import ImgItem from './utils/ImgItem'
@@ -44,6 +44,7 @@ export interface ItemMethods {
 
 export type CommonRecordUpdaters = RecordUpdater<'id', number> &
   RecordUpdater<'locked', boolean> &
+  RecordUpdater<'label', string> &
   RecordUpdater<'opacity', number> &
   RecordUpdater<'tags', Set<string>>
 
@@ -89,7 +90,7 @@ export interface InteractionFnSinks {
   nextAdjustConfigs: Stream<AdjustConfig[]>
   nextResizer: Stream<string>
   SAVE: Stream<SaveConfig>
-  FILE: Stream<File | 'open-file-dialog'>
+  FILE: Stream<File | DialogRequest>
   addons: { [key: string]: Stream<any> }
 }
 

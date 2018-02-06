@@ -1,4 +1,5 @@
 import { DOMSource, h, VNode } from '@cycle/dom'
+import isolate from '@cycle/isolate'
 import xs, { Stream } from 'xstream'
 import InspectorGeometricTab from './InspectorGeometricTab'
 import InspectorSemanticTab from './InspectorSemanticTab'
@@ -56,9 +57,9 @@ export default function Inspector(sources: Sources): Sinks {
 
   const tabWrapper$ = tabName$.map(tabName => {
     if (tabName === 'geometric') {
-      return { inst: InspectorGeometricTab(sources), tabName }
+      return { inst: isolate(InspectorGeometricTab)(sources), tabName }
     } else {
-      return { inst: InspectorSemanticTab(sources), tabName }
+      return { inst: isolate(InspectorSemanticTab)(sources), tabName }
     }
   })
 

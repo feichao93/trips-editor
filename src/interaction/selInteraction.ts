@@ -36,7 +36,7 @@ const selInteraction: InteractionFn = ({
     .map(State.deleteSel)
 
   const toggleLock$ = xs
-    .merge(UI.intent('toggle-lock'), keyboard.shortcut('ctrl+b'))
+    .merge(UI.intent('toggle-lock'), keyboard.shortcut('b'))
     .whenNot(sel$, sel => sel.isEmpty())
     .peek(sel$)
     .map(State.toggleLock)

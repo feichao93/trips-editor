@@ -49,17 +49,38 @@ export default function InspectorSemanticTab({
     )
     .flatten()
 
-  keyboard.shortcut
+  const editIntent$ = domSource
+    .select('.label-wrapper input')
+    .events('input')
+    .map<UIIntent.Edit>(e => {
+      const input = e.ownerTarget as HTMLInputElement
+      return { type: 'edit', field: 'label', value: input.value }
+    })
+
+  const labelVdom$ = xs.combine(state$, sel$).map(([state, sel]) => {
+    const sitem = sel.item(state)
+    if (sitem == null) {
+      return null
+    }
+    return (
+      <div key="label" className="label-wrapper">
+        <p>
+          Label
+          <input type="text" value={sitem.label} />
+        </p>
+      </div>
+    )
+  })
 
   const tagsVdom$ = xs.combine(config$, state$, sel$).map(([config, state, sel]) => {
     const sitem = sel.item(state)
     if (sitem == null) {
-      return h('p.empty-prompt', 'No Selected Items.')
+      return null
     }
     return (
-      <div className="tag-list-wrapper">
+      <div key="tag-list" className="tag-list-wrapper">
         <p>
-          Semantic Tags
+          Tags
           <button className="manage" disabled>
             Manage
           </button>
@@ -79,10 +100,25 @@ export default function InspectorSemanticTab({
     )
   })
 
-  const vdom$ = xs.combine(tagsVdom$).map(([tags]) => h('div.tab.semantic-tab', [tags]))
+  const emptyPrompt$ = xs.combine(state$, sel$).map(([state, sel]) => {
+    const sitem = sel.item(state)
+    if (sitem == null) {
+      return h('p.empty-prompt', { key: 'empty-prompt' }, 'No Selected Items.')
+    } else {
+      return null
+    }
+  })
+
+  const vdom$ = xs
+    .combine(emptyPrompt$, labelVdom$, tagsVdom$)
+    .map(([emptyPrompt, label, tags]) => h('div.tab.semantic-tab', [emptyPrompt, label, tags]))
 
   return {
     DOM: vdom$,
-    intent: xs.merge(toggleSemanticTagFromClickIntent$, toggleSemanticTagFromShortcutIntent$),
+    intent: xs.merge(
+      editIntent$,
+      toggleSemanticTagFromClickIntent$,
+      toggleSemanticTagFromShortcutIntent$,
+    ),
   }
 }
