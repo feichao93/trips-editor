@@ -1,3 +1,4 @@
+import copyPaste from './copyPaste'
 import dragItems from './dragItems'
 import drawLine from './drawLine'
 import drawPolygon from './drawPolygon'
@@ -9,6 +10,7 @@ import selInteraction from './selInteraction'
 import zoom from './zoom'
 
 export default [
+  copyPaste,
   file,
   selInteraction,
   dragItems,

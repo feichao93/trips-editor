@@ -1,4 +1,5 @@
 import { identical } from 'ramda'
+import xs from 'xstream'
 import { InteractionFn, Rect, ResizeDirConfig, State } from '../interfaces'
 
 // TODO 该文件还可以进行优化
@@ -8,15 +9,15 @@ const resizeItems: InteractionFn = ({ mouse, mode: mode$, state: state$, sel: se
   const startInfo$ = mouse.down$
     .when(mode$, identical('idle'))
     .when(resizer$)
-    .sampleCombine(resizer$, state$, sel$)
-    .map(([pos, resizer, state, sel]) => {
+    .peek(xs.combine(resizer$, state$, sel$))
+    .map(([resizer, state, sel]) => {
       const startItems = sel.items(state)
       // When resizer is not null, we can make sure that bbox is not null.
       const bbox = sel.getBBox(state)
       return {
-        startPos: pos,
+        startPos: getResizerPosition(resizer, bbox),
         startItems,
-        anchor: resolveAnchor(resizer, bbox),
+        anchor: getAnchorPosition(resizer, bbox),
         resizeDirConfig: resolveResizeDirConfig(resizer),
       }
     })
@@ -32,27 +33,33 @@ const resizeItems: InteractionFn = ({ mouse, mode: mode$, state: state$, sel: se
   }
 }
 
-function resolveAnchor(resizer: string, rect: Rect) {
+function opposite(resizer: string) {
+  if (resizer === 'nw-resize') return 'se-resize'
+  if (resizer === 'se-resize') return 'nw-resize'
+  if (resizer === 'n-resize') return 's-resize'
+  if (resizer === 's-resize') return 'n-resize'
+  if (resizer === 'ne-resize') return 'sw-resize'
+  if (resizer === 'sw-resize') return 'ne-resize'
+  if (resizer === 'e-resize') return 'w-resize'
+  if (resizer === 'w-resize') return 'e-resize'
+  throw new Error(`Invalid resizer: ${resizer}`)
+}
+
+function getResizerPosition(resizer: string, rect: Rect) {
   const { x, y, width, height } = rect
-  if (resizer === 'nw-resize') {
-    return { x: x + width, y: y + height }
-  } else if (resizer === 'n-resize') {
-    return { x: 0, y: y + height }
-  } else if (resizer === 'ne-resize') {
-    return { x, y: y + height }
-  } else if (resizer === 'w-resize') {
-    return { x: x + width, y: 0 }
-  } else if (resizer === 'e-resize') {
-    return { x, y: 0 }
-  } else if (resizer === 'sw-resize') {
-    return { x: x + width, y }
-  } else if (resizer === 's-resize') {
-    return { x: 0, y }
-  } else if (resizer === 'se-resize') {
-    return { x, y }
-  } else {
-    throw new Error(`Invalid resizer: ${resizer}`)
-  }
+  if (resizer === 'nw-resize') return { x, y }
+  if (resizer === 'n-resize') return { x: 0, y }
+  if (resizer === 'ne-resize') return { x: x + width, y }
+  if (resizer === 'w-resize') return { x, y: 0 }
+  if (resizer === 'e-resize') return { x: x + width, y: 0 }
+  if (resizer === 'sw-resize') return { x, y: y + height }
+  if (resizer === 's-resize') return { x: 0, y: y + height }
+  if (resizer === 'se-resize') return { x: x + width, y: y + height }
+  throw new Error(`Invalid resizer: ${resizer}`)
+}
+
+function getAnchorPosition(resizer: string, rect: Rect) {
+  return getResizerPosition(opposite(resizer), rect)
 }
 
 function resolveResizeDirConfig(resizer: string): ResizeDirConfig {

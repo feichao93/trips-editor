@@ -47,6 +47,7 @@ export default function App(sources: Sources): Sinks {
   const keyboard = sources.keyboard
 
   const nextConfigProxy$ = xs.create<AppConfig>()
+  const nextClipboardProxy$ = xs.create<Item>()
   const actionProxy$ = xs.create<Action>()
   const nextModeProxy$ = xs.create<string>()
   const updateSelProxy$ = xs.create<SelUpdater>()
@@ -60,6 +61,7 @@ export default function App(sources: Sources): Sinks {
     polygonCloseIndicator$: xs.create<VNode>(),
   }
 
+  const clipboard$ = nextClipboardProxy$.startWith(null)
   const config$ = nextConfigProxy$.startWith(initConfig)
   const state$ = actionProxy$.fold((s, updater) => updater(s), new State())
   const transform$ = nextTransformProxy$.startWith(d3.zoomIdentity)
@@ -90,6 +92,7 @@ export default function App(sources: Sources): Sinks {
     mouse,
     keyboard,
     config: config$,
+    clipboard: clipboard$,
     mode: mode$,
     state: state$,
     sel: sel$,
@@ -114,6 +117,7 @@ export default function App(sources: Sources): Sinks {
   }
 
   nextConfigProxy$.imitate(mergeSinks(allSinks, 'nextConfig'))
+  nextClipboardProxy$.imitate(mergeSinks(allSinks, 'nextClipboard'))
   nextDrawingItemProxy$.imitate(mergeSinks(allSinks, 'drawingItem'))
   actionProxy$.imitate(mergeSinks(allSinks, 'action'))
   nextModeProxy$.imitate(mergeSinks(allSinks, 'nextMode'))

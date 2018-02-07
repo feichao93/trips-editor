@@ -68,6 +68,7 @@ export interface InteractionFnSources {
   DOM: DOMSource
   UI: UIClass
   config: MemoryStream<AppConfig>
+  clipboard: MemoryStream<Item>
   mouse: AdjustedMouse
   mode: MemoryStream<string>
   state: MemoryStream<State>
@@ -82,6 +83,7 @@ export interface InteractionFnSinks {
   action: Stream<Action>
   nextMode: Stream<string>
   nextConfig: Stream<AppConfig>
+  nextClipboard: Stream<Item>
   nextTransform: Stream<d3.ZoomTransform>
   updateSel: Stream<SelUpdater>
   drawingItem: Stream<Item>
