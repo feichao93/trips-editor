@@ -2,9 +2,9 @@
 
 ## Motivation
 
-(TODO) Add a basic description about _our algorithm_.
+(TODO) Add a basic description about __our algorithm__.
 
-The spatial topological relations of the floor, which is hard to generate or extract, is one of the key inputs to our algorithm. In many cases, we could only get a bitmap image file of the floorplan. And there are sophisticated tools such as [Microsoft Visio][] or [Inkscape][] which can load the image file and make a diagram manually according to the image file. But the main disadvantage is that the output of these tools is too complicated to fit in our algorithm: it is hard to parse and manipulate in our code, and it lacks the abilities of attaching semantic information to shapes. Our algorithm prefers a simple and clean data format so it can focus on processing positioning data and aggregating semantic trajectories.
+The spatial topological relations of the floor is one of the key inputs to our algorithm, but it is hard to generate or extract. In many cases, we could only get a bitmap image file of the floorplan. And there are sophisticated tools such as [Microsoft Visio][] or [Inkscape][] which can load the image file and make a diagram manually according to the image file. But the main disadvantage is that the output of these tools is too complicated to fit in our algorithm: it is hard to parse and manipulate in our code, and it lacks the abilities of attaching semantic information to shapes. Our algorithm prefers a simple and clean data format so it can focus on processing positioning data and aggregating semantic trajectories.
 
 The editor could help us build up the topological relations from a image file. The editor can load the image file and display it, then we can draw polygons/polylines imitating the spatial structures on the image. After completing the geometric information, we can use the editor to attach specific semantic information to polygons/polyglines. For example, we can designate severals rectangles as rooms or specify a polyline as a wall. When all is done, the editor can export both geometric and semantic information to a single json file, which can be parsed by our algorithm easily.
 
@@ -12,16 +12,31 @@ While the editor is created originally for our algorithm, the editor itself is j
 
 ## Introduction
 
-This section describes what features does the editor provides and how to use them.
+This section describes the concepts and features about the editor.
 
-1. The board: The board is where shapes display and user interactions happens.
-2. Mode: The mode is displayed at the lower left corner. It tells the user 'What we are doing'. The mode is default to `idle`; The mode is `rect.xxx` when drawing a rect; And the mode is `line.xxx` when drawing a line and so on.
-3. Load image file: In `idle` mode, drag the image file from file explorer and drop it onto the editor board.
-4. Draw polygons: In `idle` mode, press `P` to enter `polygon` mode, and an empty drawing-polygon is set up; In `polygon` mode, every mouse click will add a vertex to the drawing-polygon; If the user closes the drawing-polygon by clicks near the first vertex, a new polygon will be added and mode changes back to `idle`. The user can always press `ESC` to return `idle` mode.
-5. Draw lines/rectangles: Press the shortcut and enter the corresponding mode, drag the mouse and a new shape will be added.
-6. Selections and the Inspector: Click on a shape to select it, and the inspector on the right will list all the properties about the selected shape. The inspector has two tabs, one for geometric information such as width, height, z-index, and one for semantic information including region type (room / staircase / hallway), line type (wall / door). Some properties are readonly in the inspector and some are editable. (TODO a image showing the inspector
-7. Dragging, Zooming and Resizing: The board supports dragging and zooming. The selected items can be resized using the resizers. These three operations are really intuitive so we just mention them here.
-8. Point editing: Press `E` to toggle selection mode between `bbox`(default) and `vertices`. In `vertices` selection mode, a small circle will appear at every vertex of the selected polygon/polyline, the user could drag the circle to change the vertex position, or press `D` and delete the hovered vertex, or drag from near an edge and add a new vertex.
+* UI: The user interface contains several components:
+
+  - The menu bar is a container of various buttons;
+
+
+  - The board is where shapes display and user interactions happens. You can drag and zoom the board, or drag and resize the shapes on the board;
+  - The status bar displays some useful information such as current mode, current selection mode and current zoom percentage;
+  - The inspector shows properties about the current selected shapes. The inspector has two tabs: geometric tab lists the geometric and style properties, and semantic tab displays the semantic label and tags;
+
+* Concept _Mode_: The mode is displayed at the left corner. It tells the user 'What you are doing': The mode is default to `idle`; The mode is `rect.xxx` when drawing a rect; The mode is `line.xxx` when drawing a line and so on.
+
+*  Drawing:
+
+   - Polygons: In `idle` mode, press `P` to enter `polygon` mode, and an empty drawing-polygon is set up; In `polygon` mode, every mouse click will add a vertex to the drawing-polygon; If the user closes the drawing-polygon by clicks near the first vertex, a new polygon will be added and mode changes back to `idle`. The user can always press `ESC` to return `idle` mode.
+   - Lines / Rectangles: Press the shortcut and enter the corresponding mode, drag the mouse and a new shape will be added;
+   - With various shortcuts and intuitive auto-adjust, you can draw complex shapes quickly.
+
+*  Point editing: Press `E` to toggle selection mode between `bbox`(default) and `vertices`. In `vertices` selection mode, a small circle will appear at every vertex of the selected polygon/polyline, the user could drag the circle to change the vertex position, or press `D` to delete the hovered vertex, or drag from near an edge and add a new vertex.
+
+*  Load and Save Files:
+
+   - The editor use JSON with a flexible structure as the data format which is easy to parse and manipulate. You can save the current state to a JSON file or load state from a JSON file;
+   - Load image file: Drag the image file from file explorer and drop it onto the editor board.
 
 ## Interaction Refinement
 
@@ -76,7 +91,7 @@ The keyboard also provides a `isPressing` method. For example, when implementing
 
 **Pre-calculated mouse positions**
 
-There are three different types of mouse positions: **Raw positions** are from mouse event listener directly and records the coordinates relative to the web page. **Board positions** records the coordinates relative to the board, which are calculating by combining the transform stream and raw position stream and [inverting](https://github.com/d3/d3-zoom#transform_invert) the position by the transform. **Adjusted position** are board positions processed by the adjuster. (TODO 在Interaction Refinement中添加对adjuster的说明)
+There are three different types of mouse positions: **Raw positions** are from mouse event listener directly and records the coordinates relative to the web page. **Board positions** records the coordinates relative to the board, which are calculating by combining the transform stream and raw position stream and [inverting](https://github.com/d3/d3-zoom#transform_invert) the position by the transform. **Adjusted position** are board positions processed by the adjuster.
 
 We pre-calculate all types of mouse positions and pack them into the `mouse` object. For example, `mouse.rawDown$` is the stream that records the raw position of the mouse down event, and `mouse.down$` records the board position, and `mouse.adown$` records the adjusted board position.
 

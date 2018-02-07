@@ -6,6 +6,7 @@ export type UIIntent = UIIntent.ALL
 export namespace UIIntent {
   export type ALL =
     | 'toggle-lock'
+    | 'toggle-sel-mode'
     | 'reset-zoom'
     | Edit
     | ApplyStylePreset

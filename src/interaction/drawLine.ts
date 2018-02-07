@@ -35,7 +35,7 @@ const drawLine: InteractionFn = ({ mouse, UI, mode: mode$, keyboard }) => {
     action: newItem$.map(State.addItem),
     nextMode: nextMode$,
     nextAdjustConfigs: nextAdjustConfigs$,
-    updateSel: newItem$.mapTo(Sel.selectLast('vertices')),
+    updateSel: newItem$.mapTo(Sel.selectLast()),
   }
 }
 

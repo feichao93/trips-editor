@@ -1,7 +1,7 @@
 import { DOMSource, h, VNode } from '@cycle/dom'
 import * as d3 from 'd3'
 import xs, { Stream } from 'xstream'
-import { State, UIIntent } from '../interfaces'
+import { Sel, State, UIIntent } from '../interfaces'
 import '../styles/StatusBar.styl'
 
 export interface Sources {
@@ -9,6 +9,7 @@ export interface Sources {
   mode: Stream<string>
   transform: Stream<d3.ZoomTransform>
   state: Stream<State>
+  sel: Stream<Sel>
 }
 
 export interface Sinks {
@@ -16,22 +17,33 @@ export interface Sinks {
   intent: Stream<UIIntent>
 }
 
-export default function StatusBar(sources: Sources): Sinks {
-  const domSource = sources.DOM
-
+export default function StatusBar({
+  DOM: domSource,
+  mode: mode$,
+  transform: transform$,
+  sel: sel$,
+}: Sources): Sinks {
   const resetZoomIntent$ = domSource
     .select('.reset-zoom')
     .events('click')
     .mapTo<UIIntent>('reset-zoom')
 
+  const toggleSelnModeIntent$ = domSource
+    .select('.toggle-sel-mode')
+    .events('click')
+    .mapTo<UIIntent>('toggle-sel-mode')
+
   const vdom$ = xs
-    .combine(sources.mode, sources.transform)
-    .map(([mode, transform]) =>
+    .combine(mode$, transform$, sel$)
+    .map(([mode, transform, sel]) =>
       h('div.status-bar', [
-        h('div.left', [h('p.mode', mode)]),
+        h('div.left', [
+          h('p.item.mode', mode),
+          h('p.button.toggle-sel-mode', { attrs: { title: 'Toggle Selection Mode' } }, sel.mode),
+        ]),
         h('div.right', [
           h(
-            'p.reset-zoom.button',
+            'p.button.reset-zoom',
             { attrs: { title: 'Click to Reset Zoom' } },
             `${Math.round(transform.k * 100)}%`,
           ),
@@ -41,6 +53,6 @@ export default function StatusBar(sources: Sources): Sinks {
 
   return {
     DOM: vdom$,
-    intent: resetZoomIntent$,
+    intent: xs.merge(resetZoomIntent$, toggleSelnModeIntent$),
   }
 }

@@ -26,8 +26,8 @@ export default class Sel extends SelRecord {
     return sel => sel.set('idSet', OrderedSet(set))
   }
 
-  static selectLast(mode: SelMode = 'bbox'): SelUpdater {
-    return (sel, state) => sel.set('idSet', OrderedSet([getMaxItemId(state)])).set('mode', mode)
+  static selectLast(): SelUpdater {
+    return (sel, state) => sel.set('idSet', OrderedSet([getMaxItemId(state)]))
   }
 
   static reset(): SelUpdater {

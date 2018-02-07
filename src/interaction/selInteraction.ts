@@ -30,7 +30,12 @@ const selInteraction: InteractionFn = ({
   const deleteSel$ = xs
     .merge(
       UI.intent('delete'),
-      keyboard.shortcut('d').when(sel$, sel => !sel.isEmpty() && sel.mode === 'bbox'),
+      keyboard
+        .shortcut('d')
+        .when(
+          xs.combine(sel$, state$),
+          ([sel, state]) => !sel.isEmpty() && (sel.mode === 'bbox' || sel.item(state).locked),
+        ),
     )
     .peek(sel$)
     .map(State.deleteSel)

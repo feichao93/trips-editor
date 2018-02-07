@@ -8,9 +8,16 @@ interface EditPointStartInfo {
   vertexIndex: number
 }
 
-const editPoints: InteractionFn = ({ mouse, state: state$, mode: mode$, keyboard, sel: sel$ }) => {
-  const toggleSelMode$ = keyboard
-    .shortcut('e')
+const editPoints: InteractionFn = ({
+  UI,
+  mouse,
+  state: state$,
+  mode: mode$,
+  keyboard,
+  sel: sel$,
+}) => {
+  const toggleSelMode$ = xs
+    .merge(keyboard.shortcut('e'), UI.intent('toggle-sel-mode'))
     .when(sel$, sel => !sel.isEmpty())
     .mapTo(Sel.toggleMode())
 
