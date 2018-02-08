@@ -31,7 +31,7 @@ export default class Sel extends SelRecord {
   }
 
   static reset(): SelUpdater {
-    return () => new Sel()
+    return sel => new Sel({ mode: sel.mode })
   }
 
   item(state: State) {

@@ -1,15 +1,15 @@
 import { List } from 'immutable'
+import xs from 'xstream'
 import { State } from './State'
 import {
   ImgItem,
-  InteractionFnSinks,
+  ComponentSinks,
   Item,
   Point,
   PolygonItem,
   PolylineItem,
   Rect,
 } from '../interfaces'
-import xs from 'xstream'
 
 export function getMaxItemId(state: State) {
   return state.items.map(item => item.id).max() || 0
@@ -104,9 +104,9 @@ export function distanceBetweenPointAndSegment(point: Point, start: Point, end: 
   )
 }
 
-export function mergeSinks<K extends keyof InteractionFnSinks>(
-  sinksArray: Partial<InteractionFnSinks>[],
+export function mergeSinks<K extends keyof ComponentSinks>(
+  sinksArray: Partial<ComponentSinks>[],
   key: K,
-): InteractionFnSinks[K] {
+): ComponentSinks[K] {
   return xs.merge(...(sinksArray.map(sinks => sinks[key]).filter(Boolean) as any))
 }

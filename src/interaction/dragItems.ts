@@ -1,7 +1,8 @@
 import { identical } from 'ramda'
-import { InteractionFn, State } from '../interfaces'
+import xs from 'xstream'
+import { Component, State } from '../interfaces'
 
-const dragItems: InteractionFn = ({ mouse, mode: mode$, state: state$ }) => {
+const dragItems: Component = ({ mouse, mode: mode$, state: state$ }) => {
   const dragStart$ = mouse.down$
     .when(mode$, identical('idle'))
     .whenNot(mouse.isBusy$)
@@ -10,17 +11,23 @@ const dragItems: InteractionFn = ({ mouse, mode: mode$, state: state$ }) => {
       const clickedItems = state.items.filter(item => item.containsPoint(pos))
       const targetItemId = state.zlist.findLast(itemId => clickedItems.has(itemId))
       const startItems = state.items.filter(item => item.id === targetItemId)
-      if (!startItems.isEmpty()) {
-        return { startPos: pos, startItems }
-      }
-      return null
-      // TODO 支持多个元素的拖动
+      return { startPos: pos, startItems }
     })
-    .startWith(null)
+    .filter(({ startItems }) => !startItems.isEmpty())
+
+  const toDraggingMode$ = dragStart$
+    .mapTo(
+      mouse.move$
+        .endWhen(mouse.up$)
+        .mapTo('dragging')
+        .take(1),
+    )
+    .flatten()
 
   const dragItems$ = dragStart$
-    .checkedFlatMap(({ startItems, startPos }) =>
+    .map(({ startItems, startPos }) =>
       mouse.move$
+        .when(mode$, identical('dragging'))
         .map(pos => {
           const dx = pos.x - startPos.x
           const dy = pos.y - startPos.y
@@ -29,9 +36,14 @@ const dragItems: InteractionFn = ({ mouse, mode: mode$, state: state$ }) => {
         })
         .endWhen(mouse.up$),
     )
-    .filter(Boolean)
+    .flatten()
 
-  return { action: dragItems$ }
+  const toIdleMode$ = mouse.up$.when(mode$, identical('dragging')).mapTo('idle')
+
+  return {
+    action: dragItems$,
+    nextMode: xs.merge(toDraggingMode$, toIdleMode$),
+  }
 }
 
 export default dragItems

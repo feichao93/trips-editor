@@ -1,35 +1,31 @@
 import { identical } from 'ramda'
 import xs, { Stream } from 'xstream'
-import { InteractionFn, Item, Point, Sel, State } from '../interfaces'
+import { Component, Item, Point, Sel, State } from '../interfaces'
 
-interface EditPointStartInfo {
+interface EditVertexStartInfo {
   startPos: Point
   item: Item
   vertexIndex: number
 }
 
-const editPoints: InteractionFn = ({
-  UI,
-  mouse,
-  state: state$,
-  mode: mode$,
-  keyboard,
-  sel: sel$,
-}) => {
+const editVertex: Component = ({ UI, mouse, state: state$, mode: mode$, keyboard, sel: sel$ }) => {
+  /** Toggle Selection Mode */
   const toggleSelMode$ = xs
     .merge(keyboard.shortcut('e'), UI.intent('toggle-sel-mode'))
+    .when(mode$, identical('idle'))
     .when(sel$, sel => !sel.isEmpty())
     .mapTo(Sel.toggleMode())
 
-  const addPointConfig$ = mouse.down$
+  /** Add/move vertex */
+  const addVertexConfig$ = mouse.down$
     .whenNot(mouse.vertexInsertIndex$, identical(-1))
     .sampleCombine(sel$, mouse.vertexInsertIndex$)
 
-  const startFromAdd$: Stream<EditPointStartInfo> = addPointConfig$
+  const startFromAdd$: Stream<EditVertexStartInfo> = addVertexConfig$
     .map(([pos, sel, vertexInsertIndex]) =>
       state$
         .drop(1) // state$ is a memory-stream, so we drop the current state
-        .take(1) // Use the next state (state that contains the added-point)
+        .take(1) // Use the next state (state that contains the added-vertex)
         .map(state => ({
           startPos: pos,
           item: sel.item(state),
@@ -38,7 +34,7 @@ const editPoints: InteractionFn = ({
     )
     .flatten()
 
-  const startFromMouseDown$: Stream<EditPointStartInfo> = mouse.down$
+  const startFromMouseDown$: Stream<EditVertexStartInfo> = mouse.down$
     .when(mode$, identical('idle'))
     .whenNot(mouse.vertexIndex$, identical(-1))
     .when(sel$, sel => sel.mode === 'vertices')
@@ -50,6 +46,17 @@ const editPoints: InteractionFn = ({
     }))
 
   const startInfo$ = xs.merge(startFromAdd$, startFromMouseDown$)
+
+  const stopMoving$ = xs.merge(mouse.up$, mouse.vertexIndex$.filter(identical(-1)))
+
+  const toVertexMovingMode$ = startInfo$
+    .mapTo(
+      mouse.move$
+        .endWhen(stopMoving$)
+        .mapTo('vertex.moving')
+        .take(1),
+    )
+    .flatten()
 
   const nextAdjustConfigs$ = startInfo$
     .map(({ item, vertexIndex }) =>
@@ -66,34 +73,39 @@ const editPoints: InteractionFn = ({
     )
     .flatten()
 
-  const movingInfo$ = startInfo$
+  const moveVertex$ = startInfo$
     .map(({ item, startPos, vertexIndex }) =>
       mouse.amove$
+        .when(mode$, identical('vertex.moving'))
         .map(movingPos => {
           const dx = movingPos.x - startPos.x
           const dy = movingPos.y - startPos.y
           return [item, vertexIndex, dx, dy]
         })
-        .endWhen(mouse.up$),
+        .endWhen(stopMoving$),
     )
     .flatten()
-  const movePoint$ = movingInfo$.map(State.moveVertex)
+    .map(State.moveVertex)
 
-  const deletePoint$ = keyboard
-    .keyup('d')
+  const toIdleMode$ = mouse.up$.when(mode$, identical('vertex.moving')).mapTo('idle')
+
+  /** Delete Vertex */
+  const deleteVertex$ = keyboard
+    .shortcut('d')
     .whenNot(mouse.vertexIndex$, identical(-1))
     .peek(xs.combine(sel$, mouse.vertexIndex$))
     .map(State.deleteVertex)
 
   return {
     updateSel: toggleSelMode$,
-    action: xs.merge(movePoint$, addPointConfig$.map(State.insertVertex), deletePoint$),
+    action: xs.merge(moveVertex$, addVertexConfig$.map(State.insertVertex), deleteVertex$),
     nextVertexIndex: xs.merge(
-      deletePoint$.mapTo(-1),
       startFromAdd$.map(startInfo => startInfo.vertexIndex),
+      deleteVertex$.mapTo(-1),
     ),
     nextAdjustConfigs: nextAdjustConfigs$ as any,
+    nextMode: xs.merge(toVertexMovingMode$, toIdleMode$),
   }
 }
 
-export default editPoints
+export default editVertex

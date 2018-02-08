@@ -1,9 +1,9 @@
 import xs from 'xstream'
-import { InteractionFn, Sel, State, ImgItem } from '../interfaces'
+import { Component, ImgItem, Sel, State } from '../interfaces'
 import { DialogRequest, TextFileStat } from '../makeFileDriver'
 import serializeUtils from '../utils/serializeUtils'
 
-const file: InteractionFn = ({ FILE, UI, keyboard, state: state$ }) => {
+const file: Component = ({ FILE, UI, keyboard, state: state$ }) => {
   /* Menubar File -> Save as JSON */
   const save$ = xs
     .merge(UI.intent('save'), keyboard.shortcut('mod+s'))

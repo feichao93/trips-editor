@@ -2,7 +2,7 @@ import { h, VNode } from '@cycle/dom'
 import { List } from 'immutable'
 import { always, identical } from 'ramda'
 import xs, { Stream } from 'xstream'
-import { AdjustConfig, InteractionFn, Point, PolygonItem, Sel, State, Updater } from '../interfaces'
+import { AdjustConfig, Component, Point, PolygonItem, Sel, State, Updater } from '../interfaces'
 import { distanceBetweenPointAndPoint } from '../utils/common'
 
 /** Implementation for drawing polygon interaction.
@@ -15,7 +15,7 @@ import { distanceBetweenPointAndPoint } from '../utils/common'
  * Note that we set `adjustConfigs` when drawing a new polygon, so we use adjusted
  *  positions like `mouse.aclick$` instead of raw positions like `mouse.click$`.
  */
-const drawPolygon: InteractionFn = ({
+const drawPolygon: Component = ({
   mouse,
   keyboard,
   UI,

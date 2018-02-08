@@ -8,7 +8,7 @@ import { ImgFileStat } from '../makeFileDriver'
 const ImgItemRecord = Record(
   {
     id: -1,
-    locked: true,
+    locked: false,
     label: '',
     tags: Set<string>(),
     opacity: 1,

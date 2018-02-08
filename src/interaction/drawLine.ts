@@ -1,8 +1,8 @@
 import { identical } from 'ramda'
 import xs from 'xstream'
-import { AdjustConfig, InteractionFn, PolylineItem, Sel, State } from '../interfaces'
+import { AdjustConfig, Component, PolylineItem, Sel, State } from '../interfaces'
 
-const drawLine: InteractionFn = ({ mouse, UI, mode: mode$, keyboard }) => {
+const drawLine: Component = ({ mouse, UI, mode: mode$, keyboard }) => {
   const toLineReadyMode$ = xs.merge(UI.intent('line'), keyboard.shortcut('l')).mapTo('line.ready')
 
   const startPos$ = mouse.adown$.when(mode$, identical('line.ready')).remember()

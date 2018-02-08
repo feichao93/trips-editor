@@ -1,9 +1,9 @@
 import { is, OrderedMap } from 'immutable'
 import { identical } from 'ramda'
 import xs from 'xstream'
-import { InteractionFn, Item, ItemId, Sel, State, UIIntent } from '../interfaces'
+import { Component, Item, ItemId, Sel, State, UIIntent } from '../interfaces'
 
-const selInteraction: InteractionFn = ({
+const selInteraction: Component = ({
   mouse,
   keyboard,
   UI,

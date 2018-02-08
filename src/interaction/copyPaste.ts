@@ -1,14 +1,9 @@
 import { always, inc } from 'ramda'
 import xs from 'xstream'
 import { PASTE_OFFSET } from '../constants'
-import { InteractionFn, Sel, State, Updater } from '../interfaces'
+import { Component, Sel, State, Updater } from '../interfaces'
 
-const copyPaste: InteractionFn = ({
-  keyboard,
-  sel: sel$,
-  state: state$,
-  clipboard: clipboard$,
-}) => {
+const copyPaste: Component = ({ keyboard, sel: sel$, state: state$, clipboard: clipboard$ }) => {
   const copied$ = keyboard
     .shortcut('mod+c')
     .peek(xs.combine(state$, sel$))

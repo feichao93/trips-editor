@@ -64,7 +64,7 @@ export interface ResizeDirConfig {
   v: boolean
 }
 
-export interface InteractionFnSources {
+export interface ComponentSources {
   DOM: DOMSource
   UI: UIClass
   config: MemoryStream<AppConfig>
@@ -78,7 +78,7 @@ export interface InteractionFnSources {
   FILE: Stream<FileStat>
 }
 
-export interface InteractionFnSinks {
+export interface ComponentSinks {
   DOM: Stream<VNode>
   action: Stream<Action>
   nextMode: Stream<string>
@@ -96,8 +96,8 @@ export interface InteractionFnSinks {
   addons: { [key: string]: Stream<any> }
 }
 
-export interface InteractionFn {
-  (sources: InteractionFnSources): Partial<InteractionFnSinks>
+export interface Component {
+  (sources: ComponentSources): Partial<ComponentSinks>
 }
 
 export interface SaveConfig {

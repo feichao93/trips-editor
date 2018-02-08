@@ -1,12 +1,12 @@
 import * as d3 from 'd3'
 import { clamp, identical } from 'ramda'
 import xs from 'xstream'
-import { InteractionFn } from '../interfaces'
+import { Component } from '../interfaces'
 import transition from '../utils/transition'
 
 // TODO use d3.interpolateZoom instead of d3.interpolate
 
-const zoom: InteractionFn = ({
+const zoom: Component = ({
   mouse,
   config: config$,
   mode: mode$,

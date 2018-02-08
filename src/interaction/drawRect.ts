@@ -1,6 +1,6 @@
 import { identical } from 'ramda'
 import xs from 'xstream'
-import { AdjustConfig, InteractionFn, PolygonItem, Sel, State } from '../interfaces'
+import { AdjustConfig, Component, PolygonItem, Sel, State } from '../interfaces'
 import { getBoundingBoxOfPoints } from '../utils/common'
 
 /**
@@ -17,7 +17,7 @@ import { getBoundingBoxOfPoints } from '../utils/common'
  * Note that we set `adjustConfigs` when drawing a new rect, so we use `mouse.adown$`
  *  instead of `mouse.down$`.
  */
-const drawRect: InteractionFn = ({ UI, mouse, mode: mode$, keyboard }) => {
+const drawRect: Component = ({ UI, mouse, mode: mode$, keyboard }) => {
   const toRectReadyMode$ = xs.merge(UI.intent('rect'), keyboard.shortcut('r')).mapTo('rect.ready')
 
   const startPos$ = mouse.adown$.when(mode$, identical('rect.ready'))

@@ -3,7 +3,7 @@ import dragItems from './dragItems'
 import drawLine from './drawLine'
 import drawPolygon from './drawPolygon'
 import drawRect from './drawRect'
-import editPoints from './editPoints'
+import editVertex from './editVertex'
 import file from './file'
 import resizeItems from './resizeItems'
 import selInteraction from './selInteraction'
@@ -19,5 +19,5 @@ export default [
   drawRect,
   drawPolygon,
   drawLine,
-  editPoints,
+  editVertex,
 ]

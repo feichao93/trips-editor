@@ -1,15 +1,14 @@
 import { identical } from 'ramda'
 import xs from 'xstream'
-import { InteractionFn, Rect, ResizeDirConfig, State } from '../interfaces'
+import { Component, Rect, ResizeDirConfig, State } from '../interfaces'
 
 // TODO 该文件还可以进行优化
 
-const resizeItems: InteractionFn = ({ mouse, mode: mode$, state: state$, sel: sel$ }) => {
-  const resizer$ = mouse.resizer$
+const resizeItems: Component = ({ mouse, mode: mode$, state: state$, sel: sel$ }) => {
   const startInfo$ = mouse.down$
     .when(mode$, identical('idle'))
-    .when(resizer$)
-    .peek(xs.combine(resizer$, state$, sel$))
+    .when(mouse.resizer$)
+    .peek(xs.combine(mouse.resizer$, state$, sel$))
     .map(([resizer, state, sel]) => {
       const startItems = sel.items(state)
       // When resizer is not null, we can make sure that bbox is not null.
@@ -22,14 +21,30 @@ const resizeItems: InteractionFn = ({ mouse, mode: mode$, state: state$, sel: se
       }
     })
 
-  const resizeAction$ = startInfo$
-    .checkedFlatMap(startInfo =>
-      mouse.move$.map(movingPos => ({ movingPos, ...startInfo })).endWhen(mouse.up$),
+  const toResizingMode$ = startInfo$
+    .mapTo(
+      mouse.move$
+        .endWhen(mouse.up$)
+        .mapTo('resizing')
+        .take(1),
     )
+    .flatten()
+
+  const resizeAction$ = startInfo$
+    .map(startInfo =>
+      mouse.move$
+        .when(mode$, identical('resizing'))
+        .map(movingPos => ({ movingPos, ...startInfo }))
+        .endWhen(mouse.up$),
+    )
+    .flatten()
     .map(State.resizeItems)
+
+  const toIdleMode$ = mouse.up$.when(mode$, identical('resizing')).mapTo('idle')
 
   return {
     action: resizeAction$,
+    nextMode: xs.merge(toResizingMode$, toIdleMode$),
   }
 }
 
