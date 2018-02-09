@@ -1,6 +1,9 @@
 import { identical } from 'ramda'
 import xs, { Stream } from 'xstream'
-import { Component, Item, Point, Sel, State } from '../interfaces'
+import InsertVertexAction from '../actions/InsertVertexAction'
+import MoveVertexAction from '../actions/MoveVertexAction'
+import { Component, Item, Point, Sel } from '../interfaces'
+import DeleteVertexAction from '../actions/DeleteVertexAction'
 
 interface EditVertexStartInfo {
   startPos: Point
@@ -17,11 +20,11 @@ const editVertex: Component = ({ UI, mouse, state: state$, mode: mode$, keyboard
     .mapTo(Sel.toggleMode())
 
   /** Add/move vertex */
-  const addVertexConfig$ = mouse.down$
+  const insertVertexConfig$ = mouse.down$
     .whenNot(mouse.vertexInsertIndex$, identical(-1))
     .sampleCombine(sel$, mouse.vertexInsertIndex$)
 
-  const startFromAdd$: Stream<EditVertexStartInfo> = addVertexConfig$
+  const startFromAdd$: Stream<EditVertexStartInfo> = insertVertexConfig$
     .map(([pos, sel, vertexInsertIndex]) =>
       state$
         .drop(1) // state$ is a memory-stream, so we drop the current state
@@ -80,25 +83,29 @@ const editVertex: Component = ({ UI, mouse, state: state$, mode: mode$, keyboard
         .map(movingPos => {
           const dx = movingPos.x - startPos.x
           const dy = movingPos.y - startPos.y
-          return [item, vertexIndex, dx, dy]
+          return { item, vertexIndex, dx, dy }
         })
         .endWhen(stopMoving$),
     )
     .flatten()
-    .map(State.moveVertex)
+    .map(info => new MoveVertexAction(info))
 
   const toIdleMode$ = mouse.up$.when(mode$, identical('vertex.moving')).mapTo('idle')
 
   /** Delete Vertex */
   const deleteVertex$ = keyboard
     .shortcut('d')
-    .whenNot(mouse.vertexIndex$, identical(-1))
-    .peek(xs.combine(sel$, mouse.vertexIndex$))
-    .map(State.deleteVertex)
+    .peek(mouse.vertexIndex$)
+    .filter(vi => vi !== -1)
+    .map(vertexIndex => new DeleteVertexAction(vertexIndex))
 
   return {
     updateSel: toggleSelMode$,
-    action: xs.merge(moveVertex$, addVertexConfig$.map(State.insertVertex), deleteVertex$),
+    action: xs.merge(
+      moveVertex$,
+      insertVertexConfig$.map(config => new InsertVertexAction(config)),
+      deleteVertex$,
+    ),
     nextVertexIndex: xs.merge(
       startFromAdd$.map(startInfo => startInfo.vertexIndex),
       deleteVertex$.mapTo(-1),

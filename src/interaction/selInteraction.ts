@@ -1,7 +1,12 @@
-import { is, OrderedMap } from 'immutable'
 import { identical } from 'ramda'
 import xs from 'xstream'
-import { Component, Item, ItemId, Sel, State, UIIntent } from '../interfaces'
+import ChangeSelAction from '../actions/ChangeSelAction'
+import DeleteSelAction from '../actions/DeleteSelAction'
+import EditItemAction from '../actions/EditItemAction'
+import ToggleLockAction from '../actions/ToggleLockAction'
+import ToggleSemanticTagAction from '../actions/ToggleSemanticTagAction'
+import { Component, UIIntent } from '../interfaces'
+import ChangeZIndexAction from '../actions/ChangeZIndexAction'
 
 const selInteraction: Component = ({
   mouse,
@@ -20,12 +25,11 @@ const selInteraction: Component = ({
       const clickedItems = state.items.filter(item => item.containsPoint(pos))
       const targetItemId = state.zlist.findLast(itemId => clickedItems.has(itemId))
       if (targetItemId != null) {
-        return Sel.select(targetItemId)
+        return new ChangeSelAction(targetItemId)
       } else {
-        return Sel.reset()
+        return new ChangeSelAction /* empty item id */()
       }
     })
-    .dropRepeats(is)
 
   const deleteSel$ = xs
     .merge(
@@ -37,50 +41,37 @@ const selInteraction: Component = ({
           ([sel, state]) => !sel.isEmpty() && (sel.mode === 'bbox' || sel.item(state).locked),
         ),
     )
-    .peek(sel$)
-    .map(State.deleteSel)
+    .mapTo(new DeleteSelAction())
 
   const toggleLock$ = xs
     .merge(UI.intent('toggle-lock'), keyboard.shortcut('b'))
     .whenNot(sel$, sel => sel.isEmpty())
-    .peek(sel$)
-    .map(State.toggleLock)
+    .mapTo(new ToggleLockAction())
 
-  const edit$ = UI.intent<UIIntent.Edit>('edit')
-    .sampleCombine(sel$, state$)
-    .map(([{ field, value }, sel, state]) => {
-      const useNumberValue = ['strokeWidth', 'opacity'].includes(field)
-      const val: any = useNumberValue ? Number(value) : value
-      const updatedItems = sel.items(state).map(item => item.set(field as any, val))
-      return State.updateItems(updatedItems)
-    })
+  const edit$ = UI.intent<UIIntent.Edit>('edit').map(({ field, value }) => {
+    const useNumberValue = ['strokeWidth', 'opacity'].includes(field)
+    const val: any = useNumberValue ? Number(value) : value
+    return new EditItemAction(field, val)
+  })
 
-  const changeZIndex$ = UI.intent<UIIntent.ChangeZIndex>('change-z-index')
-    .sampleCombine(sel$)
-    .map(([{ op }, sel]) => State.updateZIndex(sel, op))
+  const changeZIndex$ = UI.intent<UIIntent.ChangeZIndex>('change-z-index').map(
+    ({ op }) => new ChangeZIndexAction(op),
+  )
 
   const toggleSemanticTag$ = UI.intent<UIIntent.ToggleSemanticTag>('toggle-semantic-tag')
     .whenNot(sel$, sel => sel.isEmpty())
     .sampleCombine(sel$, state$, config$)
     .map(([{ tagName }, sel, state, config]) => {
       const tagConfig = config.semantics.tags.find(tag => tag.name === tagName)
-      const item = sel.item(state)
-      const updatedItem = item.tags.has(tagName)
-        ? // Remove tag
-          item.update('tags', tags => tags.remove(tagName))
-        : // Add tag and apply the styles
-          item.update('tags', tags => tags.add(tagName)).merge(tagConfig.styles)
-      return State.updateItems(OrderedMap<ItemId, Item>().set(item.id, updatedItem))
+      return new ToggleSemanticTagAction(tagConfig)
     })
 
   const toIdle$ = keyboard.shortcut('esc').mapTo('idle')
-  const updateSel$ = xs.merge(changeSel$, deleteSel$.mapTo(Sel.reset()))
 
   return {
-    action: xs.merge(deleteSel$, toggleLock$, edit$, changeZIndex$, toggleSemanticTag$),
+    action: xs.merge(changeSel$, deleteSel$, toggleLock$, edit$, changeZIndex$, toggleSemanticTag$),
     nextMode: toIdle$,
     nextAdjustConfigs: toIdle$.mapTo([]),
-    updateSel: updateSel$,
   }
 }
 

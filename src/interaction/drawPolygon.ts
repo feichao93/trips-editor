@@ -2,7 +2,8 @@ import { h, VNode } from '@cycle/dom'
 import { List } from 'immutable'
 import { always, identical } from 'ramda'
 import xs, { Stream } from 'xstream'
-import { AdjustConfig, Component, Point, PolygonItem, Sel, State, Updater } from '../interfaces'
+import AddItemAction from '../actions/AddItemAction'
+import { AdjustConfig, Component, Point, PolygonItem, Updater } from '../interfaces'
 import { distanceBetweenPointAndPoint } from '../utils/common'
 
 /** Implementation for drawing polygon interaction.
@@ -61,7 +62,7 @@ const drawPolygon: Component = ({
   // Step 4
   const toIdleMode$ = newItem$.mapTo('idle')
 
-  const addItem$ = newItem$.map(State.addItem)
+  const addItem$ = newItem$.map(item => new AddItemAction(item))
   resetPointsProxy$.imitate(xs.merge(addItem$, toPolygonMode$))
 
   // 记录当前正在绘制的多边形的预览
@@ -131,7 +132,6 @@ const drawPolygon: Component = ({
     drawingItem: drawingPolygon$,
     action: addItem$,
     nextMode: nextMode$,
-    updateSel: newItem$.mapTo(Sel.selectLast()),
     nextAdjustConfigs: nextAdjustConfigs$,
     addons: { polygonCloseIndicator: closeIndicator$ },
   }

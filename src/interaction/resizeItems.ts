@@ -1,6 +1,7 @@
 import { identical } from 'ramda'
 import xs from 'xstream'
-import { Component, Rect, ResizeDirConfig, State } from '../interfaces'
+import ResizeItemAction from '../actions/ResizeItemActon'
+import { Component, Rect, ResizeDirConfig } from '../interfaces'
 
 // TODO 该文件还可以进行优化
 
@@ -38,7 +39,7 @@ const resizeItems: Component = ({ mouse, mode: mode$, state: state$, sel: sel$ }
         .endWhen(mouse.up$),
     )
     .flatten()
-    .map(State.resizeItems)
+    .map(resizingInfo => new ResizeItemAction(resizingInfo))
 
   const toIdleMode$ = mouse.up$.when(mode$, identical('resizing')).mapTo('idle')
 

@@ -1,6 +1,7 @@
 import { DOMSource, VNode } from '@cycle/dom'
 import { List, Set } from 'immutable'
 import { MemoryStream, Stream } from 'xstream'
+import Action from './actions'
 import { DialogRequest, FileStat } from './makeFileDriver'
 import { KeyboardSource } from './makeKeyboardDriver'
 import AdjustedMouse from './utils/AdjustedMouse'
@@ -8,10 +9,10 @@ import ImgItem from './utils/ImgItem'
 import PolygonItem from './utils/PolygonItem'
 import PolylineItem from './utils/PolylineItem'
 import Sel, { SelUpdater } from './utils/Sel'
-import { Action, State } from './utils/State'
+import { State, ZIndexOp } from './utils/State'
 import UIClass, { UIIntent } from './utils/UI'
 
-export { UIIntent, Action, State, PolygonItem, PolylineItem, ImgItem, Sel, SelUpdater }
+export { UIIntent, Action, State, ZIndexOp, PolygonItem, PolylineItem, ImgItem, Sel, SelUpdater }
 
 export interface Point {
   readonly x: number
@@ -76,6 +77,8 @@ export interface ComponentSources {
   transform: MemoryStream<d3.ZoomTransform>
   keyboard: KeyboardSource
   FILE: Stream<FileStat>
+  polygonCloseIndicator: MemoryStream<VNode>
+  drawingItem: MemoryStream<Item>
 }
 
 export interface ComponentSinks {
@@ -85,15 +88,14 @@ export interface ComponentSinks {
   nextConfig: Stream<AppConfig>
   nextClipboard: Stream<Item>
   nextTransform: Stream<d3.ZoomTransform>
-  updateSel: Stream<SelUpdater>
   drawingItem: Stream<Item>
   nextVertexIndex: Stream<any>
   nextVertexInsertIndex: Stream<any>
   nextAdjustConfigs: Stream<AdjustConfig[]>
   nextResizer: Stream<string>
+  nextPolygonCloseIndicator: Stream<VNode>
   SAVE: Stream<SaveConfig>
   FILE: Stream<File | DialogRequest>
-  addons: { [key: string]: Stream<any> }
 }
 
 export interface Component {

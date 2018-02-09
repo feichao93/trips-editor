@@ -1,7 +1,8 @@
 import { always, inc } from 'ramda'
 import xs from 'xstream'
 import { PASTE_OFFSET } from '../constants'
-import { Component, Sel, State, Updater } from '../interfaces'
+import { Component, Updater } from '../interfaces'
+import AddItemAction from '../actions/AddItemAction'
 
 const copyPaste: Component = ({ keyboard, sel: sel$, state: state$, clipboard: clipboard$ }) => {
   const copied$ = keyboard
@@ -27,14 +28,13 @@ const copyPaste: Component = ({ keyboard, sel: sel$, state: state$, clipboard: c
         .move(PASTE_OFFSET * (1 + count), PASTE_OFFSET * (1 + count))
         .set('locked', item.locked),
     )
-    .map(State.addItem)
+    .map(item => new AddItemAction(item))
 
   incPasteCountProxy$.imitate(pasteToAddItem$)
 
   return {
     nextClipboard: copied$,
     action: pasteToAddItem$,
-    updateSel: pasteToAddItem$.mapTo(Sel.selectLast()),
   }
 }
 

@@ -1,6 +1,7 @@
 import { identical } from 'ramda'
 import xs from 'xstream'
-import { AdjustConfig, Component, PolylineItem, Sel, State } from '../interfaces'
+import { AdjustConfig, Component, PolylineItem } from '../interfaces'
+import AddItemAction from '../actions/AddItemAction'
 
 const drawLine: Component = ({ mouse, UI, mode: mode$, keyboard }) => {
   const toLineReadyMode$ = xs.merge(UI.intent('line'), keyboard.shortcut('l')).mapTo('line.ready')
@@ -32,10 +33,9 @@ const drawLine: Component = ({ mouse, UI, mode: mode$, keyboard }) => {
 
   return {
     drawingItem: drawingLine$,
-    action: newItem$.map(State.addItem),
+    action: newItem$.map(item => new AddItemAction(item)),
     nextMode: nextMode$,
     nextAdjustConfigs: nextAdjustConfigs$,
-    updateSel: newItem$.mapTo(Sel.selectLast()),
   }
 }
 

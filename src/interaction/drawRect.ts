@@ -1,7 +1,8 @@
 import { identical } from 'ramda'
 import xs from 'xstream'
-import { AdjustConfig, Component, PolygonItem, Sel, State } from '../interfaces'
+import { AdjustConfig, Component, PolygonItem } from '../interfaces'
 import { getBoundingBoxOfPoints } from '../utils/common'
+import AddItemAction from '../actions/AddItemAction'
 
 /**
  * Implementation for drawing rectangle interaction.
@@ -53,9 +54,8 @@ const drawRect: Component = ({ UI, mouse, mode: mode$, keyboard }) => {
 
   return {
     drawingItem: drawingRect$,
-    action: newItem$.map(State.addItem),
+    action: newItem$.map(item => new AddItemAction(item)),
     nextMode: nextMode$,
-    updateSel: newItem$.mapTo(Sel.selectLast()),
     nextAdjustConfigs: nextAdjustConfigs$,
   }
 }

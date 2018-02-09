@@ -6,6 +6,10 @@ import AdjustIndicator from './AdjustIndicator'
 import SelectionIndicator from './SelectionIndicator'
 import VertexInsertIndicator from './VertexInsertIndicator'
 import VerticesIndicator from './VerticesIndicator'
+import AddItemAction from '../actions/AddItemAction'
+import { FileStat } from '../makeFileDriver'
+import { KeyboardSource } from '../makeKeyboardDriver'
+import '../styles/svg.styl'
 import {
   Action,
   State,
@@ -16,43 +20,18 @@ import {
   Sel,
   AppConfig,
   SelUpdater,
+  ComponentSources,
+  ComponentSinks,
 } from '../interfaces'
-import { FileStat } from '../makeFileDriver'
-import { KeyboardSource } from '../makeKeyboardDriver'
-import '../styles/svg.styl'
-import AdjustedMouse from '../utils/AdjustedMouse'
 
-export interface Sources {
-  DOM: DOMSource
-  FILE: Stream<FileStat>
-  mouse: AdjustedMouse
-  keyboard: KeyboardSource
-  drawingItem: Stream<Item>
-  state: Stream<State>
-  sel: Stream<Sel>
-  transform: Stream<d3.ZoomTransform>
-  adjustConfigs: Stream<AdjustConfig[]>
-  config: Stream<AppConfig>
-  addons: {
-    polygonCloseIndicator$: MemoryStream<VNode>
-  }
-}
-
-export interface Sinks {
-  DOM: Stream<VNode>
-  FILE: Stream<File>
-  action: Stream<Action>
-  updateSel: Stream<SelUpdater>
+type ExtraSinks = {
   rawDown: Stream<Point>
   rawClick: Stream<Point>
   rawDblclick: Stream<Point>
   rawWheel: Stream<{ pos: Point; deltaY: number }>
-  nextVertexIndex: Stream<number>
-  nextResizer: Stream<string>
-  nextVertexInsertIndex: Stream<number>
 }
 
-export default function Svg(sources: Sources): Sinks {
+export default function Svg(sources: ComponentSources): Partial<ComponentSinks> & ExtraSinks {
   const domSource = sources.DOM
   const svgdom = domSource.select('.svg')
   const state$ = sources.state
@@ -77,7 +56,7 @@ export default function Svg(sources: Sources): Sinks {
       sources.FILE.filter(stat => stat.file === file)
         .take(1)
         .map(ImgItem.fromImgFileStat)
-        .map(State.addItem),
+        .map(item => new AddItemAction(item)),
     )
     .flatten()
 
@@ -101,7 +80,7 @@ export default function Svg(sources: Sources): Sinks {
       vertexInsertIndicator.DOM.startWith(null),
       verticesIndicator.DOM.startWith(null),
       adjustIndicator.DOM.startWith(null),
-      sources.addons.polygonCloseIndicator$,
+      sources.polygonCloseIndicator,
     )
     .map(([s, vi, v, a, pc]) => h('g.indicators', [s, vi, v, a, pc].filter(Boolean)))
 
@@ -139,7 +118,6 @@ export default function Svg(sources: Sources): Sinks {
     DOM: vdom$,
     FILE: file$,
     action: addImgItem$,
-    updateSel: addImgItem$.mapTo(Sel.selectLast()),
     rawDown: rawDown$,
     rawDblclick: rawDblclick$,
     rawClick: rawClick$,

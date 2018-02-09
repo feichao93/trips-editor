@@ -1,5 +1,7 @@
 import xs from 'xstream'
-import { Component, ImgItem, Sel, State } from '../interfaces'
+import AddItemAction from '../actions/AddItemAction'
+import LoadAction from '../actions/LoadAction'
+import { Component, ImgItem } from '../interfaces'
 import { DialogRequest, TextFileStat } from '../makeFileDriver'
 import serializeUtils from '../utils/serializeUtils'
 
@@ -24,8 +26,7 @@ const file: Component = ({ FILE, UI, keyboard, state: state$ }) => {
   const loadedState$ = dataFileStat$.map((stat: TextFileStat) =>
     serializeUtils.fromJS(JSON.parse(stat.content)),
   )
-  const resetState$ = loadedState$.map(State.setState)
-  const resetSel$ = loadedState$.mapTo(Sel.reset())
+  const loadState$ = loadedState$.map(newState => new LoadAction(newState))
   const toIdleMode$ = loadedState$.mapTo('idle')
 
   /* Menubar File -> Export as SVG */
@@ -40,13 +41,12 @@ const file: Component = ({ FILE, UI, keyboard, state: state$ }) => {
     .mapTo(FILE.take(1))
     .flatten()
     .map(ImgItem.fromImgFileStat)
-    .map(State.addItem)
+    .map(item => new AddItemAction(item))
 
   return {
     SAVE: save$,
     FILE: xs.merge(openDataFileDialog$, openImageFileDialog$),
-    action: xs.merge(resetState$, addImgeItem$),
-    updateSel: resetSel$,
+    action: xs.merge(loadState$, addImgeItem$),
     nextMode: toIdleMode$,
   }
 }

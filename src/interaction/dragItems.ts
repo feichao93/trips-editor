@@ -1,6 +1,7 @@
 import { identical } from 'ramda'
 import xs from 'xstream'
-import { Component, State } from '../interfaces'
+import { Component } from '../interfaces'
+import MoveItemsAction from '../actions/MoveItemsAction'
 
 const dragItems: Component = ({ mouse, mode: mode$, state: state$ }) => {
   const dragStart$ = mouse.down$
@@ -32,7 +33,7 @@ const dragItems: Component = ({ mouse, mode: mode$, state: state$ }) => {
           const dx = pos.x - startPos.x
           const dy = pos.y - startPos.y
           const movedItems = startItems.map(item => item.move(dx, dy))
-          return State.moveItems(movedItems)
+          return new MoveItemsAction(movedItems)
         })
         .endWhen(mouse.up$),
     )

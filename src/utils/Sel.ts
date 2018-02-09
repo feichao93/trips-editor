@@ -1,5 +1,5 @@
 import { List, OrderedSet, Record } from 'immutable'
-import { getBoundingBoxOfPoints, getMaxItemId } from './common'
+import { getBoundingBoxOfPoints } from './common'
 import { ItemId, State, Updater } from '../interfaces'
 
 type SelMode = 'bbox' | 'vertices'
@@ -12,28 +12,6 @@ const SelRecord = Record({
 export type SelUpdater = Updater<Sel, State>
 
 export default class Sel extends SelRecord {
-  static toggleMode(): SelUpdater {
-    return sel => {
-      if (sel.mode === 'bbox') {
-        return sel.set('mode', 'vertices')
-      } else {
-        return sel.set('mode', 'bbox')
-      }
-    }
-  }
-
-  static select(...set: ItemId[]): SelUpdater {
-    return sel => sel.set('idSet', OrderedSet(set))
-  }
-
-  static selectLast(): SelUpdater {
-    return (sel, state) => sel.set('idSet', OrderedSet([getMaxItemId(state)]))
-  }
-
-  static reset(): SelUpdater {
-    return sel => new Sel({ mode: sel.mode })
-  }
-
   item(state: State) {
     return state.items.find(item => this.idSet.has(item.id)) || null
   }

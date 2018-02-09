@@ -7,7 +7,7 @@ import { ItemMethods, Point, ResizeDirConfig } from '../interfaces'
 const PolylineItemRecord = Record(
   {
     id: -1,
-    locked: true,
+    locked: false,
     label: '',
     tags: Set<string>(),
     points: List<Point>(),
