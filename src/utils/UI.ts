@@ -10,6 +10,7 @@ export namespace UIIntent {
     | 'reset-zoom'
     | 'undo'
     | 'redo'
+    | 'clear-history'
     | Edit
     | ApplyStylePreset
     | ChangeZIndex

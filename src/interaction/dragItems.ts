@@ -14,7 +14,7 @@ const dragItems: Component = ({ mouse, mode: mode$, state: state$ }) => {
       const startItems = state.items.filter(item => item.id === targetItemId)
       return { startPos: pos, startItems }
     })
-    .filter(({ startItems }) => !startItems.isEmpty())
+    .filter(({ startItems }) => !startItems.isEmpty() && startItems.every(item => !item.locked))
 
   const toDraggingMode$ = dragStart$
     .mapTo(

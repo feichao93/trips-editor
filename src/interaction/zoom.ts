@@ -53,18 +53,20 @@ const zoom: Component = ({ mouse, config: config$, mode: mode$, state: state$, U
       const nextY = factor * (y - rawPos.y) + rawPos.y
       if (useTransition && factor !== 1) {
         return transition(250, [x, y, k], [nextX, nextY, nextK]).map(([x, y, k]) => ({
+          pos: rawPos,
           start: state.transform,
           target: d3.zoomIdentity.translate(x, y).scale(k),
         }))
       } else {
         return xs.of({
+          pos: rawPos,
           start: state.transform,
           target: d3.zoomIdentity.translate(nextX, nextY).scale(nextK),
         })
       }
     })
     .flatten()
-    .map(({ start, target }) => new SetTransformAction(target, start))
+    .map(({ start, target, pos }) => new SetTransformAction(target, start, pos))
 
   const resetZoom$ = UI.intent('reset-zoom')
     .peek(state$)

@@ -14,7 +14,7 @@ import { DialogRequest, FileStat } from './makeFileDriver'
 import { KeyboardSource } from './makeKeyboardDriver'
 import './styles/app.styl'
 import AdjustedMouse from './utils/AdjustedMouse'
-import AppHistory, { redo, undo } from './utils/AppHistory'
+import AppHistory, { redo, undo, clearHistory } from './utils/AppHistory'
 import { mergeSinks } from './utils/common'
 import makeAdjuster from './utils/makeAdjuster'
 import UIClass from './utils/UI'
@@ -65,14 +65,17 @@ export default function App(sources: Sources): Sinks {
       keyboard.shortcut(['mod+y', 'mod+shift+z']).when(mode$, identical('idle')),
     )
     .mapTo<redo>(redo)
+  const clearHistory$ = UI.intent('clear-history').mapTo<clearHistory>(clearHistory)
 
   const appHistory$ = xs
-    .merge<undo, redo, Action>(undo$, redo$, actionProxy$)
+    .merge<undo, redo, clearHistory, Action>(undo$, redo$, clearHistory$, actionProxy$)
     .fold((h, action) => {
       if (action === undo) {
         return h.undo(h.getLastAction())
       } else if (action === redo) {
         return h.redo(h.getNextAction())
+      } else if (action === clearHistory) {
+        return h.clearHistory()
       } else {
         return action.prepare(h).apply(action)
       }

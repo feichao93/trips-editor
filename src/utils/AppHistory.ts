@@ -7,6 +7,8 @@ export const undo = Symbol('undo')
 export type undo = typeof undo
 export const redo = Symbol('redo')
 export type redo = typeof redo
+export const clearHistory = Symbol('clear-history')
+export type clearHistory = typeof clearHistory
 
 const AppHistoryRecord = Record({
   state: new State(),
@@ -69,5 +71,13 @@ export default class AppHistory extends AppHistoryRecord {
         state: action.prev(this.state),
       })
     }
+  }
+
+  clearHistory() {
+    return this.merge({
+      list: List(),
+      index: -1,
+      state: this.state,
+    })
   }
 }

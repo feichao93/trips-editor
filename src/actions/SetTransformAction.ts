@@ -1,17 +1,24 @@
-import { Action, AppHistory, State } from '../interfaces'
+import { Action, AppHistory, emptyAction, Point, State } from '../interfaces'
+import { isSamePoint } from '../utils/common'
 
 export default class SetTransformAction extends Action {
-  constructor(readonly target: d3.ZoomTransform, readonly start: d3.ZoomTransform) {
+  constructor(
+    readonly target: d3.ZoomTransform,
+    readonly start: d3.ZoomTransform,
+    readonly mousePos: Point = null,
+  ) {
     super()
   }
 
   prepare(h: AppHistory): AppHistory {
-    const last = h.list.get(h.index)
+    const last = h.getLastAction()
     if (
-      h.index !== -1 &&
-      last != null &&
+      last !== emptyAction &&
       last instanceof SetTransformAction &&
-      this.start == last.start
+      (this.start == last.start ||
+        (this.mousePos != null &&
+          last.mousePos != null &&
+          isSamePoint(this.mousePos, last.mousePos)))
     ) {
       return h.pop()
     } else {
