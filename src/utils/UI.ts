@@ -1,5 +1,5 @@
 import xs, { Stream } from 'xstream'
-import { ZIndexOp } from './State'
+import { ZIndexOp } from '../actions/ChangeZIndexAction'
 
 export type UIIntent = UIIntent.ALL
 

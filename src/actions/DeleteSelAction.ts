@@ -1,17 +1,14 @@
 import { OrderedSet } from 'immutable'
-import { Action, Sel, State } from '../interfaces'
+import { Action, State } from '../interfaces'
 
 export default class DeleteSelAction extends Action {
-  nextState(state: State, sel: Sel) {
-    if (sel.isEmpty()) {
+  next(state: State) {
+    if (state.selIdSet.isEmpty()) {
       return state
     }
     return state
-      .update('items', items => items.filterNot(item => sel.idSet.has(item.id)))
-      .update('zlist', zlist => zlist.filterNot(itemId => sel.idSet.has(itemId)))
-  }
-
-  nextSel(state: State, sel: Sel) {
-    return sel.set('idSet', OrderedSet())
+      .update('items', items => items.filterNot(item => state.selIdSet.has(item.id)))
+      .update('zlist', zlist => zlist.filterNot(itemId => state.selIdSet.has(itemId)))
+      .set('selIdSet', OrderedSet())
   }
 }

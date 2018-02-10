@@ -2,7 +2,7 @@ import { h, VNode } from '@cycle/dom'
 import { is } from 'immutable'
 import xs from 'xstream'
 import { Sinks, Sources } from './Inspector'
-import { Item, Sel, State, UIIntent } from '../interfaces'
+import { Item, State, UIIntent } from '../interfaces'
 import { isPolygonItem, isPolylineItem, round3 } from '../utils/common'
 
 function Row({ label, key }: { label: string; key: string }, children: VNode[]) {
@@ -24,8 +24,8 @@ function EditableField({ label, type, value, field, ...otherProps }: EditableFie
   ])
 }
 
-function PositionAndSize(state: State, sel: Sel) {
-  const bbox = sel.getBBox(state)
+function PositionAndSize(state: State) {
+  const bbox = state.getBBox()
   if (bbox == null) {
     return null
   }
@@ -103,16 +103,16 @@ function Opacity(sitem: Item) {
   ])
 }
 
-function Z({ items, zlist }: State, sel: Sel) {
-  if (sel.isEmpty()) {
+function Z({ selIdSet, items, zlist }: State) {
+  if (selIdSet.isEmpty()) {
     return null
   }
-  const sidsList = sel.idSet.toList()
-  const sidsCount = sel.idSet.count()
+  const sidsList = selIdSet.toList()
+  const sidsCount = selIdSet.count()
   const isAtBottom = is(sidsList.sort(), zlist.take(sidsCount).sort())
   const isAtTop = is(sidsList.sort(), zlist.takeLast(sidsCount).sort())
 
-  const zIndex = zlist.indexOf(sel.idSet.first())
+  const zIndex = zlist.indexOf(selIdSet.first())
 
   return Row({ label: 'Z-index', key: 'z' }, [
     h('p', { style: { 'align-self': 'center', 'margin-right': '8px' } }, String(zIndex)),
@@ -138,7 +138,6 @@ function LockInfo(sitem: Item) {
 export default function InspectorGeometricTab(sources: Sources): Sinks {
   const domSource = sources.DOM
   const state$ = sources.state
-  const sel$ = sources.sel
 
   const changeZIndexIntent$ = domSource
     .select('.btn.z')
@@ -160,18 +159,18 @@ export default function InspectorGeometricTab(sources: Sources): Sinks {
       return { type: 'edit', field, value: input.value }
     })
 
-  const vdom$ = xs.combine(state$, sel$).map(([state, sel]) => {
+  const vdom$ = state$.map(state => {
     let children: VNode[]
-    const sitem = sel.item(state)
+    const sitem = state.sitem()
     if (sitem == null) {
       children = [h('p.empty-prompt', 'No Selected Items.')]
     } else {
       children = [
-        PositionAndSize(state, sel),
+        PositionAndSize(state),
         Fill(sitem),
         Stroke(sitem),
         Opacity(sitem),
-        Z(state, sel),
+        Z(state),
         LockInfo(sitem),
       ]
     }

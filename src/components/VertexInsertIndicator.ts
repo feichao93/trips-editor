@@ -1,7 +1,7 @@
 import { DOMSource, h, VNode } from '@cycle/dom'
 import { List } from 'immutable'
 import xs, { Stream } from 'xstream'
-import { AppConfig, Point, Sel, State } from '../interfaces'
+import { AppConfig, Point, State } from '../interfaces'
 import { KeyboardSource } from '../makeKeyboardDriver'
 import { distanceBetweenPointAndSegment } from '../utils/common'
 import Mouse from '../utils/Mouse'
@@ -11,8 +11,6 @@ export interface Sources {
   state: Stream<State>
   mouse: Mouse
   keyboard: KeyboardSource
-  sel: Stream<Sel>
-  transform: Stream<d3.ZoomTransform>
   config: Stream<AppConfig>
 }
 
@@ -22,16 +20,14 @@ export interface Sinks {
 }
 
 export default function VertexInsertIndicator({
-  sel: sel$,
   mouse,
   keyboard,
-  transform: transform$,
   state: state$,
   config: config$,
 }: Sources): Sinks {
-  const verticesAndEditable$ = xs.combine(sel$, state$).map(([sel, state]) => {
-    const item = sel.item(state)
-    const vertices = sel.vertices(state)
+  const verticesAndEditable$ = state$.map(state => {
+    const item = state.sitem()
+    const vertices = state.vertices()
     const editable = item && !item.locked
     return { editable, vertices }
   })
@@ -45,9 +41,9 @@ export default function VertexInsertIndicator({
             .push([vertices.last(), vertices.first()]),
   )
   const highlightedSegmentIndex$ = xs
-    .combine(verticesAndEditable$, config$, mouse.move$, segments$, transform$, mouse.vertexIndex$)
+    .combine(verticesAndEditable$, config$, mouse.move$, segments$, state$, mouse.vertexIndex$)
     .map(
-      ([{ editable }, config, pos, segments, transform, vertexIndex]) =>
+      ([{ editable }, config, pos, segments, { transform }, vertexIndex]) =>
         vertexIndex === -1 && editable
           ? segments.findIndex(
               seg =>
@@ -59,8 +55,8 @@ export default function VertexInsertIndicator({
   const highlightedSegment$ = highlightedSegmentIndex$
     .sampleCombine(segments$)
     .map(([i, segs]) => (i === -1 ? null : segs.get(i)))
-  const vdom$ = highlightedSegment$.sampleCombine(transform$).map(
-    ([seg, transform]) =>
+  const vdom$ = highlightedSegment$.sampleCombine(state$).map(
+    ([seg, { transform }]) =>
       seg
         ? h('line', {
             attrs: {

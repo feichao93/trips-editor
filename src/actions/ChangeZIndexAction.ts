@@ -1,12 +1,14 @@
-import { State, Sel, Action, ZIndexOp } from '../interfaces'
+import { State, Action } from '../interfaces'
+
+export type ZIndexOp = 'inc' | 'dec' | 'top' | 'bottom'
 
 export default class ChangeZIndexAction extends Action {
   constructor(readonly op: ZIndexOp) {
     super()
   }
 
-  nextState(state: State, sel: Sel) {
-    const idSet = sel.idSet
+  next(state: State) {
+    const idSet = state.selIdSet
     if (idSet.count() !== 1) {
       return state
     } else {

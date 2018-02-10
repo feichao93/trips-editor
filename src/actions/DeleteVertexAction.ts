@@ -1,14 +1,14 @@
-import { Action, State, Sel } from '../interfaces'
+import { Action, State } from '../interfaces'
 
 export default class DeleteVertexAction extends Action {
   constructor(readonly vertexIndex: number) {
     super()
   }
 
-  nextState(state: State, sel: Sel) {
+  next(state: State) {
     return state.update('items', items =>
       items.update(
-        sel.idSet.first(),
+        state.selIdSet.first(),
         item => (item.supportEditVertex() ? item.deleteVertex(this.vertexIndex) : item),
       ),
     )

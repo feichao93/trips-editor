@@ -1,18 +1,20 @@
 import { DOMSource, h, VNode } from '@cycle/dom'
 import isolate from '@cycle/isolate'
+import { List } from 'immutable'
 import xs, { Stream } from 'xstream'
 import InspectorGeometricTab from './InspectorGeometricTab'
+import InspectorHistoryTab from './InspectorHistoryTab'
 import InspectorSemanticTab from './InspectorSemanticTab'
-import { AppConfig, Sel, State, UIIntent } from '../interfaces'
+import { Action, AppConfig, State, UIIntent } from '../interfaces'
 import { KeyboardSource } from '../makeKeyboardDriver'
 import '../styles/inspector.styl'
 
 export interface Sources {
   DOM: DOMSource
   state: Stream<State>
-  sel: Stream<Sel>
   config: Stream<AppConfig>
   keyboard: KeyboardSource
+  appHistory: Stream<{ list: List<Action>; index: number }>
 }
 
 export interface Sinks {
@@ -20,9 +22,8 @@ export interface Sinks {
   intent: Stream<UIIntent>
 }
 
-// TODO working-style & config
-type TabName = 'geometric' | 'semantic'
-const allTabNames: TabName[] = ['geometric', 'semantic']
+type TabName = 'geometric' | 'semantic' | 'history'
+const allTabNames: TabName[] = ['geometric', 'semantic', 'history']
 
 function TabChooserItem({ cntTabName, tabName }: { cntTabName: string; tabName: TabName }) {
   return h(
@@ -51,13 +52,15 @@ export default function Inspector(sources: Sources): Sinks {
   )
 
   const tabName$ = nextTabName$
-    .startWith('geometric')
+    .startWith('history')
     .dropRepeats()
     .remember()
 
   const tabWrapper$ = tabName$.map(tabName => {
     if (tabName === 'geometric') {
       return { inst: isolate(InspectorGeometricTab)(sources), tabName }
+    } else if (tabName === 'history') {
+      return { inst: isolate(InspectorHistoryTab)(sources), tabName }
     } else {
       return { inst: isolate(InspectorSemanticTab)(sources), tabName }
     }

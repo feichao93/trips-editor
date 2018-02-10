@@ -17,9 +17,7 @@ import {
   ImgItem,
   Item,
   Point,
-  Sel,
   AppConfig,
-  SelUpdater,
   ComponentSources,
   ComponentSinks,
 } from '../interfaces'
@@ -37,8 +35,6 @@ export default function Svg(sources: ComponentSources): Partial<ComponentSinks> 
   const state$ = sources.state
   const mouse = sources.mouse
   const keyboard = sources.keyboard
-  const transform$ = sources.transform
-  const sel$ = sources.sel
 
   svgdom.events('dragover', { preventDefault: true }).addListener({
     next(e) {
@@ -85,8 +81,8 @@ export default function Svg(sources: ComponentSources): Partial<ComponentSinks> 
     .map(([s, vi, v, a, pc]) => h('g.indicators', [s, vi, v, a, pc].filter(Boolean)))
 
   const itemsVdom$ = xs
-    .combine(state$, sel$, keyboard.isPressing('`'))
-    .map(([{ zlist, items }, sel, reverseZList]) =>
+    .combine(state$, keyboard.isPressing('`'))
+    .map(([{ zlist, items }, reverseZList]) =>
       h(
         'g.items',
         (reverseZList ? zlist.reverse() : zlist)
@@ -97,8 +93,8 @@ export default function Svg(sources: ComponentSources): Partial<ComponentSinks> 
     )
 
   const vdom$ = xs
-    .combine(itemsVdom$, mouse.cursor$, transform$, sources.drawingItem, indicatorsVdom$)
-    .map(([items, cursor, transform, drawingItem, indicators]) =>
+    .combine(itemsVdom$, mouse.cursor$, state$, sources.drawingItem, indicatorsVdom$)
+    .map(([items, cursor, { transform }, drawingItem, indicators]) =>
       h('svg.svg', { style: { cursor } }, [
         h('g', { attrs: { transform: String(transform) } }, [
           h('line', { attrs: { x1: 0, y1: 0, x2: 300, y2: 0, stroke: 'red' } }),

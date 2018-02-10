@@ -1,16 +1,16 @@
-import { Action, Point, Sel, State, Item } from '../interfaces'
+import { Action, Point, State, Item } from '../interfaces'
 
-type InsertVertexConfig = [Point, Sel, number]
+type InsertVertexConfig = [Point, number]
 
 export default class InsertVertexAction extends Action {
   constructor(readonly config: InsertVertexConfig) {
     super()
   }
 
-  nextState(state: State, sel: Sel) {
-    const [pos, _, insertIndex] = this.config
+  next(state: State) {
+    const [pos, insertIndex] = this.config
     return state.updateIn(
-      ['items', sel.idSet.first()],
+      ['items', state.selIdSet.first()],
       (item: Item) => (item.supportEditVertex() ? item.insertVertex(insertIndex, pos) : item),
     )
   }

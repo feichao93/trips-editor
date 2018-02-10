@@ -1,7 +1,9 @@
 import { DOMSource, h, VNode } from '@cycle/dom'
 import isolate from '@cycle/isolate'
 import * as d3 from 'd3'
+import { List } from 'immutable'
 import xs, { Stream } from 'xstream'
+import SetTransformAction from './actions/SetTransformAction'
 import Inspector from './components/Inspector'
 import Menubar from './components/Menubar'
 import StatusBar from './components/StatusBar'
@@ -14,16 +16,7 @@ import AdjustedMouse from './utils/AdjustedMouse'
 import { mergeSinks } from './utils/common'
 import makeAdjuster from './utils/makeAdjuster'
 import UIClass from './utils/UI'
-import {
-  Action,
-  AdjustConfig,
-  AppConfig,
-  Item,
-  SaveConfig,
-  Sel,
-  SelUpdater,
-  State,
-} from './interfaces'
+import { Action, AdjustConfig, AppConfig, Item, SaveConfig, State, AppHistory } from './interfaces'
 
 export interface Sources {
   DOM: DOMSource
@@ -54,29 +47,53 @@ export default function App(sources: Sources): Sinks {
   const nextResizerProxy$ = xs.create<string>()
   const nextVertexIndexProxy$ = xs.create<number>()
   const nextVertexInsertIndexProxy$ = xs.create<number>()
-  const nextTransformProxy$ = xs.create<d3.ZoomTransform>()
   const nextAdjustConfigs$ = xs.create<AdjustConfig[]>()
   const nextPolygonCloseIndicator$ = xs.create<VNode>()
 
   const clipboard$ = nextClipboardProxy$.startWith(null)
   const config$ = nextConfigProxy$.startWith(initConfig)
 
-  const stateAndSel$ = actionProxy$.fold(
-    ({ state, sel }, action) => ({
-      state: action.nextState(state, sel),
-      sel: action.nextSel(state, sel),
-    }),
-    { state: new State(), sel: new Sel() },
-  )
-  const state$ = stateAndSel$
-    .map(ss => ss.state)
+  const init: AppHistory = {
+    state: new State(),
+    list: List<Action>(),
+    index: -1,
+  }
+  const appHistory$ = xs
+    .merge(keyboard.shortcut('mod+z').mapTo<'undo'>('undo'), actionProxy$)
+    .fold((appHistory, action) => {
+      const { state, list, index } = appHistory
+      if (action === 'undo') {
+        if (index === -1) {
+          return appHistory
+        }
+        const lastAction = list.get(index)
+        return {
+          list,
+          index: index - 1,
+          state: lastAction.prev(state),
+        }
+      } else {
+        const after = action.prepare(appHistory)
+        return {
+          list: after.list.setSize(after.index + 1).push(action),
+          index: after.index + 1,
+          state: action.next(after.state),
+        }
+      }
+    }, init)
     .dropRepeats()
     .remember()
-  const sel$ = stateAndSel$
-    .map(ss => ss.sel)
+
+  const state$ = appHistory$
+    .map(h => h.state)
     .dropRepeats()
     .remember()
-  const transform$ = nextTransformProxy$.startWith(d3.zoomIdentity)
+  // .debug(s => console.log('state:', s.toJS()))
+  const transform$ = appHistory$
+    .map(h => h.state.transform)
+    .dropRepeats()
+    .remember()
+
   const mode$ = nextModeProxy$.startWith(initMode)
   const adjustConfigs$ = nextAdjustConfigs$.startWith([])
   const drawingItem$ = nextDrawingItemProxy$.startWith(null)
@@ -93,6 +110,7 @@ export default function App(sources: Sources): Sinks {
   )
 
   const compSources = {
+    appHistory: appHistory$,
     FILE: sources.FILE,
     DOM: domSource,
     UI,
@@ -102,7 +120,6 @@ export default function App(sources: Sources): Sinks {
     clipboard: clipboard$,
     mode: mode$,
     state: state$,
-    sel: sel$,
     transform: transform$,
     drawingItem: drawingItem$,
     adjustConfigs: adjustConfigs$,
@@ -120,9 +137,13 @@ export default function App(sources: Sources): Sinks {
   nextConfigProxy$.imitate(mergeSinks(allSinks, 'nextConfig'))
   nextClipboardProxy$.imitate(mergeSinks(allSinks, 'nextClipboard'))
   nextDrawingItemProxy$.imitate(mergeSinks(allSinks, 'drawingItem'))
-  actionProxy$.imitate(mergeSinks(allSinks, 'action'))
+  actionProxy$.imitate(
+    xs.merge(
+      mergeSinks(allSinks, 'action'),
+      mergeSinks(allSinks, 'nextTransform').map(transform => new SetTransformAction(transform)),
+    ),
+  )
   nextModeProxy$.imitate(mergeSinks(allSinks, 'nextMode'))
-  nextTransformProxy$.imitate(mergeSinks(allSinks, 'nextTransform'))
   nextAdjustConfigs$.imitate(mergeSinks(allSinks, 'nextAdjustConfigs'))
   nextPolygonCloseIndicator$.imitate(mergeSinks(allSinks, 'nextPolygonCloseIndicator'))
 

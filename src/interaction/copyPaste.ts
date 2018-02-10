@@ -4,11 +4,11 @@ import { PASTE_OFFSET } from '../constants'
 import { Component, Updater } from '../interfaces'
 import AddItemAction from '../actions/AddItemAction'
 
-const copyPaste: Component = ({ keyboard, sel: sel$, state: state$, clipboard: clipboard$ }) => {
+const copyPaste: Component = ({ keyboard, state: state$, clipboard: clipboard$ }) => {
   const copied$ = keyboard
     .shortcut('mod+c')
-    .peek(xs.combine(state$, sel$))
-    .map(([state, sel]) => sel.item(state))
+    .peek(state$)
+    .map(state => state.sitem())
     .filter(Boolean)
 
   const incPasteCountProxy$ = xs.create()

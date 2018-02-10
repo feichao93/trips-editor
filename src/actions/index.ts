@@ -1,20 +1,16 @@
-import { State, Sel } from '../interfaces'
+import { State, AppHistory } from '../interfaces'
 
 export default abstract class Action {
   constructor() {}
 
-  nextState(state: State, sel: Sel): State {
+  next(state: State): State {
     return state
   }
-  prevState(state: State, sel: Sel): State {
+  prev(state: State): State {
     return state
-  }
-  nextSel(state: State, sel: Sel): Sel {
-    return sel
-  }
-  prevSel(state: State, sel: Sel): Sel {
-    return sel
   }
 
-  beforePush() {}
+  prepare(appHistory: AppHistory): AppHistory {
+    return appHistory
+  }
 }

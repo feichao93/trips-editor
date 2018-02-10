@@ -1,11 +1,11 @@
 import { DOMSource, h, VNode } from '@cycle/dom'
 import xs, { Stream } from 'xstream'
-import { Sel, UIIntent } from '../interfaces'
+import { State, UIIntent } from '../interfaces'
 import '../styles/Menubar.styl'
 
 export interface Sources {
   DOM: DOMSource
-  sel: Stream<Sel>
+  state: Stream<State>
 }
 
 export interface Sinks {
@@ -41,7 +41,6 @@ function MenuItem({ name, hint, intent, disabled }: MenuItemProps) {
 
 export default function Menubar(sources: Sources): Sinks {
   const domSource = sources.DOM
-  const sel$ = sources.sel
   const nextActiveCategoryProxy$ = xs.create<string>()
 
   const activeCategory$ = nextActiveCategoryProxy$.dropRepeats().startWith(null)
@@ -85,7 +84,7 @@ export default function Menubar(sources: Sources): Sinks {
     .filter(e => !e.ownerTarget.classList.contains('disabled'))
     .map(e => e.ownerTarget.dataset.intent as UIIntent)
 
-  const vdom$ = xs.combine(activeCategory$, sel$).map(([activeCategory, sel]) => (
+  const vdom$ = xs.combine(sources.state, activeCategory$).map(([{ selIdSet }, activeCategory]) => (
     <div className="menubar" tabIndex="1">
       <MenuCategory category="File" active={activeCategory === 'File'}>
         <MenuItem name="Save as JSON" intent="save" hint="Ctrl+S" />
@@ -94,8 +93,8 @@ export default function Menubar(sources: Sources): Sinks {
         <MenuItem name="Load Image" intent="load-image" />
       </MenuCategory>
       <MenuCategory category="Edit" active={activeCategory === 'Edit'}>
-        <MenuItem name="Delete Selection" disabled={sel.isEmpty()} hint="D" intent="delete" />
-        <MenuItem name="Toggle Lock" disabled={sel.isEmpty()} hint="B" intent="toggle-lock" />
+        <MenuItem name="Delete Selection" disabled={selIdSet.isEmpty()} hint="D" intent="delete" />
+        <MenuItem name="Toggle Lock" disabled={selIdSet.isEmpty()} hint="B" intent="toggle-lock" />
         <MenuItem name="Add Rectangle" hint="R" intent="rect" />
         <MenuItem name="Add Polygon" hint="P" intent="polygon" />
         <MenuItem name="Add Line" hint="L" intent="line" />

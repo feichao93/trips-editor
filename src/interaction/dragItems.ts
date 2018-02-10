@@ -29,12 +29,7 @@ const dragItems: Component = ({ mouse, mode: mode$, state: state$ }) => {
     .map(({ startItems, startPos }) =>
       mouse.move$
         .when(mode$, identical('dragging'))
-        .map(pos => {
-          const dx = pos.x - startPos.x
-          const dy = pos.y - startPos.y
-          const movedItems = startItems.map(item => item.move(dx, dy))
-          return new MoveItemsAction(movedItems)
-        })
+        .map(movingPos => new MoveItemsAction({ startPos, movingPos, startItems }))
         .endWhen(mouse.up$),
     )
     .flatten()

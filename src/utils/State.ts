@@ -1,20 +1,39 @@
-import { List, Map, Record } from 'immutable'
-import { Item, ItemId, Point, ResizeDirConfig, Updater } from '../interfaces'
+import * as d3 from 'd3'
+import { List, Map, OrderedSet, Record } from 'immutable'
+import { getBoundingBoxOfPoints } from './common'
+import { Item, ItemId } from '../interfaces'
 
-export interface ResizingInfo {
-  movingPos: Point
-  startPos: Point
-  startItems: Map<ItemId, Item>
-  anchor: Point
-  resizeDirConfig: ResizeDirConfig
-}
+export type SelMode = 'bbox' | 'vertices'
 
 const StateRecord = Record({
+  transform: d3.zoomIdentity,
   items: Map<ItemId, Item>(),
   zlist: List<ItemId>(),
+  selMode: 'bbox' as SelMode,
+  selIdSet: OrderedSet<ItemId>(),
 })
 
-export type Action = Updater<State>
-export type ZIndexOp = 'inc' | 'dec' | 'top' | 'bottom'
+export default class State extends StateRecord {
+  sitem() {
+    return this.items.find(item => this.selIdSet.has(item.id)) || null
+  }
 
-export class State extends StateRecord {}
+  vertices() {
+    const item = this.sitem()
+    if (this.selMode !== 'vertices' || item == null) {
+      return List()
+    } else {
+      return item.getVertices()
+    }
+  }
+
+  sitems() {
+    return this.items.filter(item => this.selIdSet.has(item.id))
+  }
+
+  getBBox() {
+    const selectedItems = this.sitems()
+    const points = selectedItems.toList().flatMap(item => item.getVertices())
+    return getBoundingBoxOfPoints(points)
+  }
+}

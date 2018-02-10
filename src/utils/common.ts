@@ -1,6 +1,5 @@
 import { List } from 'immutable'
 import xs from 'xstream'
-import { State } from './State'
 import {
   ImgItem,
   ComponentSinks,
@@ -9,6 +8,7 @@ import {
   PolygonItem,
   PolylineItem,
   Rect,
+  State,
 } from '../interfaces'
 
 export function getMaxItemId(state: State) {

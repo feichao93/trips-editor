@@ -1,4 +1,4 @@
-import { Action, Item, State, Sel } from '../interfaces'
+import { Action, Item, State } from '../interfaces'
 
 type VertexMovingInfo = {
   item: Item
@@ -12,7 +12,7 @@ export default class MoveVertexAction extends Action {
     super()
   }
 
-  nextState(state: State, sel: Sel) {
+  next(state: State) {
     const { item, vertexIndex, dx, dy } = this.vertexMovingInfo
     return state.update('items', items =>
       items.set(item.id, item.supportEditVertex() ? item.moveVertex(vertexIndex, dx, dy) : item),

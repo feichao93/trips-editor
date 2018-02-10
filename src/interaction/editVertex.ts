@@ -1,9 +1,10 @@
 import { identical } from 'ramda'
 import xs, { Stream } from 'xstream'
+import DeleteVertexAction from '../actions/DeleteVertexAction'
 import InsertVertexAction from '../actions/InsertVertexAction'
 import MoveVertexAction from '../actions/MoveVertexAction'
-import { Component, Item, Point, Sel } from '../interfaces'
-import DeleteVertexAction from '../actions/DeleteVertexAction'
+import ToggleSelModeAction from '../actions/ToggleSelModeAction'
+import { Component, Item, Point } from '../interfaces'
 
 interface EditVertexStartInfo {
   startPos: Point
@@ -11,27 +12,27 @@ interface EditVertexStartInfo {
   vertexIndex: number
 }
 
-const editVertex: Component = ({ UI, mouse, state: state$, mode: mode$, keyboard, sel: sel$ }) => {
+const editVertex: Component = ({ UI, mouse, state: state$, mode: mode$, keyboard }) => {
   /** Toggle Selection Mode */
   const toggleSelMode$ = xs
     .merge(keyboard.shortcut('e'), UI.intent('toggle-sel-mode'))
     .when(mode$, identical('idle'))
-    .when(sel$, sel => !sel.isEmpty())
-    .mapTo(Sel.toggleMode())
+    .when(state$, state => !state.selIdSet.isEmpty())
+    .mapTo(new ToggleSelModeAction())
 
   /** Add/move vertex */
   const insertVertexConfig$ = mouse.down$
     .whenNot(mouse.vertexInsertIndex$, identical(-1))
-    .sampleCombine(sel$, mouse.vertexInsertIndex$)
+    .sampleCombine(mouse.vertexInsertIndex$)
 
   const startFromAdd$: Stream<EditVertexStartInfo> = insertVertexConfig$
-    .map(([pos, sel, vertexInsertIndex]) =>
+    .map(([pos, vertexInsertIndex]) =>
       state$
         .drop(1) // state$ is a memory-stream, so we drop the current state
         .take(1) // Use the next state (state that contains the added-vertex)
         .map(state => ({
           startPos: pos,
-          item: sel.item(state),
+          item: state.sitem(),
           vertexIndex: vertexInsertIndex,
         })),
     )
@@ -40,11 +41,11 @@ const editVertex: Component = ({ UI, mouse, state: state$, mode: mode$, keyboard
   const startFromMouseDown$: Stream<EditVertexStartInfo> = mouse.down$
     .when(mode$, identical('idle'))
     .whenNot(mouse.vertexIndex$, identical(-1))
-    .when(sel$, sel => sel.mode === 'vertices')
-    .sampleCombine(mouse.vertexIndex$, sel$, state$)
-    .map(([pos, vertexIndex, sel, state]) => ({
+    .when(state$, state => state.selMode === 'vertices')
+    .sampleCombine(mouse.vertexIndex$, state$)
+    .map(([pos, vertexIndex, state]) => ({
       startPos: pos,
-      item: sel.item(state).setIn(['points', vertexIndex], pos),
+      item: state.sitem().setIn(['points', vertexIndex], pos),
       vertexIndex,
     }))
 
@@ -100,8 +101,8 @@ const editVertex: Component = ({ UI, mouse, state: state$, mode: mode$, keyboard
     .map(vertexIndex => new DeleteVertexAction(vertexIndex))
 
   return {
-    updateSel: toggleSelMode$,
     action: xs.merge(
+      toggleSelMode$,
       moveVertex$,
       insertVertexConfig$.map(config => new InsertVertexAction(config)),
       deleteVertex$,

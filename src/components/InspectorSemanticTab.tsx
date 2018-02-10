@@ -23,7 +23,6 @@ function generateTagPreviewStyle({ styles }: SemanticTagConfig) {
 
 export default function InspectorSemanticTab({
   state: state$,
-  sel: sel$,
   config: config$,
   DOM: domSource,
   keyboard,
@@ -57,8 +56,8 @@ export default function InspectorSemanticTab({
       return { type: 'edit', field: 'label', value: input.value }
     })
 
-  const labelVdom$ = xs.combine(state$, sel$).map(([state, sel]) => {
-    const sitem = sel.item(state)
+  const labelVdom$ = state$.map(state => {
+    const sitem = state.sitem()
     if (sitem == null) {
       return null
     }
@@ -72,8 +71,8 @@ export default function InspectorSemanticTab({
     )
   })
 
-  const tagsVdom$ = xs.combine(config$, state$, sel$).map(([config, state, sel]) => {
-    const sitem = sel.item(state)
+  const tagsVdom$ = xs.combine(config$, state$).map(([config, state]) => {
+    const sitem = state.sitem()
     if (sitem == null) {
       return null
     }
@@ -100,8 +99,8 @@ export default function InspectorSemanticTab({
     )
   })
 
-  const emptyPrompt$ = xs.combine(state$, sel$).map(([state, sel]) => {
-    const sitem = sel.item(state)
+  const emptyPrompt$ = state$.map(state => {
+    const sitem = state.sitem()
     if (sitem == null) {
       return h('p.empty-prompt', { key: 'empty-prompt' }, 'No Selected Items.')
     } else {

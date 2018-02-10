@@ -1,15 +1,12 @@
-import { Action, State, Sel } from '../interfaces'
 import { OrderedSet } from 'immutable'
+import { Action, State } from '../interfaces'
+
 export default class LoadAction extends Action {
   constructor(readonly newState: State) {
     super()
   }
 
-  nextState(state: State, sel: Sel) {
-    return this.newState
-  }
-
-  nextSel(state: State, sel: Sel) {
-    return sel.set('idSet', OrderedSet())
+  next(state: State) {
+    return state.merge(this.newState).set('selIdSet', OrderedSet())
   }
 }

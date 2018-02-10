@@ -3,7 +3,6 @@ import { T } from 'ramda'
 import xs, { Stream } from 'xstream'
 import { distanceBetweenPointAndPoint } from './common'
 import Mouse from './Mouse'
-import { State } from './State'
 import { KeyboardSource } from '../makeKeyboardDriver'
 import {
   AdjustConfig,
@@ -11,8 +10,9 @@ import {
   AdjustConfigCement,
   AdjustConfigRestrict,
   AdjustResult,
-  Point,
   AppConfig,
+  Point,
+  State,
 } from '../interfaces'
 
 const PointRecord = Record({ x: 0, y: 0 })

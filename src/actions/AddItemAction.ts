@@ -1,21 +1,32 @@
 import { OrderedSet } from 'immutable'
+import { identical } from 'ramda'
 import Action from './index'
-import { Item, Sel, State } from '../interfaces'
+import { Item, State, AppHistory } from '../interfaces'
 import { getNextItemId } from '../utils/common'
 
 export default class AddItemAction extends Action {
+  private itemId: number
+
   constructor(private item: Item) {
     super()
   }
 
-  nextState(state: State, sel: Sel) {
-    const itemId = getNextItemId(state)
-    return state
-      .update('items', items => items.set(itemId, this.item.set('id', itemId)))
-      .update('zlist', zlist => zlist.push(itemId))
+  prepare(h: AppHistory): AppHistory {
+    this.itemId = getNextItemId(h.state)
+    return h
   }
 
-  nextSel(state: State, sel: Sel) {
-    return sel.set('idSet', OrderedSet([getNextItemId(state)]))
+  next(state: State) {
+    return state
+      .update('items', items => items.set(this.itemId, this.item.set('id', this.itemId)))
+      .update('zlist', zlist => zlist.push(this.itemId))
+      .set('selIdSet', OrderedSet([getNextItemId(state)]))
+  }
+
+  prev(state: State) {
+    return state
+      .deleteIn(['items', this.itemId])
+      .update('zlist', zlist => zlist.filterNot(identical(this.itemId)))
+      .update('selIdSet', idSet => idSet.remove(this.itemId))
   }
 }

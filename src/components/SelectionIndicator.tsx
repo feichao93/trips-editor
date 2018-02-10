@@ -1,7 +1,7 @@
 import { DOMSource, h, VNode } from '@cycle/dom'
 import xs, { Stream } from 'xstream'
 import { INDICATOR_CIRCLE_RADIUS, INDICATOR_RECT_SIZE } from '../constants'
-import { Rect, Sel, State } from '../interfaces'
+import { Rect, State } from '../interfaces'
 import Mouse from '../utils/Mouse'
 
 export interface SmallShapeProps {
@@ -108,7 +108,6 @@ export interface Sources {
   DOM: DOMSource
   mouse: Mouse
   state: Stream<State>
-  sel: Stream<Sel>
   transform: Stream<d3.ZoomTransform>
 }
 
@@ -119,18 +118,17 @@ export interface Sinks {
 
 export default function SelectedItemsIndicator({
   mouse,
-  sel: sel$,
   transform: transform$,
   state: state$,
 }: Sources): Sinks {
-  const bboxAndShapeType$ = xs.combine(sel$, state$).map(([sel, state]) => ({
-    bbox: sel.getBBox(state),
-    Shape: sel.item(state) ? (sel.item(state).locked ? SmallCross : SmallRect) : null,
+  const bboxAndShapeType$ = state$.map(state => ({
+    bbox: state.getBBox(),
+    Shape: state.sitem() ? (state.sitem().locked ? SmallCross : SmallRect) : null,
   }))
 
   const shapeConfig$ = xs
-    .combine(bboxAndShapeType$, transform$, sel$)
-    .map(([{ bbox, Shape }, transform, sel]) => {
+    .combine(bboxAndShapeType$, transform$, state$)
+    .map(([{ bbox, Shape }, transform, state]) => {
       if (bbox == null) {
         return null
       }
@@ -144,7 +142,7 @@ export default function SelectedItemsIndicator({
         y0,
         bbox,
         size: INDICATOR_RECT_SIZE / k,
-        showShape: sel.mode === 'bbox',
+        showShape: state.selMode === 'bbox',
         Shape,
       }
     })

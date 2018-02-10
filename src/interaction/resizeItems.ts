@@ -5,15 +5,15 @@ import { Component, Rect, ResizeDirConfig } from '../interfaces'
 
 // TODO 该文件还可以进行优化
 
-const resizeItems: Component = ({ mouse, mode: mode$, state: state$, sel: sel$ }) => {
+const resizeItems: Component = ({ mouse, mode: mode$, state: state$ }) => {
   const startInfo$ = mouse.down$
     .when(mode$, identical('idle'))
     .when(mouse.resizer$)
-    .peek(xs.combine(mouse.resizer$, state$, sel$))
-    .map(([resizer, state, sel]) => {
-      const startItems = sel.items(state)
+    .peek(xs.combine(mouse.resizer$, state$))
+    .map(([resizer, state]) => {
+      const startItems = state.sitems()
       // When resizer is not null, we can make sure that bbox is not null.
-      const bbox = sel.getBBox(state)
+      const bbox = state.getBBox()
       return {
         startPos: getResizerPosition(resizer, bbox),
         startItems,

@@ -1,12 +1,12 @@
-import { Action, SemanticTagConfig, Sel, State } from '../interfaces'
+import { Action, SemanticTagConfig, State } from '../interfaces'
 
 export default class ToggleSemanticTagAction extends Action {
   constructor(readonly tagConfig: SemanticTagConfig) {
     super()
   }
 
-  nextState(state: State, sel: Sel) {
-    const item = sel.item(state)
+  next(state: State) {
+    const item = state.sitem()
     const tagName = this.tagConfig.name
     const updatedItem = item.tags.has(tagName)
       ? // Remove tag

@@ -8,11 +8,10 @@ import AdjustedMouse from './utils/AdjustedMouse'
 import ImgItem from './utils/ImgItem'
 import PolygonItem from './utils/PolygonItem'
 import PolylineItem from './utils/PolylineItem'
-import Sel, { SelUpdater } from './utils/Sel'
-import { State, ZIndexOp } from './utils/State'
+import State from './utils/State'
 import UIClass, { UIIntent } from './utils/UI'
 
-export { UIIntent, Action, State, ZIndexOp, PolygonItem, PolylineItem, ImgItem, Sel, SelUpdater }
+export { UIIntent, Action, State, PolygonItem, PolylineItem, ImgItem }
 
 export interface Point {
   readonly x: number
@@ -73,7 +72,6 @@ export interface ComponentSources {
   mouse: AdjustedMouse
   mode: MemoryStream<string>
   state: MemoryStream<State>
-  sel: MemoryStream<Sel>
   transform: MemoryStream<d3.ZoomTransform>
   keyboard: KeyboardSource
   FILE: Stream<FileStat>
@@ -156,4 +154,10 @@ export interface SemanticTagConfig {
     stroke?: string
     strokeWdith?: number
   }
+}
+
+export interface AppHistory {
+  state: State
+  list: List<Action>
+  index: number
 }
