@@ -3,20 +3,20 @@ import isolate from '@cycle/isolate'
 import * as d3 from 'd3'
 import { List } from 'immutable'
 import xs, { Stream } from 'xstream'
-import SetTransformAction from './actions/SetTransformAction'
 import Inspector from './components/Inspector'
 import Menubar from './components/Menubar'
 import StatusBar from './components/StatusBar'
 import Svg from './components/Svg'
 import interactions from './interaction'
+import { Action, AdjustConfig, AppConfig, Item, SaveConfig, State } from './interfaces'
 import { DialogRequest, FileStat } from './makeFileDriver'
 import { KeyboardSource } from './makeKeyboardDriver'
 import './styles/app.styl'
 import AdjustedMouse from './utils/AdjustedMouse'
+import AppHistory, { undo, redo } from './utils/AppHistory'
 import { mergeSinks } from './utils/common'
 import makeAdjuster from './utils/makeAdjuster'
 import UIClass from './utils/UI'
-import { Action, AdjustConfig, AppConfig, Item, SaveConfig, State, AppHistory } from './interfaces'
 
 export interface Sources {
   DOM: DOMSource
@@ -52,45 +52,28 @@ export default function App(sources: Sources): Sinks {
 
   const clipboard$ = nextClipboardProxy$.startWith(null)
   const config$ = nextConfigProxy$.startWith(initConfig)
+  const UI = new UIClass()
 
-  const init: AppHistory = {
-    state: new State(),
-    list: List<Action>(),
-    index: -1,
-  }
   const appHistory$ = xs
-    .merge(keyboard.shortcut('mod+z').mapTo<'undo'>('undo'), actionProxy$)
-    .fold((appHistory, action) => {
-      const { state, list, index } = appHistory
-      if (action === 'undo') {
-        if (index === -1) {
-          return appHistory
-        }
-        const lastAction = list.get(index)
-        return {
-          list,
-          index: index - 1,
-          state: lastAction.prev(state),
-        }
+    .merge<undo, redo, Action>(
+      xs.merge(UI.intent('undo'), keyboard.shortcut('mod+z')).mapTo<undo>(undo),
+      xs.merge(UI.intent('redo'), keyboard.shortcut('mod+y')).mapTo<redo>(redo),
+      actionProxy$,
+    )
+    .fold((h, action) => {
+      if (action === undo) {
+        return h.undo(h.getLastAction())
+      } else if (action === redo) {
+        return h.redo(h.getNextAction())
       } else {
-        const after = action.prepare(appHistory)
-        return {
-          list: after.list.setSize(after.index + 1).push(action),
-          index: after.index + 1,
-          state: action.next(after.state),
-        }
+        return action.prepare(h).apply(action)
       }
-    }, init)
+    }, new AppHistory())
     .dropRepeats()
     .remember()
 
   const state$ = appHistory$
     .map(h => h.state)
-    .dropRepeats()
-    .remember()
-  // .debug(s => console.log('state:', s.toJS()))
-  const transform$ = appHistory$
-    .map(h => h.state.transform)
     .dropRepeats()
     .remember()
 
@@ -99,9 +82,8 @@ export default function App(sources: Sources): Sinks {
   const drawingItem$ = nextDrawingItemProxy$.startWith(null)
   const polygonCloseIndicator$ = nextPolygonCloseIndicator$.startWith(null)
 
-  const UI = new UIClass()
   const mouse = new AdjustedMouse(
-    transform$,
+    state$,
     sources.mousemove,
     sources.mouseup,
     nextResizerProxy$,
@@ -120,7 +102,6 @@ export default function App(sources: Sources): Sinks {
     clipboard: clipboard$,
     mode: mode$,
     state: state$,
-    transform: transform$,
     drawingItem: drawingItem$,
     adjustConfigs: adjustConfigs$,
     polygonCloseIndicator: polygonCloseIndicator$,
@@ -134,15 +115,10 @@ export default function App(sources: Sources): Sinks {
   const interactionSinks = interactions.map(fn => fn(compSources))
   const allSinks = interactionSinks.concat([menubar, inspector, svg, statusBar])
 
+  actionProxy$.imitate(mergeSinks(allSinks, 'action'))
   nextConfigProxy$.imitate(mergeSinks(allSinks, 'nextConfig'))
   nextClipboardProxy$.imitate(mergeSinks(allSinks, 'nextClipboard'))
   nextDrawingItemProxy$.imitate(mergeSinks(allSinks, 'drawingItem'))
-  actionProxy$.imitate(
-    xs.merge(
-      mergeSinks(allSinks, 'action'),
-      mergeSinks(allSinks, 'nextTransform').map(transform => new SetTransformAction(transform)),
-    ),
-  )
   nextModeProxy$.imitate(mergeSinks(allSinks, 'nextMode'))
   nextAdjustConfigs$.imitate(mergeSinks(allSinks, 'nextAdjustConfigs'))
   nextPolygonCloseIndicator$.imitate(mergeSinks(allSinks, 'nextPolygonCloseIndicator'))
@@ -151,7 +127,7 @@ export default function App(sources: Sources): Sinks {
   const file$ = mergeSinks(allSinks, 'FILE')
 
   mouse.imitate(svg.rawDown, svg.rawClick, svg.rawDblclick, svg.rawWheel)
-  mouse.setAdjuster(makeAdjuster(keyboard, mouse, state$, transform$, adjustConfigs$, config$))
+  mouse.setAdjuster(makeAdjuster(keyboard, mouse, state$, adjustConfigs$, config$))
   UI.imitate(xs.merge(inspector.intent, menubar.intent, statusBar.intent))
   nextResizerProxy$.imitate(mergeSinks(allSinks, 'nextResizer'))
   nextVertexIndexProxy$.imitate(mergeSinks(allSinks, 'nextVertexIndex'))

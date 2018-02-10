@@ -21,7 +21,7 @@ const drawPolygon: Component = ({
   keyboard,
   UI,
   mode: mode$,
-  transform: transform$,
+  state: state$,
   config: config$,
 }) => {
   const addPointProxy$ = xs.create<Point>()
@@ -37,10 +37,10 @@ const drawPolygon: Component = ({
 
   // Whether the user can close the polygon and add a new polygon item
   const canClose$ = xs
-    .combine(mouse.move$, transform$, config$)
+    .combine(mouse.move$, state$, config$)
     .sampleCombine(points$)
     .map(
-      ([[movingPos, transform, config], points]) =>
+      ([[movingPos, { transform }, config], points]) =>
         points.count() >= 3 &&
         distanceBetweenPointAndPoint(points.first(), movingPos) < config.senseRange / transform.k,
     )
@@ -87,7 +87,7 @@ const drawPolygon: Component = ({
       () => points$.map(points => points.first()),
     )
     .checkedFlatMap(p =>
-      xs.combine(transform$, config$).map(([transform, config]) =>
+      xs.combine(state$, config$).map(([{ transform }, config]) =>
         h('circle.close-indicator', {
           attrs: {
             cx: p.x,

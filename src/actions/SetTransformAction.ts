@@ -1,34 +1,29 @@
-import { Action, State, AppHistory } from '../interfaces'
+import { Action, AppHistory, State } from '../interfaces'
 
 export default class SetTransformAction extends Action {
-  startTransform: d3.ZoomTransform
-
-  constructor(readonly transform: d3.ZoomTransform) {
+  constructor(readonly target: d3.ZoomTransform, readonly start: d3.ZoomTransform) {
     super()
   }
 
   prepare(h: AppHistory): AppHistory {
-    const lastAction = h.list.get(h.index)
-    if (h.index !== -1 && lastAction != null && lastAction instanceof SetTransformAction) {
-      // TODO add start-transform as the filter-predicate
-      // TODO add trigger(wheel or UI) as the filter-predicate
-      this.startTransform = lastAction.startTransform
-      return {
-        list: h.list.splice(h.index, 1),
-        index: h.index - 1,
-        state: h.state,
-      }
+    const last = h.list.get(h.index)
+    if (
+      h.index !== -1 &&
+      last != null &&
+      last instanceof SetTransformAction &&
+      this.start == last.start
+    ) {
+      return h.pop()
     } else {
-      this.startTransform = h.state.transform
       return h
     }
   }
 
   next(state: State) {
-    return state.set('transform', this.transform)
+    return state.set('transform', this.target)
   }
 
   prev(state: State) {
-    return state.set('transform', this.startTransform)
+    return state.set('transform', this.start)
   }
 }

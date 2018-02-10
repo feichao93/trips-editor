@@ -1,9 +1,7 @@
 import { identical } from 'ramda'
 import xs from 'xstream'
-import ResizeItemAction from '../actions/ResizeItemActon'
+import ResizeItemAction from '../actions/ResizeItemAction'
 import { Component, Rect, ResizeDirConfig } from '../interfaces'
-
-// TODO 该文件还可以进行优化
 
 const resizeItems: Component = ({ mouse, mode: mode$, state: state$ }) => {
   const startInfo$ = mouse.down$

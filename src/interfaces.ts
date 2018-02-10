@@ -5,13 +5,14 @@ import Action from './actions'
 import { DialogRequest, FileStat } from './makeFileDriver'
 import { KeyboardSource } from './makeKeyboardDriver'
 import AdjustedMouse from './utils/AdjustedMouse'
+import AppHistory from './utils/AppHistory'
 import ImgItem from './utils/ImgItem'
 import PolygonItem from './utils/PolygonItem'
 import PolylineItem from './utils/PolylineItem'
 import State from './utils/State'
 import UIClass, { UIIntent } from './utils/UI'
 
-export { UIIntent, Action, State, PolygonItem, PolylineItem, ImgItem }
+export { AppHistory, UIIntent, Action, State, PolygonItem, PolylineItem, ImgItem }
 
 export interface Point {
   readonly x: number
@@ -72,7 +73,6 @@ export interface ComponentSources {
   mouse: AdjustedMouse
   mode: MemoryStream<string>
   state: MemoryStream<State>
-  transform: MemoryStream<d3.ZoomTransform>
   keyboard: KeyboardSource
   FILE: Stream<FileStat>
   polygonCloseIndicator: MemoryStream<VNode>
@@ -85,7 +85,6 @@ export interface ComponentSinks {
   nextMode: Stream<string>
   nextConfig: Stream<AppConfig>
   nextClipboard: Stream<Item>
-  nextTransform: Stream<d3.ZoomTransform>
   drawingItem: Stream<Item>
   nextVertexIndex: Stream<any>
   nextVertexInsertIndex: Stream<any>
@@ -154,10 +153,4 @@ export interface SemanticTagConfig {
     stroke?: string
     strokeWdith?: number
   }
-}
-
-export interface AppHistory {
-  state: State
-  list: List<Action>
-  index: number
 }

@@ -8,6 +8,8 @@ export namespace UIIntent {
     | 'toggle-lock'
     | 'toggle-sel-mode'
     | 'reset-zoom'
+    | 'undo'
+    | 'redo'
     | Edit
     | ApplyStylePreset
     | ChangeZIndex

@@ -13,4 +13,8 @@ export default abstract class Action {
   prepare(appHistory: AppHistory): AppHistory {
     return appHistory
   }
+
+  getMessage() {
+    return this.constructor.name
+  }
 }

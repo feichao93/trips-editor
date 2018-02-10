@@ -1,23 +1,23 @@
 import { DOMSource, h, VNode } from '@cycle/dom'
-import xs, { Stream } from 'xstream'
-import { AppConfig } from '../interfaces'
+import xs, { MemoryStream, Stream } from 'xstream'
+import { AppConfig, State } from '../interfaces'
 import AdjustedMouse from '../utils/AdjustedMouse'
 
 export interface Sources {
   DOM: DOMSource
-  transform: Stream<d3.ZoomTransform>
   mouse: AdjustedMouse
   config: Stream<AppConfig>
+  state: MemoryStream<State>
 }
 
 export interface Sinks {
   DOM: Stream<VNode>
 }
 
-export default function AdjustIndicator(sources: Sources): Sinks {
+export default function AdjustIndicator({ config: config$, state: state$, mouse }: Sources): Sinks {
   const vdom$ = xs
-    .combine(sources.mouse.adjustedMoveInfo$, sources.transform, sources.config)
-    .map(([adjustResult, transform, config]) => {
+    .combine(mouse.adjustedMoveInfo$, state$, config$)
+    .map(([adjustResult, { transform }, config]) => {
       const cement = adjustResult.applied.includes('cement')
         ? h('circle', {
             key: 'adjust-cement',

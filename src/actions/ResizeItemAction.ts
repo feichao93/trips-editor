@@ -1,7 +1,6 @@
 import { Action, Item, ItemId, Point, ResizeDirConfig, State, AppHistory } from '../interfaces'
 import { Map } from 'immutable'
 
-// TODO refine interface
 export interface ResizeItemConfig {
   movingPos: Point
   startPos: Point
@@ -24,11 +23,7 @@ export default class ResizeItemAction extends Action {
       this.config.startPos == lastAction.config.startPos
     ) {
       this.prevItems = lastAction.prevItems
-      return {
-        list: h.list.splice(h.index, 1),
-        index: h.index - 1,
-        state: h.state,
-      }
+      return h.pop()
     } else {
       this.prevItems = this.config.startItems
       return h

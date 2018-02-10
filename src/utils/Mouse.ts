@@ -1,5 +1,5 @@
-import xs, { Stream, MemoryStream } from 'xstream'
-import { Point } from '../interfaces'
+import xs, { MemoryStream, Stream } from 'xstream'
+import { Point, State } from '../interfaces'
 
 type SimpleWheelEvent = { pos: Point; deltaY: number }
 
@@ -50,14 +50,17 @@ export default class Mouse {
   private transform$: MemoryStream<d3.ZoomTransform>
 
   constructor(
-    transform$: MemoryStream<d3.ZoomTransform>,
+    state$: MemoryStream<State>,
     rawMove$: Stream<Point>,
     rawUp$: Stream<Point>,
     nextResizer$: Stream<string>,
     nextVertexIndex$: Stream<number>,
     nextVertexInsertIndex$: Stream<number>,
   ) {
-    this.transform$ = transform$
+    this.transform$ = state$
+      .map(s => s.transform)
+      .dropRepeats()
+      .remember()
     this.rawMove$ = rawMove$.map(applyOffset)
     this.move$ = this.convert(this.rawMove$)
     this.rawUp$ = rawUp$.map(applyOffset)

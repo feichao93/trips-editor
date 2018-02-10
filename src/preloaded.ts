@@ -3,7 +3,7 @@ import xs, { Stream } from 'xstream'
 import dropRepeats from 'xstream/extra/dropRepeats'
 import sampleCombine from 'xstream/extra/sampleCombine'
 import { Point } from './interfaces'
-import peek from './utils/peek'
+import peek from './utils/peek-operator'
 import when from './utils/when-operator'
 
 declare global {

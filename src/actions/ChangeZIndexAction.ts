@@ -1,10 +1,18 @@
-import { State, Action } from '../interfaces'
+import { List } from 'immutable'
+import { Action, AppHistory, ItemId, State } from '../interfaces'
 
 export type ZIndexOp = 'inc' | 'dec' | 'top' | 'bottom'
 
 export default class ChangeZIndexAction extends Action {
+  prevZList: List<ItemId>
+
   constructor(readonly op: ZIndexOp) {
     super()
+  }
+
+  prepare(h: AppHistory): AppHistory {
+    this.prevZList = h.state.zlist
+    return h
   }
 
   next(state: State) {
@@ -27,5 +35,9 @@ export default class ChangeZIndexAction extends Action {
         return state.set('zlist', zs.unshift(sid))
       }
     }
+  }
+
+  prev(state: State) {
+    return state.set('zlist', this.prevZList)
   }
 }

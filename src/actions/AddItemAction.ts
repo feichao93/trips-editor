@@ -1,11 +1,12 @@
 import { OrderedSet } from 'immutable'
 import { identical } from 'ramda'
 import Action from './index'
-import { Item, State, AppHistory } from '../interfaces'
+import { AppHistory, Item, ItemId, State } from '../interfaces'
 import { getNextItemId } from '../utils/common'
 
 export default class AddItemAction extends Action {
   private itemId: number
+  private prevSelIdSet: OrderedSet<ItemId>
 
   constructor(private item: Item) {
     super()
@@ -13,6 +14,7 @@ export default class AddItemAction extends Action {
 
   prepare(h: AppHistory): AppHistory {
     this.itemId = getNextItemId(h.state)
+    this.prevSelIdSet = h.state.selIdSet
     return h
   }
 
@@ -27,6 +29,6 @@ export default class AddItemAction extends Action {
     return state
       .deleteIn(['items', this.itemId])
       .update('zlist', zlist => zlist.filterNot(identical(this.itemId)))
-      .update('selIdSet', idSet => idSet.remove(this.itemId))
+      .set('selIdSet', this.prevSelIdSet)
   }
 }

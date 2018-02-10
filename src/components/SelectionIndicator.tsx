@@ -108,7 +108,6 @@ export interface Sources {
   DOM: DOMSource
   mouse: Mouse
   state: Stream<State>
-  transform: Stream<d3.ZoomTransform>
 }
 
 export interface Sinks {
@@ -116,36 +115,30 @@ export interface Sinks {
   nextResizer: Stream<string>
 }
 
-export default function SelectedItemsIndicator({
-  mouse,
-  transform: transform$,
-  state: state$,
-}: Sources): Sinks {
+export default function SelectedItemsIndicator({ mouse, state: state$ }: Sources): Sinks {
   const bboxAndShapeType$ = state$.map(state => ({
     bbox: state.getBBox(),
     Shape: state.sitem() ? (state.sitem().locked ? SmallCross : SmallRect) : null,
   }))
 
-  const shapeConfig$ = xs
-    .combine(bboxAndShapeType$, transform$, state$)
-    .map(([{ bbox, Shape }, transform, state]) => {
-      if (bbox == null) {
-        return null
-      }
-      const { x, y } = bbox
-      const k = transform.k
-      const x0 = x - INDICATOR_RECT_SIZE / 2 / k
-      const y0 = y - INDICATOR_RECT_SIZE / 2 / k
-      return {
-        k,
-        x0,
-        y0,
-        bbox,
-        size: INDICATOR_RECT_SIZE / k,
-        showShape: state.selMode === 'bbox',
-        Shape,
-      }
-    })
+  const shapeConfig$ = xs.combine(bboxAndShapeType$, state$).map(([{ bbox, Shape }, state]) => {
+    if (bbox == null) {
+      return null
+    }
+    const { x, y } = bbox
+    const k = state.transform.k
+    const x0 = x - INDICATOR_RECT_SIZE / 2 / k
+    const y0 = y - INDICATOR_RECT_SIZE / 2 / k
+    return {
+      k,
+      x0,
+      y0,
+      bbox,
+      size: INDICATOR_RECT_SIZE / k,
+      showShape: state.selMode === 'bbox',
+      Shape,
+    }
+  })
 
   const nextResizer$ = xs
     .combine(shapeConfig$, mouse.move$)

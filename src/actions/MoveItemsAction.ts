@@ -21,11 +21,7 @@ export default class MoveItemsAction extends Action {
       lastAction.config.startPos == this.config.startPos
     ) {
       this.prevItems = lastAction.prevItems
-      return {
-        list: h.list.splice(h.index, 1),
-        index: h.index - 1,
-        state: h.state,
-      }
+      return h.pop()
     } else {
       this.prevItems = this.config.startItems
       return h

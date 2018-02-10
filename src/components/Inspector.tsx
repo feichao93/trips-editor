@@ -5,7 +5,7 @@ import xs, { Stream } from 'xstream'
 import InspectorGeometricTab from './InspectorGeometricTab'
 import InspectorHistoryTab from './InspectorHistoryTab'
 import InspectorSemanticTab from './InspectorSemanticTab'
-import { Action, AppConfig, State, UIIntent } from '../interfaces'
+import { Action, AppConfig, AppHistory, State, UIIntent } from '../interfaces'
 import { KeyboardSource } from '../makeKeyboardDriver'
 import '../styles/inspector.styl'
 
@@ -14,7 +14,7 @@ export interface Sources {
   state: Stream<State>
   config: Stream<AppConfig>
   keyboard: KeyboardSource
-  appHistory: Stream<{ list: List<Action>; index: number }>
+  appHistory: Stream<AppHistory>
 }
 
 export interface Sinks {

@@ -153,17 +153,22 @@ export default function makeAdjuster(
   keyboard: KeyboardSource,
   mouse: Mouse,
   state$: Stream<State>,
-  transform$: Stream<d3.ZoomTransform>,
   configs$: Stream<AdjustConfig[]>,
   appConfig$: Stream<AppConfig>,
 ) {
   const allPoints$ = state$.map(state => state.items.toList().flatMap(item => item.getVertices()))
 
   return xs
-    .combine(appConfig$, keyboard.isPressing('z'), configs$, transform$, allPoints$)
-    .map(([appConfig, disabled, configs, transform, allPoints]) => (targetPoint: Point) => {
+    .combine(appConfig$, keyboard.isPressing('z'), configs$, state$, allPoints$)
+    .map(([appConfig, disabled, configs, state, allPoints]) => (targetPoint: Point) => {
       function reduceFn(reduction: AdjustResult, config: AdjustConfig): AdjustResult {
-        const next = adjustFn[config.type](appConfig, reduction.point, transform, config, allPoints)
+        const next = adjustFn[config.type](
+          appConfig,
+          reduction.point,
+          state.transform,
+          config,
+          allPoints,
+        )
         if (next != null && reduction.ensure(next.point)) {
           return {
             point: next.point,
