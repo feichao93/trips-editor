@@ -41,4 +41,8 @@ export default class ResizeItemAction extends Action {
   prev(state: State) {
     return state.mergeIn(['items'], this.prevItems)
   }
+
+  getMessage() {
+    return `Resize items. items={${this.prevItems.keySeq().join(',')}}`
+  }
 }

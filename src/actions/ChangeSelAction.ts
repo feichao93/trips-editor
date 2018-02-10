@@ -22,4 +22,11 @@ export default class ChangeSelAction extends Action {
   prev(state: State) {
     return state.set('selIdSet', this.prevSelIdSet)
   }
+  getMessage() {
+    if (this.itemIds.length === 0) {
+      return `Clear selection`
+    } else {
+      return `Select items. items={${this.itemIds.join(',')}}`
+    }
+  }
 }

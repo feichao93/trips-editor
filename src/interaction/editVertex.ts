@@ -18,7 +18,7 @@ const editVertex: Component = ({ UI, mouse, state: state$, mode: mode$, keyboard
     .merge(keyboard.shortcut('e'), UI.intent('toggle-sel-mode'))
     .when(mode$, identical('idle'))
     .when(state$, state => !state.selIdSet.isEmpty())
-    .mapTo(new ToggleSelModeAction())
+    .map(() => new ToggleSelModeAction())
 
   /** Add/move vertex */
   const insertVertexConfig$ = mouse.down$
@@ -81,15 +81,10 @@ const editVertex: Component = ({ UI, mouse, state: state$, mode: mode$, keyboard
     .map(({ item, startPos, vertexIndex }) =>
       mouse.amove$
         .when(mode$, identical('vertex.moving'))
-        .map(movingPos => {
-          const dx = movingPos.x - startPos.x
-          const dy = movingPos.y - startPos.y
-          return { item, vertexIndex, dx, dy }
-        })
+        .map(movingPos => new MoveVertexAction({ item, vertexIndex, startPos, movingPos }))
         .endWhen(stopMoving$),
     )
     .flatten()
-    .map(info => new MoveVertexAction(info))
 
   const toIdleMode$ = mouse.up$.when(mode$, identical('vertex.moving')).mapTo('idle')
 

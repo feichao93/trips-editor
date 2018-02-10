@@ -40,4 +40,8 @@ export default class ChangeZIndexAction extends Action {
   prev(state: State) {
     return state.set('zlist', this.prevZList)
   }
+
+  getMessage() {
+    return `Change z-index. op=${this.op}`
+  }
 }

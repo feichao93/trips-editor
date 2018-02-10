@@ -1,5 +1,5 @@
 import { Map } from 'immutable'
-import { Action, Item, ItemId, State, AppHistory, Point } from '../interfaces'
+import { Action, AppHistory, emptyAction, Item, ItemId, Point, State } from '../interfaces'
 
 export interface MoveItemsConfig {
   startPos: Point
@@ -9,14 +9,15 @@ export interface MoveItemsConfig {
 
 export default class MoveItemsAction extends Action {
   prevItems: Map<ItemId, Item>
+
   constructor(readonly config: MoveItemsConfig) {
     super()
   }
 
   prepare(h: AppHistory): AppHistory {
-    const lastAction = h.list.get(h.index)
+    const lastAction = h.getLastAction()
     if (
-      lastAction != null &&
+      lastAction != emptyAction &&
       lastAction instanceof MoveItemsAction &&
       lastAction.config.startPos == this.config.startPos
     ) {
@@ -37,5 +38,12 @@ export default class MoveItemsAction extends Action {
 
   prev(state: State) {
     return state.mergeIn(['items'], this.prevItems)
+  }
+
+  getMessage() {
+    const items = this.config.startItems.keySeq().join(',')
+    const dx = this.config.movingPos.x - this.config.startPos.x
+    const dy = this.config.movingPos.y - this.config.startPos.y
+    return `Move items. items={${items}}, dx=${dx.toFixed(1)}, dy=${dy.toFixed(1)}`
   }
 }

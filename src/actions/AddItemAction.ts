@@ -31,4 +31,8 @@ export default class AddItemAction extends Action {
       .update('zlist', zlist => zlist.filterNot(identical(this.itemId)))
       .set('selIdSet', this.prevSelIdSet)
   }
+
+  getMessage() {
+    return `Add item ${this.itemId}`
+  }
 }

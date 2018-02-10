@@ -2,6 +2,7 @@ import { DOMSource, h, VNode } from '@cycle/dom'
 import isolate from '@cycle/isolate'
 import * as d3 from 'd3'
 import { List } from 'immutable'
+import { identical } from 'ramda'
 import xs, { Stream } from 'xstream'
 import Inspector from './components/Inspector'
 import Menubar from './components/Menubar'
@@ -13,7 +14,7 @@ import { DialogRequest, FileStat } from './makeFileDriver'
 import { KeyboardSource } from './makeKeyboardDriver'
 import './styles/app.styl'
 import AdjustedMouse from './utils/AdjustedMouse'
-import AppHistory, { undo, redo } from './utils/AppHistory'
+import AppHistory, { redo, undo } from './utils/AppHistory'
 import { mergeSinks } from './utils/common'
 import makeAdjuster from './utils/makeAdjuster'
 import UIClass from './utils/UI'
@@ -52,14 +53,21 @@ export default function App(sources: Sources): Sinks {
 
   const clipboard$ = nextClipboardProxy$.startWith(null)
   const config$ = nextConfigProxy$.startWith(initConfig)
+  const mode$ = nextModeProxy$.startWith(initMode)
   const UI = new UIClass()
 
-  const appHistory$ = xs
-    .merge<undo, redo, Action>(
-      xs.merge(UI.intent('undo'), keyboard.shortcut('mod+z')).mapTo<undo>(undo),
-      xs.merge(UI.intent('redo'), keyboard.shortcut('mod+y')).mapTo<redo>(redo),
-      actionProxy$,
+  const undo$ = xs
+    .merge(UI.intent('undo'), keyboard.shortcut('mod+z').when(mode$, identical('idle')))
+    .mapTo<undo>(undo)
+  const redo$ = xs
+    .merge(
+      UI.intent('redo'),
+      keyboard.shortcut(['mod+y', 'mod+shift+z']).when(mode$, identical('idle')),
     )
+    .mapTo<redo>(redo)
+
+  const appHistory$ = xs
+    .merge<undo, redo, Action>(undo$, redo$, actionProxy$)
     .fold((h, action) => {
       if (action === undo) {
         return h.undo(h.getLastAction())
@@ -77,7 +85,6 @@ export default function App(sources: Sources): Sinks {
     .dropRepeats()
     .remember()
 
-  const mode$ = nextModeProxy$.startWith(initMode)
   const adjustConfigs$ = nextAdjustConfigs$.startWith([])
   const drawingItem$ = nextDrawingItemProxy$.startWith(null)
   const polygonCloseIndicator$ = nextPolygonCloseIndicator$.startWith(null)

@@ -45,12 +45,12 @@ const selInteraction: Component = ({
           state => !state.selIdSet.isEmpty() && (state.selMode === 'bbox' || state.sitem().locked),
         ),
     )
-    .mapTo(new DeleteSelAction())
+    .map(() => new DeleteSelAction())
 
   const toggleLock$ = xs
     .merge(UI.intent('toggle-lock'), keyboard.shortcut('b'))
     .when(state$, state => !state.selIdSet.isEmpty())
-    .mapTo(new ToggleLockAction())
+    .map(() => new ToggleLockAction())
 
   const edit$ = UI.intent<UIIntent.Edit>('edit').map(({ field, value }) => {
     const useNumberValue = ['strokeWidth', 'opacity'].includes(field)

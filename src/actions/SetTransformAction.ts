@@ -26,4 +26,11 @@ export default class SetTransformAction extends Action {
   prev(state: State) {
     return state.set('transform', this.start)
   }
+
+  getMessage() {
+    const xPart = `x=${this.target.x.toFixed(1)}`
+    const yPart = `y=${this.target.y.toFixed(1)}`
+    const kPart = `k=${this.target.k.toFixed(1)}`
+    return `Set transform. ${xPart}, ${yPart}, ${kPart}`
+  }
 }

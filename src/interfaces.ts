@@ -5,14 +5,24 @@ import Action from './actions'
 import { DialogRequest, FileStat } from './makeFileDriver'
 import { KeyboardSource } from './makeKeyboardDriver'
 import AdjustedMouse from './utils/AdjustedMouse'
-import AppHistory from './utils/AppHistory'
+import AppHistory, { emptyAction } from './utils/AppHistory'
 import ImgItem from './utils/ImgItem'
 import PolygonItem from './utils/PolygonItem'
 import PolylineItem from './utils/PolylineItem'
-import State from './utils/State'
+import State, { SelMode } from './utils/State'
 import UIClass, { UIIntent } from './utils/UI'
 
-export { AppHistory, UIIntent, Action, State, PolygonItem, PolylineItem, ImgItem }
+export {
+  AppHistory,
+  UIIntent,
+  Action,
+  emptyAction,
+  SelMode,
+  State,
+  PolygonItem,
+  PolylineItem,
+  ImgItem,
+}
 
 export interface Point {
   readonly x: number
