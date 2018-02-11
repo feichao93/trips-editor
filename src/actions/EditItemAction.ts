@@ -1,5 +1,5 @@
-import { Map } from 'immutable'
-import { Action, AppHistory, Item, ItemId, State } from '../interfaces'
+import { is, Map } from 'immutable'
+import { Action, AppHistory, emptyAction, Item, ItemId, State } from '../interfaces'
 
 export default class EditItemAction extends Action {
   prevItems: Map<ItemId, Item>
@@ -9,7 +9,17 @@ export default class EditItemAction extends Action {
   }
 
   prepare(h: AppHistory) {
+    const last = h.getLastAction()
     this.prevItems = h.state.sitems()
+    if (
+      last !== emptyAction &&
+      last instanceof EditItemAction &&
+      is(this.prevItems.keySeq(), last.prevItems.keySeq()) &&
+      this.field == last.field
+    ) {
+      this.prevItems = last.prevItems
+      return h.pop()
+    }
     return h
   }
 
@@ -23,6 +33,8 @@ export default class EditItemAction extends Action {
   }
 
   getMessage() {
-    return `Edit item. field=${this.field}, value=${JSON.stringify(this.val)}`
+    const itemsStr = this.prevItems.keySeq().join(',')
+    const valueStr = JSON.stringify(this.val)
+    return `Edit items. items={${itemsStr}}, field=${this.field}, value=${valueStr}`
   }
 }

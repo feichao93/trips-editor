@@ -1,11 +1,13 @@
 import { Action, AppHistory, emptyAction, Point, State } from '../interfaces'
-import { isSamePoint } from '../utils/common'
+import { distanceBetweenPointAndPoint } from '../utils/common'
+import { MERGE_SET_TRANSFORM_ACTION_FACTOR } from '../constants'
 
 export default class SetTransformAction extends Action {
   constructor(
     readonly target: d3.ZoomTransform,
     readonly start: d3.ZoomTransform,
-    readonly mousePos: Point = null,
+    readonly mousePos: Point,
+    readonly senseRange: number,
   ) {
     super()
   }
@@ -18,7 +20,8 @@ export default class SetTransformAction extends Action {
       (this.start == last.start ||
         (this.mousePos != null &&
           last.mousePos != null &&
-          isSamePoint(this.mousePos, last.mousePos)))
+          distanceBetweenPointAndPoint(this.mousePos, last.mousePos) <
+            this.senseRange * MERGE_SET_TRANSFORM_ACTION_FACTOR))
     ) {
       return h.pop()
     } else {
