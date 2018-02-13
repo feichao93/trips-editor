@@ -8,7 +8,6 @@ export default class DeleteItemsAction extends Action {
 
   constructor(readonly itemIdArray: number[]) {
     super()
-    console.log(this.itemIdArray)
   }
 
   prepare(h: AppHistory): AppHistory {

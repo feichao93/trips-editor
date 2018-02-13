@@ -51,6 +51,8 @@ export interface ItemMethods {
   insertVertex?(insertIndex: number, p: Point): this
   deleteVertex?(vertexIndex: number): this
   moveVertex?(vertexIndex: number, dx: number, dy: number): this
+
+  getShortDescription(): string
 }
 
 export type CommonRecordUpdaters = RecordUpdater<'id', number> &

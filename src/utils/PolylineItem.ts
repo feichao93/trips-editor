@@ -99,4 +99,8 @@ export default class PolylineItem extends PolylineItemRecord implements ItemMeth
       })),
     )
   }
+
+  getShortDescription() {
+    return `PolylineItem ${this.id}`
+  }
 }

@@ -8,7 +8,9 @@
   "scripts": {
     "start": "webpack-dev-server",
     "build": "webpack --env.prod",
-    "prettier": "prettier --write \"src/**/*.{ts,tsx,js,jsx}\""
+    "prettier": "prettier --write \"src/**/*.{ts,tsx,js,jsx}\"",
+    "gh-pages":
+      "rm -rf build && yarn build && git checkout gh-pages && git pull && git rm index.html main.* && mv build/* . && git add index.html main.* && git commit -m 'update' && git push && git checkout master"
   },
   "prettier": {
     "printWidth": 100,

@@ -98,4 +98,8 @@ export default class ImgItem extends ImgItemRecord implements ItemMethods {
   supportEditVertex() {
     return false
   }
+
+  getShortDescription() {
+    return `ImgItem ${this.id}`
+  }
 }

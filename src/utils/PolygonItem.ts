@@ -133,4 +133,8 @@ export default class PolygonItem extends PolygonItemRecord implements ItemMethod
       })),
     )
   }
+
+  getShortDescription() {
+    return `PolygonItem ${this.id}`
+  }
 }
