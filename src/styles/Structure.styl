@@ -1,0 +1,31 @@
+.structure {
+  width 240px
+  background #e7e7e7
+
+  .item-list {
+    padding 0
+    .item {
+      cursor pointer
+      display flex
+      align-items center
+      line-height 1.5rem
+      padding 0 2rem
+      .text {
+        flex 1
+      }
+      .delete-btn {
+        margin-left auto
+        display none
+      }
+      &.selected {
+        color #e7e7e7
+        background #282c34
+      }
+      &:hover {
+        .delete-btn {
+          display initial
+        }
+      }
+    }
+  }
+}

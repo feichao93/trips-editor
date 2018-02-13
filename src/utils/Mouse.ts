@@ -4,7 +4,7 @@ import { Point, State } from '../interfaces'
 type SimpleWheelEvent = { pos: Point; deltaY: number }
 
 // TODO use the DOM API to get the correct offset
-const offset = { top: 22, left: 0 }
+const offset = { top: 22, left: 240 }
 const applyOffset = (p: Point) => ({ x: p.x - offset.left, y: p.y - offset.top })
 
 export default class Mouse {

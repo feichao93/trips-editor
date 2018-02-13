@@ -1,22 +1,27 @@
 import { List, Map, OrderedSet } from 'immutable'
 import { Action, AppHistory, Item, ItemId, State } from '../interfaces'
 
-export default class DeleteSelAction extends Action {
+export default class DeleteItemsAction extends Action {
   prevSelIdSet: OrderedSet<ItemId>
   deletedItems: Map<ItemId, Item>
   prevZList: List<ItemId>
 
+  constructor(readonly itemIdArray: number[]) {
+    super()
+    console.log(this.itemIdArray)
+  }
+
   prepare(h: AppHistory): AppHistory {
     this.prevSelIdSet = h.state.selIdSet
-    this.deletedItems = h.state.items.filter((_, itemId) => this.prevSelIdSet.has(itemId))
+    this.deletedItems = h.state.items.filter((_, itemId) => this.itemIdArray.includes(itemId))
     this.prevZList = h.state.zlist
     return h
   }
 
   next(state: State) {
     return state
-      .update('items', items => items.filterNot(item => state.selIdSet.has(item.id)))
-      .update('zlist', zlist => zlist.filterNot(itemId => state.selIdSet.has(itemId)))
+      .update('items', items => items.filterNot(item => this.itemIdArray.includes(item.id)))
+      .update('zlist', zlist => zlist.filterNot(itemId => this.itemIdArray.includes(itemId)))
       .set('selIdSet', OrderedSet())
   }
 

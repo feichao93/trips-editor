@@ -7,6 +7,7 @@ import xs, { Stream } from 'xstream'
 import Inspector from './components/Inspector'
 import Menubar from './components/Menubar'
 import StatusBar from './components/StatusBar'
+import Structure from './components/Structure'
 import Svg from './components/Svg'
 import interactions from './interaction'
 import { Action, AdjustConfig, AppConfig, Item, SaveConfig, State } from './interfaces'
@@ -14,7 +15,7 @@ import { DialogRequest, FileStat } from './makeFileDriver'
 import { KeyboardSource } from './makeKeyboardDriver'
 import './styles/app.styl'
 import AdjustedMouse from './utils/AdjustedMouse'
-import AppHistory, { redo, undo, clearHistory } from './utils/AppHistory'
+import AppHistory, { clearHistory, redo, undo } from './utils/AppHistory'
 import { mergeSinks } from './utils/common'
 import makeAdjuster from './utils/makeAdjuster'
 import UIClass from './utils/UI'
@@ -119,11 +120,12 @@ export default function App(sources: Sources): Sinks {
 
   const menubar = isolate(Menubar, 'menubar')(compSources)
   const svg = isolate(Svg, 'svg')(compSources)
+  const structure = isolate(Structure, 'structure')(compSources)
   const inspector = isolate(Inspector, 'inspector')(compSources)
   const statusBar = isolate(StatusBar, 'status-bar')(compSources)
 
   const interactionSinks = interactions.map(fn => fn(compSources))
-  const allSinks = interactionSinks.concat([menubar, inspector, svg, statusBar])
+  const allSinks = interactionSinks.concat([menubar, structure, inspector, svg, statusBar])
 
   actionProxy$.imitate(mergeSinks(allSinks, 'action'))
   nextConfigProxy$.imitate(mergeSinks(allSinks, 'nextConfig'))
@@ -138,15 +140,15 @@ export default function App(sources: Sources): Sinks {
 
   mouse.imitate(svg.rawDown, svg.rawClick, svg.rawDblclick, svg.rawWheel)
   mouse.setAdjuster(makeAdjuster(keyboard, mouse, state$, adjustConfigs$, config$))
-  UI.imitate(xs.merge(inspector.intent, menubar.intent, statusBar.intent))
+  UI.imitate(xs.merge(structure.intent, inspector.intent, menubar.intent, statusBar.intent))
   nextResizerProxy$.imitate(mergeSinks(allSinks, 'nextResizer'))
   nextVertexIndexProxy$.imitate(mergeSinks(allSinks, 'nextVertexIndex'))
   nextVertexInsertIndexProxy$.imitate(mergeSinks(allSinks, 'nextVertexInsertIndex'))
 
   const vdom$ = xs
-    .combine(menubar.DOM, svg.DOM, inspector.DOM, statusBar.DOM)
-    .map(([menubar, svg, inspector, statusBar]) =>
-      h('div.app', [menubar, h('main', [svg, inspector]), statusBar]),
+    .combine(menubar.DOM, svg.DOM, structure.DOM, inspector.DOM, statusBar.DOM)
+    .map(([menubar, svg, structure, inspector, statusBar]) =>
+      h('div.app', [menubar, h('main', [structure, svg, inspector]), statusBar]),
     )
 
   return {

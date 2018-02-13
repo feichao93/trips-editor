@@ -4,7 +4,7 @@ import { identical } from 'ramda'
 import xs from 'xstream'
 import ChangeSelAction from '../actions/ChangeSelAction'
 import ChangeZIndexAction from '../actions/ChangeZIndexAction'
-import DeleteSelAction from '../actions/DeleteSelAction'
+import DeleteItemsAction from '../actions/DeleteItemsAction'
 import EditItemAction from '../actions/EditItemAction'
 import ToggleLockAction from '../actions/ToggleLockAction'
 import ToggleSemanticTagAction from '../actions/ToggleSemanticTagAction'
@@ -18,7 +18,7 @@ const selInteraction: Component = ({
   state: state$,
   config: config$,
 }) => {
-  const changeSel$ = mouse.down$
+  const changeSelFromMouse$ = mouse.down$
     .when(mode$, identical('idle'))
     .whenNot(mouse.isBusy$)
     .sampleCombine(state$)
@@ -35,6 +35,11 @@ const selInteraction: Component = ({
     })
     .filter(Boolean)
 
+  const changeSelFromUI$ = UI.intent<UIIntent.ChangeSel>('change-sel')
+    .sampleCombine(state$)
+    .filter(([{ itemIdArray }, state]) => !is(state.selIdSet, OrderedSet(itemIdArray)))
+    .map(([{ itemIdArray }]) => new ChangeSelAction(...itemIdArray))
+
   const deleteSel$ = xs
     .merge(
       UI.intent('delete'),
@@ -45,7 +50,12 @@ const selInteraction: Component = ({
           state => !state.selIdSet.isEmpty() && (state.selMode === 'bbox' || state.sitem().locked),
         ),
     )
-    .map(() => new DeleteSelAction())
+    .peek(state$)
+    .map(state => new DeleteItemsAction(state.selIdSet.toArray()))
+
+  const deleteItems$ = UI.intent<UIIntent.DeleteItems>('delete-items').map(
+    ({ itemIdArray }) => new DeleteItemsAction(itemIdArray),
+  )
 
   const toggleLock$ = xs
     .merge(UI.intent('toggle-lock'), keyboard.shortcut('b'))
@@ -73,7 +83,16 @@ const selInteraction: Component = ({
   const toIdle$ = keyboard.shortcut('esc').mapTo('idle')
 
   return {
-    action: xs.merge(changeSel$, deleteSel$, toggleLock$, edit$, changeZIndex$, toggleSemanticTag$),
+    action: xs.merge(
+      changeSelFromMouse$,
+      changeSelFromUI$,
+      deleteSel$,
+      deleteItems$,
+      toggleLock$,
+      edit$,
+      changeZIndex$,
+      toggleSemanticTag$,
+    ),
     nextMode: toIdle$,
     nextAdjustConfigs: toIdle$.mapTo([]),
   }

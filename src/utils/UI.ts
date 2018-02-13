@@ -15,6 +15,8 @@ export namespace UIIntent {
     | ApplyStylePreset
     | ChangeZIndex
     | ToggleSemanticTag
+    | ChangeSel
+    | DeleteItems
 
   export interface Edit {
     type: 'edit'
@@ -35,6 +37,16 @@ export namespace UIIntent {
   export interface ToggleSemanticTag {
     type: 'toggle-semantic-tag'
     tagName: string
+  }
+
+  export interface ChangeSel {
+    type: 'change-sel'
+    itemIdArray: number[]
+  }
+
+  export interface DeleteItems {
+    type: 'delete-items'
+    itemIdArray: number[]
   }
 }
 
