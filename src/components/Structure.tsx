@@ -47,7 +47,7 @@ export default function Structure({ state: state$, DOM: domSource }: Sources): S
                 class: { selected: state.selIdSet.has(itemId) },
               },
               [
-                h('span.text', `${itemId} ${item.constructor.name}`),
+                h('span.text', `${itemId} ${item.getShortDescription()}`),
                 DeleteIcon({ className: 'delete-btn' }),
               ],
             )

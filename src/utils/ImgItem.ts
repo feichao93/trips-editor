@@ -100,6 +100,6 @@ export default class ImgItem extends ImgItemRecord implements ItemMethods {
   }
 
   getShortDescription() {
-    return `ImgItem ${this.id}`
+    return 'ImgItem'
   }
 }
