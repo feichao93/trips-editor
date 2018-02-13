@@ -2,7 +2,7 @@ import { List, Record } from 'immutable'
 import State from './State'
 import { Action } from '../interfaces'
 
-export const emptyAction = Symbol('fallback-action')
+export const emptyAction = Symbol('empty-action')
 export const undo = Symbol('undo')
 export type undo = typeof undo
 export const redo = Symbol('redo')

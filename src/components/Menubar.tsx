@@ -1,11 +1,13 @@
 import { DOMSource, h, VNode } from '@cycle/dom'
 import xs, { Stream } from 'xstream'
-import { State, UIIntent } from '../interfaces'
+import { AppHistory, emptyAction, State, UIIntent } from '../interfaces'
 import '../styles/Menubar.styl'
 
 export interface Sources {
   DOM: DOMSource
   state: Stream<State>
+  mode: Stream<string>
+  appHistory: Stream<AppHistory>
 }
 
 export interface Sinks {
@@ -39,8 +41,15 @@ function MenuItem({ name, hint, intent, disabled }: MenuItemProps) {
   ])
 }
 
-export default function Menubar(sources: Sources): Sinks {
-  const domSource = sources.DOM
+function Seperator() {
+  return h('hr.seprator')
+}
+
+export default function Menubar({
+  DOM: domSource,
+  state: state$,
+  appHistory: appHistory$,
+}: Sources): Sinks {
   const nextActiveCategoryProxy$ = xs.create<string>()
 
   const activeCategory$ = nextActiveCategoryProxy$.dropRepeats().startWith(null)
@@ -84,27 +93,54 @@ export default function Menubar(sources: Sources): Sinks {
     .filter(e => !e.ownerTarget.classList.contains('disabled'))
     .map(e => e.ownerTarget.dataset.intent as UIIntent)
 
-  const vdom$ = xs.combine(sources.state, activeCategory$).map(([{ selIdSet }, activeCategory]) => (
-    <div className="menubar" tabIndex="1">
-      <MenuCategory category="File" active={activeCategory === 'File'}>
-        <MenuItem name="Save as JSON" intent="save" hint="Ctrl+S" />
-        <MenuItem name="Load JSON" intent="load-data" />
-        <MenuItem name="Export as SVG" disabled />
-        <MenuItem name="Load Image" intent="load-image" />
-      </MenuCategory>
-      <MenuCategory category="Edit" active={activeCategory === 'Edit'}>
-        <MenuItem name="Delete Selection" disabled={selIdSet.isEmpty()} hint="D" intent="delete" />
-        <MenuItem name="Toggle Lock" disabled={selIdSet.isEmpty()} hint="B" intent="toggle-lock" />
-        <MenuItem name="Add Rectangle" hint="R" intent="rect" />
-        <MenuItem name="Add Polygon" hint="P" intent="polygon" />
-        <MenuItem name="Add Line" hint="L" intent="line" />
-      </MenuCategory>
-      <MenuCategory category="View" active={activeCategory === 'View'}>
-        <MenuItem name="Reset Zoom" intent="reset-zoom" />
-        <MenuItem name="Centralize Selection" disabled />
-      </MenuCategory>
-    </div>
-  ))
+  const vdom$ = xs
+    .combine(state$, appHistory$, activeCategory$)
+    .map(([{ selIdSet }, appHistory, activeCategory]) => (
+      <div className="menubar" tabIndex="1">
+        <MenuCategory category="File" active={activeCategory === 'File'}>
+          <MenuItem name="Save as JSON" intent="save" hint="Ctrl+S" />
+          <MenuItem name="Load JSON" intent="load-data" />
+          <MenuItem name="Export as SVG" disabled />
+          <MenuItem name="Load Image" intent="load-image" />
+        </MenuCategory>
+        <MenuCategory category="Edit" active={activeCategory === 'Edit'}>
+          <MenuItem
+            name="Undo"
+            disabled={appHistory.getLastAction() === emptyAction}
+            hint="Ctrl+Z"
+            intent="undo"
+          />
+          <MenuItem
+            name="Redo"
+            disabled={appHistory.getNextAction() === emptyAction}
+            hint="Ctrl+Y"
+            intent="redo"
+          />
+          <Seperator />
+          <MenuItem
+            name="Delete Selection"
+            disabled={selIdSet.isEmpty()}
+            hint="D"
+            intent="delete"
+          />
+          <MenuItem
+            name="Toggle Lock"
+            disabled={selIdSet.isEmpty()}
+            hint="B"
+            intent="toggle-lock"
+          />
+          <MenuItem name="Toggle Selection Mode" hint="E" intent="toggle-sel-mode" />
+          <Seperator />
+          <MenuItem name="Add Rectangle" hint="R" intent="rect" />
+          <MenuItem name="Add Polygon" hint="P" intent="polygon" />
+          <MenuItem name="Add Line" hint="L" intent="line" />
+        </MenuCategory>
+        <MenuCategory category="View" active={activeCategory === 'View'}>
+          <MenuItem name="Reset Zoom" intent="reset-zoom" />
+          <MenuItem name="Centralize Selection" disabled />
+        </MenuCategory>
+      </div>
+    ))
 
   return {
     DOM: vdom$,

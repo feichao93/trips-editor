@@ -17,7 +17,6 @@ const editVertex: Component = ({ UI, mouse, state: state$, mode: mode$, keyboard
   const toggleSelMode$ = xs
     .merge(keyboard.shortcut('e'), UI.intent('toggle-sel-mode'))
     .when(mode$, identical('idle'))
-    .when(state$, state => !state.selIdSet.isEmpty())
     .map(() => new ToggleSelModeAction())
 
   /** Add/move vertex */
