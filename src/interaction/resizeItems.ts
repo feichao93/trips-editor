@@ -29,6 +29,10 @@ const resizeItems: Component = ({ mouse, mode: mode$, state: state$ }) => {
     )
     .flatten()
 
+  const nextEditingItemId$ = toResizingMode$
+    .peek(startInfo$)
+    .map(startInfo => startInfo.startItems.first().id)
+
   const resizeAction$ = startInfo$
     .map(startInfo =>
       mouse.move$
@@ -44,6 +48,7 @@ const resizeItems: Component = ({ mouse, mode: mode$, state: state$ }) => {
   return {
     action: resizeAction$,
     nextMode: xs.merge(toResizingMode$, toIdleMode$),
+    nextEditingItemId: xs.merge(nextEditingItemId$, toIdleMode$.mapTo(-1)),
   }
 }
 

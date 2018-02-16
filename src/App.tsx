@@ -10,7 +10,7 @@ import StatusBar from './components/StatusBar'
 import Structure from './components/Structure'
 import Svg from './components/Svg'
 import interactions from './interaction'
-import { Action, AdjustConfig, AppConfig, Item, SaveConfig, State } from './interfaces'
+import { Action, AdjustConfig, AppConfig, Item, ItemId, SaveConfig, State } from './interfaces'
 import { DialogRequest, FileStat } from './makeFileDriver'
 import { KeyboardSource } from './makeKeyboardDriver'
 import './styles/app.styl'
@@ -46,6 +46,7 @@ export default function App(sources: Sources): Sinks {
   const actionProxy$ = xs.create<Action>()
   const nextModeProxy$ = xs.create<string>()
   const nextDrawingItemProxy$ = xs.create<Item>()
+  const nextEditingItemIdProxy$ = xs.create<ItemId>()
   const nextResizerProxy$ = xs.create<string>()
   const nextVertexIndexProxy$ = xs.create<number>()
   const nextVertexInsertIndexProxy$ = xs.create<number>()
@@ -91,6 +92,7 @@ export default function App(sources: Sources): Sinks {
 
   const adjustConfigs$ = nextAdjustConfigs$.startWith([])
   const drawingItem$ = nextDrawingItemProxy$.startWith(null)
+  const editingItemId$ = nextEditingItemIdProxy$.startWith(-1)
   const polygonCloseIndicator$ = nextPolygonCloseIndicator$.startWith(null)
 
   const mouse = new AdjustedMouse(
@@ -114,6 +116,7 @@ export default function App(sources: Sources): Sinks {
     mode: mode$,
     state: state$,
     drawingItem: drawingItem$,
+    editingItemId: editingItemId$,
     adjustConfigs: adjustConfigs$,
     polygonCloseIndicator: polygonCloseIndicator$,
   }
@@ -131,6 +134,7 @@ export default function App(sources: Sources): Sinks {
   nextConfigProxy$.imitate(mergeSinks(allSinks, 'nextConfig'))
   nextClipboardProxy$.imitate(mergeSinks(allSinks, 'nextClipboard'))
   nextDrawingItemProxy$.imitate(mergeSinks(allSinks, 'drawingItem'))
+  nextEditingItemIdProxy$.imitate(mergeSinks(allSinks, 'nextEditingItemId'))
   nextModeProxy$.imitate(mergeSinks(allSinks, 'nextMode'))
   nextAdjustConfigs$.imitate(mergeSinks(allSinks, 'nextAdjustConfigs'))
   nextPolygonCloseIndicator$.imitate(mergeSinks(allSinks, 'nextPolygonCloseIndicator'))

@@ -61,6 +61,10 @@ const editVertex: Component = ({ UI, mouse, state: state$, mode: mode$, keyboard
     )
     .flatten()
 
+  const nextEditingItemId$ = toVertexMovingMode$
+    .peek(startInfo$)
+    .map(startInfo => startInfo.item.id)
+
   const nextAdjustConfigs$ = startInfo$
     .map(({ item, vertexIndex }) =>
       xs.merge(
@@ -107,6 +111,7 @@ const editVertex: Component = ({ UI, mouse, state: state$, mode: mode$, keyboard
     ),
     nextAdjustConfigs: nextAdjustConfigs$ as any,
     nextMode: xs.merge(toVertexMovingMode$, toIdleMode$),
+    nextEditingItemId: xs.merge(nextEditingItemId$, toIdleMode$.mapTo(-1)),
   }
 }
 

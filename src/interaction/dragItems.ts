@@ -25,6 +25,10 @@ const dragItems: Component = ({ mouse, mode: mode$, state: state$ }) => {
     )
     .flatten()
 
+  const nextEditingItemId$ = toDraggingMode$
+    .peek(dragStart$)
+    .map(dragStart => dragStart.startItems.first().id)
+
   const dragItems$ = dragStart$
     .map(({ startItems, startPos }) =>
       mouse.move$
@@ -39,6 +43,7 @@ const dragItems: Component = ({ mouse, mode: mode$, state: state$ }) => {
   return {
     action: dragItems$,
     nextMode: xs.merge(toDraggingMode$, toIdleMode$),
+    nextEditingItemId: xs.merge(nextEditingItemId$, toIdleMode$.mapTo(-1)),
   }
 }
 

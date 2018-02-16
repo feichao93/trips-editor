@@ -81,12 +81,13 @@ export default function Svg(sources: ComponentSources): Partial<ComponentSinks> 
     .map(([s, vi, v, a, pc]) => h('g.indicators', [s, vi, v, a, pc].filter(Boolean)))
 
   const itemsVdom$ = xs
-    .combine(state$, keyboard.isPressing('`'))
-    .map(([{ zlist, items }, reverseZList]) =>
+    .combine(state$, keyboard.isPressing('`'), sources.editingItemId)
+    .map(([{ zlist, items }, reverseZList, editingItemId]) =>
       h(
         'g.items',
         (reverseZList ? zlist.reverse() : zlist)
           .map(itemId => items.get(itemId))
+          .map(item => (item.id === editingItemId ? item.set('opacity', item.opacity * 0.6) : item))
           .map(item => item.render())
           .toArray(),
       ),

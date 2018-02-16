@@ -88,7 +88,8 @@ export interface ComponentSources {
   keyboard: KeyboardSource
   FILE: Stream<FileStat>
   polygonCloseIndicator: MemoryStream<VNode>
-  drawingItem: MemoryStream<Item>
+  drawingItem: MemoryStream<Item> // TODO 可以将drawingItem合并到editingItemId中
+  editingItemId: MemoryStream<ItemId>
 }
 
 export interface ComponentSinks {
@@ -98,6 +99,7 @@ export interface ComponentSinks {
   nextConfig: Stream<AppConfig>
   nextClipboard: Stream<Item>
   drawingItem: Stream<Item>
+  nextEditingItemId: Stream<ItemId>
   nextVertexIndex: Stream<any>
   nextVertexInsertIndex: Stream<any>
   nextAdjustConfigs: Stream<AdjustConfig[]>
