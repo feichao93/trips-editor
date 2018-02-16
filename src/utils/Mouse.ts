@@ -3,11 +3,23 @@ import { Point, State } from '../interfaces'
 
 type SimpleWheelEvent = { pos: Point; deltaY: number }
 
-// TODO use the DOM API to get the correct offset
-const offset = { top: 22, left: 240 }
-const applyOffset = (p: Point) => ({ x: p.x - offset.left, y: p.y - offset.top })
+function applyOffset(pos$: Stream<Point>, offset$: Stream<DOMRect>) {
+  return pos$.sampleCombine(offset$).map(([{ x, y }, { left, top }]) => ({
+    x: x - left,
+    y: y - top,
+  }))
+}
+
+function applyOffsetForWheel(wheel$: Stream<SimpleWheelEvent>, domRect$: Stream<DOMRect>) {
+  return wheel$.sampleCombine(domRect$).map(([{ deltaY, pos }, { top, left }]) => ({
+    pos: { x: pos.x - left, y: pos.y - top },
+    deltaY,
+  }))
+}
 
 export default class Mouse {
+  svgDOMRect$: Stream<DOMRect>
+
   // `move` and `up` events are from window, so they will be available in constructor
   move$: Stream<Point>
   rawMove$: Stream<Point>
@@ -50,6 +62,7 @@ export default class Mouse {
   private transform$: MemoryStream<d3.ZoomTransform>
 
   constructor(
+    svgDOMRect$: MemoryStream<DOMRect>,
     state$: MemoryStream<State>,
     rawMove$: Stream<Point>,
     rawUp$: Stream<Point>,
@@ -57,13 +70,14 @@ export default class Mouse {
     nextVertexIndex$: Stream<number>,
     nextVertexInsertIndex$: Stream<number>,
   ) {
+    this.svgDOMRect$ = svgDOMRect$
     this.transform$ = state$
       .map(s => s.transform)
       .dropRepeats()
       .remember()
-    this.rawMove$ = rawMove$.map(applyOffset)
+    this.rawMove$ = applyOffset(rawMove$, svgDOMRect$)
     this.move$ = this.convert(this.rawMove$)
-    this.rawUp$ = rawUp$.map(applyOffset)
+    this.rawUp$ = applyOffset(rawUp$, svgDOMRect$)
     this.up$ = this.convert(this.rawUp$)
     this.resizer$ = nextResizer$.dropRepeats().startWith(null)
     this.vertexIndex$ = nextVertexIndex$.dropRepeats().startWith(-1)
@@ -105,13 +119,13 @@ export default class Mouse {
     rawDblclick$: Stream<Point>,
     rawWheel$: Stream<SimpleWheelEvent>,
   ) {
-    this.rawDown$.imitate(rawDown$.map(applyOffset))
+    this.rawDown$.imitate(applyOffset(rawDown$, this.svgDOMRect$))
     this.down$.imitate(this.convert(this.rawDown$))
-    this.rawClick$.imitate(rawClick$.map(applyOffset))
+    this.rawClick$.imitate(applyOffset(rawClick$, this.svgDOMRect$))
     this.click$.imitate(this.convert(this.rawClick$))
-    this.rawDblclick$.imitate(rawDblclick$.map(applyOffset))
+    this.rawDblclick$.imitate(applyOffset(rawDblclick$, this.svgDOMRect$))
     this.dblclick$.imitate(this.convert(this.rawDblclick$))
-    this.rawWheel$.imitate(rawWheel$.map(({ deltaY, pos }) => ({ pos: applyOffset(pos), deltaY })))
+    this.rawWheel$.imitate(applyOffsetForWheel(rawWheel$, this.svgDOMRect$))
     this.wheel$.imitate(this.convertWheel(this.rawWheel$))
   }
 }

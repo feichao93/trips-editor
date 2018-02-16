@@ -27,6 +27,7 @@ type ExtraSinks = {
   rawClick: Stream<Point>
   rawDblclick: Stream<Point>
   rawWheel: Stream<{ pos: Point; deltaY: number }>
+  svgDOMRectTrigger: Stream<any>
 }
 
 export default function Svg(sources: ComponentSources): Partial<ComponentSinks> & ExtraSinks {
@@ -122,5 +123,6 @@ export default function Svg(sources: ComponentSources): Partial<ComponentSinks> 
     nextResizer: selectionIndicator.nextResizer,
     nextVertexIndex: verticesIndicator.nextVertexIndex,
     nextVertexInsertIndex: vertexInsertIndicator.nextVertexInsertIndex,
+    svgDOMRectTrigger: domSource.select('.svg').events('load'),
   }
 }

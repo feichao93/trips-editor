@@ -3,7 +3,7 @@ import isolate from '@cycle/isolate'
 import * as d3 from 'd3'
 import { List } from 'immutable'
 import { identical } from 'ramda'
-import xs, { Stream } from 'xstream'
+import xs, { MemoryStream, Stream } from 'xstream'
 import Inspector from './components/Inspector'
 import Menubar from './components/Menubar'
 import StatusBar from './components/StatusBar'
@@ -26,12 +26,14 @@ export interface Sources {
   keyboard: KeyboardSource
   mouseup: Stream<MouseEvent>
   mousemove: Stream<MouseEvent>
+  svgDOMRect: MemoryStream<DOMRect>
 }
 
 export interface Sinks {
   DOM: Stream<VNode>
   FILE: Stream<File | DialogRequest>
   SAVE: Stream<SaveConfig>
+  svgDOMRect: Stream<any>
 }
 
 const initMode = 'idle'
@@ -96,6 +98,7 @@ export default function App(sources: Sources): Sinks {
   const polygonCloseIndicator$ = nextPolygonCloseIndicator$.startWith(null)
 
   const mouse = new AdjustedMouse(
+    sources.svgDOMRect,
     state$,
     sources.mousemove,
     sources.mouseup,
@@ -159,5 +162,6 @@ export default function App(sources: Sources): Sinks {
     DOM: vdom$,
     FILE: file$,
     SAVE: save$,
+    svgDOMRect: svg.svgDOMRectTrigger,
   }
 }
