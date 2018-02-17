@@ -24,6 +24,14 @@ export default function Structure({ state: state$, DOM: domSource }: Sources): S
       itemIdArray: [Number(e.ownerTarget.parentElement.dataset.itemId)],
     }))
 
+  const zoomToItemIntent$ = domSource
+    .select('.item .text')
+    .events('dblclick')
+    .map<UIIntent>(e => ({
+      type: 'zoom-to-item',
+      itemId: Number(e.ownerTarget.parentElement.dataset.itemId),
+    }))
+
   const deleteItemsIntent$ = domSource
     .select('.item .delete-btn')
     .events('click')
@@ -59,6 +67,6 @@ export default function Structure({ state: state$, DOM: domSource }: Sources): S
 
   return {
     DOM: vdom$,
-    intent: xs.merge(changeSelIntent$, deleteItemsIntent$),
+    intent: xs.merge(changeSelIntent$, deleteItemsIntent$, zoomToItemIntent$),
   }
 }

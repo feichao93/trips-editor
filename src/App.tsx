@@ -42,6 +42,7 @@ const initConfig: AppConfig = require('./config.yaml')
 export default function App(sources: Sources): Sinks {
   const domSource = sources.DOM
   const keyboard = sources.keyboard
+  const svgDOMRect$ = sources.svgDOMRect
 
   const nextConfigProxy$ = xs.create<AppConfig>()
   const nextClipboardProxy$ = xs.create<Item>()
@@ -98,7 +99,7 @@ export default function App(sources: Sources): Sinks {
   const polygonCloseIndicator$ = nextPolygonCloseIndicator$.startWith(null)
 
   const mouse = new AdjustedMouse(
-    sources.svgDOMRect,
+    svgDOMRect$,
     state$,
     sources.mousemove,
     sources.mouseup,
@@ -111,6 +112,7 @@ export default function App(sources: Sources): Sinks {
     appHistory: appHistory$,
     FILE: sources.FILE,
     DOM: domSource,
+    svgDOMRect: svgDOMRect$,
     UI,
     mouse,
     keyboard,

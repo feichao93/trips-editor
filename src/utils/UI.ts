@@ -1,5 +1,6 @@
 import xs, { Stream } from 'xstream'
 import { ZIndexOp } from '../actions/ChangeZIndexAction'
+import { ItemId } from '../interfaces'
 
 export type UIIntent = UIIntent.ALL
 
@@ -17,6 +18,7 @@ export namespace UIIntent {
     | ToggleSemanticTag
     | ChangeSel
     | DeleteItems
+    | ZoomToItem
 
   export interface Edit {
     type: 'edit'
@@ -41,12 +43,17 @@ export namespace UIIntent {
 
   export interface ChangeSel {
     type: 'change-sel'
-    itemIdArray: number[]
+    itemIdArray: ItemId[]
   }
 
   export interface DeleteItems {
     type: 'delete-items'
-    itemIdArray: number[]
+    itemIdArray: ItemId[]
+  }
+
+  export interface ZoomToItem {
+    type: 'zoom-to-item'
+    itemId: ItemId
   }
 }
 

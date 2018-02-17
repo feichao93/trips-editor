@@ -80,6 +80,7 @@ export interface ResizeDirConfig {
 export interface ComponentSources {
   DOM: DOMSource
   UI: UIClass
+  svgDOMRect: MemoryStream<DOMRect>
   config: MemoryStream<AppConfig>
   clipboard: MemoryStream<Item>
   mouse: AdjustedMouse
