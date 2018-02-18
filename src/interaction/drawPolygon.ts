@@ -80,7 +80,7 @@ const drawPolygon: Component = ({
     )
     .startWith(null)
 
-  const closeIndicator$: Stream<VNode> = xs
+  const nextPolygonCloseIndicator$: Stream<VNode> = xs
     .combine(mode$, canClose$)
     .checkedFlatMap(
       ([mode, canClose]) => mode === 'polygon' && canClose,
@@ -133,7 +133,7 @@ const drawPolygon: Component = ({
     action: addItem$,
     nextMode: nextMode$,
     nextAdjustConfigs: nextAdjustConfigs$,
-    addons: { polygonCloseIndicator: closeIndicator$ },
+    nextPolygonCloseIndicator: nextPolygonCloseIndicator$,
   }
 }
 
