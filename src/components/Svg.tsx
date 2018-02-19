@@ -36,6 +36,7 @@ export default function Svg(sources: ComponentSources): Partial<ComponentSinks> 
   const state$ = sources.state
   const mouse = sources.mouse
   const keyboard = sources.keyboard
+  const working = sources.working
 
   svgdom.events('dragover', { preventDefault: true }).addListener({
     next(e) {
@@ -82,13 +83,13 @@ export default function Svg(sources: ComponentSources): Partial<ComponentSinks> 
     .map(([s, vi, v, a, pc]) => h('g.indicators', [s, vi, v, a, pc].filter(Boolean)))
 
   const itemsVdom$ = xs
-    .combine(state$, keyboard.isPressing('`'), sources.editingItemId)
-    .map(([{ zlist, items }, reverseZList, editingItemId]) =>
+    .combine(state$, keyboard.isPressing('`'), working.editing)
+    .map(([{ zlist, items }, reverseZList, editing]) =>
       h(
         'g.items',
         (reverseZList ? zlist.reverse() : zlist)
           .map(itemId => items.get(itemId))
-          .map(item => (item.id === editingItemId ? item.set('opacity', item.opacity * 0.6) : item))
+          .map(item => (editing.has(item.id) ? item.set('opacity', item.opacity * 0.6) : item))
           .map(item => item.render())
           .toArray(),
       ),

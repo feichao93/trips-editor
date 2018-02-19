@@ -104,9 +104,13 @@ export function distanceBetweenPointAndSegment(point: Point, start: Point, end: 
   )
 }
 
+export function getIn(obj: any, keyPath: string) {
+  return keyPath.split('.').reduce((result, part) => result && result[part], obj)
+}
+
 export function mergeSinks<K extends keyof ComponentSinks>(
   sinksArray: Partial<ComponentSinks>[],
-  key: K,
+  keyPath: K,
 ): ComponentSinks[K] {
-  return xs.merge(...(sinksArray.map(sinks => sinks[key]).filter(Boolean) as any))
+  return xs.merge(...(sinksArray.map(sinks => getIn(sinks, keyPath)).filter(Boolean) as any))
 }

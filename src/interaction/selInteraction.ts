@@ -1,4 +1,4 @@
-import { OrderedSet } from 'immutable'
+import { OrderedSet, Set } from 'immutable'
 import { is } from 'immutable'
 import { identical } from 'ramda'
 import xs from 'xstream'
@@ -18,27 +18,10 @@ const selInteraction: Component = ({
   state: state$,
   config: config$,
 }) => {
-  const changeSelFromMouse$ = mouse.down$
-    .when(mode$, identical('idle'))
-    .whenNot(mouse.isBusy$)
-    .sampleCombine(state$)
-    .map(([pos, state]) => {
-      const clickedItems = state.items.filter(item => item.containsPoint(pos))
-      const targetItemId = state.zlist.findLast(itemId => clickedItems.has(itemId))
-      if (targetItemId != null && !is(state.selIdSet, OrderedSet([targetItemId]))) {
-        return new ChangeSelAction(targetItemId)
-      } else if (targetItemId == null && !state.selIdSet.isEmpty()) {
-        return new ChangeSelAction /* empty item id */()
-      } else {
-        return null
-      }
-    })
-    .filter(Boolean)
-
   const changeSelFromUI$ = UI.intent<UIIntent.ChangeSel>('change-sel')
     .sampleCombine(state$)
     .filter(([{ itemIdArray }, state]) => !is(state.selIdSet, OrderedSet(itemIdArray)))
-    .map(([{ itemIdArray }]) => new ChangeSelAction(...itemIdArray))
+    .map(([{ itemIdArray }]) => new ChangeSelAction(itemIdArray))
 
   const deleteSel$ = xs
     .merge(
@@ -84,7 +67,6 @@ const selInteraction: Component = ({
 
   return {
     action: xs.merge(
-      changeSelFromMouse$,
       changeSelFromUI$,
       deleteSel$,
       deleteItems$,

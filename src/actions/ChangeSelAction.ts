@@ -5,7 +5,7 @@ export default class ChangeSelAction extends Action {
   itemIds: number[]
   prevSelIdSet: OrderedSet<ItemId>
 
-  constructor(...itemIds: number[]) {
+  constructor(itemIds: number[]) {
     super()
     this.itemIds = itemIds
   }

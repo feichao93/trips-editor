@@ -1,20 +1,80 @@
+import { Set } from 'immutable'
 import { identical } from 'ramda'
 import xs from 'xstream'
-import { Component } from '../interfaces'
+import ChangeSelAction from '../actions/ChangeSelAction'
 import MoveItemsAction from '../actions/MoveItemsAction'
+import { Component } from '../interfaces'
 
-const dragItems: Component = ({ mouse, mode: mode$, state: state$ }) => {
-  const dragStart$ = mouse.down$
+function toggle<T>(set: Set<T>, t: T) {
+  if (set.has(t)) {
+    return set.remove(t)
+  } else {
+    return set.add(t)
+  }
+}
+
+const dragItems: Component = ({ mouse, mode: mode$, state: state$, keyboard }) => {
+  const posAndClickItemId$ = mouse.down$
     .when(mode$, identical('idle'))
     .whenNot(mouse.isBusy$)
     .sampleCombine(state$)
     .map(([pos, state]) => {
       const clickedItems = state.items.filter(item => item.containsPoint(pos))
-      const targetItemId = state.zlist.findLast(itemId => clickedItems.has(itemId))
-      const startItems = state.items.filter(item => item.id === targetItemId)
-      return { startPos: pos, startItems }
+      const clickItemId = state.zlist.findLast(itemId => clickedItems.has(itemId))
+      return { pos, clickItemId }
     })
-    .filter(({ startItems }) => !startItems.isEmpty() && startItems.every(item => !item.locked))
+
+  const selInfoAfterMouseDown$ = posAndClickItemId$
+    .whenNot(keyboard.isPressing('mod'))
+    .sampleCombine(state$)
+    .map(([{ clickItemId, pos }, { selIdSet }]) => {
+      const result = {
+        shouldUpdate: false,
+        idArray: [] as number[],
+        pos,
+      }
+      if (clickItemId == null) {
+        if (!selIdSet.isEmpty()) {
+          result.shouldUpdate = true
+        }
+      } else {
+        if (!selIdSet.has(clickItemId)) {
+          result.shouldUpdate = true
+          result.idArray = [clickItemId]
+        } else {
+          result.idArray = selIdSet.toArray()
+        }
+      }
+      return result
+    })
+
+  const nextSelectoinFromToggle$ = posAndClickItemId$
+    .filter(Boolean)
+    .when(keyboard.isPressing('mod'))
+    .sampleCombine(state$)
+    .map(([{ clickItemId }, { selIdSet }]) => toggle(selIdSet, clickItemId).toArray())
+
+  const changeSel$ = xs
+    .merge(
+      selInfoAfterMouseDown$.filter(info => info.shouldUpdate).map(info => info.idArray),
+      nextSelectoinFromToggle$,
+    )
+    .map(idArray => new ChangeSelAction(idArray))
+
+  const dragStart$ = selInfoAfterMouseDown$
+    .sampleCombine(state$)
+    .map(([{ pos, idArray }, state]) => {
+      const startItems = state.items.filter(item => idArray.includes(item.id))
+      if (
+        startItems.some(item => item.containsPoint(pos)) &&
+        startItems.every(item => !item.locked)
+      ) {
+        return { startPos: pos, startItems }
+      } else {
+        return null
+      }
+    })
+    .filter(Boolean)
 
   const toDraggingMode$ = dragStart$
     .mapTo(
@@ -27,7 +87,7 @@ const dragItems: Component = ({ mouse, mode: mode$, state: state$ }) => {
 
   const nextEditingItemId$ = toDraggingMode$
     .peek(dragStart$)
-    .map(dragStart => dragStart.startItems.first().id)
+    .map(dragStart => dragStart.startItems.keySeq().toSet())
 
   const dragItems$ = dragStart$
     .map(({ startItems, startPos }) =>
@@ -41,9 +101,11 @@ const dragItems: Component = ({ mouse, mode: mode$, state: state$ }) => {
   const toIdleMode$ = mouse.up$.when(mode$, identical('dragging')).mapTo('idle')
 
   return {
-    action: dragItems$,
+    action: xs.merge(changeSel$, dragItems$),
     nextMode: xs.merge(toDraggingMode$, toIdleMode$),
-    nextEditingItemId: xs.merge(nextEditingItemId$, toIdleMode$.mapTo(-1)),
+    nextWorking: {
+      editing: xs.merge(nextEditingItemId$, toIdleMode$.mapTo(Set())),
+    },
   }
 }
 

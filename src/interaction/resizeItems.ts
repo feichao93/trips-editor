@@ -1,3 +1,4 @@
+import { Set } from 'immutable'
 import { identical } from 'ramda'
 import xs from 'xstream'
 import ResizeItemAction from '../actions/ResizeItemAction'
@@ -29,9 +30,9 @@ const resizeItems: Component = ({ mouse, mode: mode$, state: state$ }) => {
     )
     .flatten()
 
-  const nextEditingItemId$ = toResizingMode$
+  const nextEditingItemIdSet$ = toResizingMode$
     .peek(startInfo$)
-    .map(startInfo => startInfo.startItems.first().id)
+    .map(startInfo => startInfo.startItems.keySeq().toSet())
 
   const resizeAction$ = startInfo$
     .map(startInfo =>
@@ -48,7 +49,9 @@ const resizeItems: Component = ({ mouse, mode: mode$, state: state$ }) => {
   return {
     action: resizeAction$,
     nextMode: xs.merge(toResizingMode$, toIdleMode$),
-    nextEditingItemId: xs.merge(nextEditingItemId$, toIdleMode$.mapTo(-1)),
+    nextWorking: {
+      editing: xs.merge(nextEditingItemIdSet$, toIdleMode$.mapTo(Set())),
+    },
   }
 }
 

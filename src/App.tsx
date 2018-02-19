@@ -1,7 +1,7 @@
 import { DOMSource, h, VNode } from '@cycle/dom'
 import isolate from '@cycle/isolate'
 import * as d3 from 'd3'
-import { List } from 'immutable'
+import { List, Set } from 'immutable'
 import { identical } from 'ramda'
 import xs, { MemoryStream, Stream } from 'xstream'
 import Inspector from './components/Inspector'
@@ -48,8 +48,11 @@ export default function App(sources: Sources): Sinks {
   const nextClipboardProxy$ = xs.create<Item>()
   const actionProxy$ = xs.create<Action>()
   const nextModeProxy$ = xs.create<string>()
+  /** @deprecated */
   const nextDrawingItemProxy$ = xs.create<Item>()
-  const nextEditingItemIdProxy$ = xs.create<ItemId>()
+  const nextWorkingProxies = {
+    editing: xs.create<Set<ItemId>>(),
+  }
   const nextResizerProxy$ = xs.create<string>()
   const nextVertexIndexProxy$ = xs.create<number>()
   const nextVertexInsertIndexProxy$ = xs.create<number>()
@@ -94,8 +97,11 @@ export default function App(sources: Sources): Sinks {
     .remember()
 
   const adjustConfigs$ = nextAdjustConfigs$.startWith([])
+  /** @deprecated */
   const drawingItem$ = nextDrawingItemProxy$.startWith(null)
-  const editingItemId$ = nextEditingItemIdProxy$.startWith(-1)
+  const working = {
+    editing: nextWorkingProxies.editing.startWith(Set()),
+  }
   const polygonCloseIndicator$ = nextPolygonCloseIndicator$.startWith(null)
 
   const mouse = new AdjustedMouse(
@@ -121,9 +127,9 @@ export default function App(sources: Sources): Sinks {
     mode: mode$,
     state: state$,
     drawingItem: drawingItem$,
-    editingItemId: editingItemId$,
     adjustConfigs: adjustConfigs$,
     polygonCloseIndicator: polygonCloseIndicator$,
+    working,
   }
 
   const menubar = isolate(Menubar, 'menubar')(compSources)
@@ -138,8 +144,9 @@ export default function App(sources: Sources): Sinks {
   actionProxy$.imitate(mergeSinks(allSinks, 'action'))
   nextConfigProxy$.imitate(mergeSinks(allSinks, 'nextConfig'))
   nextClipboardProxy$.imitate(mergeSinks(allSinks, 'nextClipboard'))
+  /** @deprecated */
   nextDrawingItemProxy$.imitate(mergeSinks(allSinks, 'drawingItem'))
-  nextEditingItemIdProxy$.imitate(mergeSinks(allSinks, 'nextEditingItemId'))
+  nextWorkingProxies.editing.imitate(mergeSinks(allSinks, 'nextWorking.editing' as any))
   nextModeProxy$.imitate(mergeSinks(allSinks, 'nextMode'))
   nextAdjustConfigs$.imitate(mergeSinks(allSinks, 'nextAdjustConfigs'))
   nextPolygonCloseIndicator$.imitate(mergeSinks(allSinks, 'nextPolygonCloseIndicator'))
