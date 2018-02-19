@@ -53,7 +53,7 @@ const drawRect: Component = ({ UI, mouse, mode: mode$, keyboard }) => {
   })
 
   return {
-    drawingItem: drawingRect$,
+    nextWorking: { drawing: drawingRect$ },
     action: newItem$.map(item => new AddItemAction(item)),
     nextMode: nextMode$,
     nextAdjustConfigs: nextAdjustConfigs$,

@@ -129,7 +129,7 @@ const drawPolygon: Component = ({
     .flatten()
 
   return {
-    drawingItem: drawingPolygon$,
+    nextWorking: { drawing: drawingPolygon$ },
     action: addItem$,
     nextMode: nextMode$,
     nextAdjustConfigs: nextAdjustConfigs$,

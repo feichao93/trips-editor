@@ -48,10 +48,9 @@ export default function App(sources: Sources): Sinks {
   const nextClipboardProxy$ = xs.create<Item>()
   const actionProxy$ = xs.create<Action>()
   const nextModeProxy$ = xs.create<string>()
-  /** @deprecated */
-  const nextDrawingItemProxy$ = xs.create<Item>()
   const nextWorkingProxies = {
     editing: xs.create<Set<ItemId>>(),
+    drawing: xs.create<Item>(),
   }
   const nextResizerProxy$ = xs.create<string>()
   const nextVertexIndexProxy$ = xs.create<number>()
@@ -97,10 +96,9 @@ export default function App(sources: Sources): Sinks {
     .remember()
 
   const adjustConfigs$ = nextAdjustConfigs$.startWith([])
-  /** @deprecated */
-  const drawingItem$ = nextDrawingItemProxy$.startWith(null)
   const working = {
     editing: nextWorkingProxies.editing.startWith(Set()),
+    drawing: nextWorkingProxies.drawing.startWith(null),
   }
   const polygonCloseIndicator$ = nextPolygonCloseIndicator$.startWith(null)
 
@@ -126,7 +124,6 @@ export default function App(sources: Sources): Sinks {
     clipboard: clipboard$,
     mode: mode$,
     state: state$,
-    drawingItem: drawingItem$,
     adjustConfigs: adjustConfigs$,
     polygonCloseIndicator: polygonCloseIndicator$,
     working,
@@ -144,9 +141,8 @@ export default function App(sources: Sources): Sinks {
   actionProxy$.imitate(mergeSinks(allSinks, 'action'))
   nextConfigProxy$.imitate(mergeSinks(allSinks, 'nextConfig'))
   nextClipboardProxy$.imitate(mergeSinks(allSinks, 'nextClipboard'))
-  /** @deprecated */
-  nextDrawingItemProxy$.imitate(mergeSinks(allSinks, 'drawingItem'))
   nextWorkingProxies.editing.imitate(mergeSinks(allSinks, 'nextWorking.editing' as any))
+  nextWorkingProxies.drawing.imitate(mergeSinks(allSinks, 'nextWorking.drawing' as any))
   nextModeProxy$.imitate(mergeSinks(allSinks, 'nextMode'))
   nextAdjustConfigs$.imitate(mergeSinks(allSinks, 'nextAdjustConfigs'))
   nextPolygonCloseIndicator$.imitate(mergeSinks(allSinks, 'nextPolygonCloseIndicator'))

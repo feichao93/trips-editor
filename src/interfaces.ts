@@ -89,11 +89,9 @@ export interface ComponentSources {
   keyboard: KeyboardSource
   FILE: Stream<FileStat>
   polygonCloseIndicator: MemoryStream<VNode>
-  /** @deprecated */
-  drawingItem: MemoryStream<Item> // TODO 可以将drawingItem合并到editingItemId中
   working: Partial<{
     editing: MemoryStream<Set<ItemId>>
-    // TODO drawing
+    drawing: MemoryStream<Item>
   }>
 }
 
@@ -103,12 +101,10 @@ export interface ComponentSinks {
   nextMode: Stream<string>
   nextConfig: Stream<AppConfig>
   nextClipboard: Stream<Item>
-  nextWorking: {
+  nextWorking: Partial<{
     editing: Stream<Set<ItemId>>
-    // TODO nextDrawing
-  }
-  /** @deprecated */
-  drawingItem: Stream<Item>
+    drawing: Stream<Item>
+  }>
   nextVertexIndex: Stream<any>
   nextVertexInsertIndex: Stream<any>
   nextAdjustConfigs: Stream<AdjustConfig[]>

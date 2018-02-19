@@ -96,7 +96,7 @@ export default function Svg(sources: ComponentSources): Partial<ComponentSinks> 
     )
 
   const vdom$ = xs
-    .combine(itemsVdom$, mouse.cursor$, state$, sources.drawingItem, indicatorsVdom$)
+    .combine(itemsVdom$, mouse.cursor$, state$, working.drawing, indicatorsVdom$)
     .map(([items, cursor, { transform }, drawingItem, indicators]) =>
       h('svg.svg', { style: { cursor } }, [
         h('g', { attrs: { transform: String(transform) } }, [

@@ -32,7 +32,7 @@ const drawLine: Component = ({ mouse, UI, mode: mode$, keyboard }) => {
   })
 
   return {
-    drawingItem: drawingLine$,
+    nextWorking: { drawing: drawingLine$ },
     action: newItem$.map(item => new AddItemAction(item)),
     nextMode: nextMode$,
     nextAdjustConfigs: nextAdjustConfigs$,
