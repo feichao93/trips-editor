@@ -1,10 +1,21 @@
 import * as d3 from 'd3'
-import { clamp, identical } from 'ramda'
+import { Stream } from 'xstream'
+import { clamp } from 'ramda'
 import xs from 'xstream'
 import SetTransformAction from '../actions/SetTransformAction'
-import { Component, UIIntent, Rect } from '../interfaces'
-import transition from '../utils/transition'
+import { Component, Point, Rect, UIIntent, AppConfig } from '../interfaces'
 import { getBoundingBoxOfPoints } from '../utils/common'
+import transition from '../utils/transition'
+
+export interface ZoomConfig {
+  targetTransform: d3.ZoomTransform
+  useTransition: boolean
+  rawPos: Point
+}
+
+function isZoomIdentity(transform: d3.ZoomTransform) {
+  return transform.x === 0 && transform.y === 0 && transform.k === 1
+}
 
 function transformToZoomView(
   viewBox: DOMRect,
@@ -33,8 +44,12 @@ function interpolateTransform(viewBox: DOMRect) {
   }
 }
 
-function getProperTransform(viewBox: DOMRect, rect: Rect) {
-  const k = Math.min(viewBox.width / rect.width, viewBox.height / rect.height) / 2
+function getProperTransform(viewBox: DOMRect, rect: Rect, config: AppConfig, marginRatio = 1) {
+  const k = clamp(
+    config.minScale,
+    config.maxScale,
+    Math.min(viewBox.width / rect.width, viewBox.height / rect.height) / (1 + marginRatio),
+  )
   const x = viewBox.width / 2 - k * (rect.x + rect.width / 2)
   const y = viewBox.height / 2 - k * (rect.y + rect.height / 2)
   return d3.zoomIdentity.translate(x, y).scale(k)
@@ -46,44 +61,22 @@ const zoom: Component = ({
   mode: mode$,
   state: state$,
   UI,
+  keyboard,
   svgDOMRect: svgDOMRect$,
 }) => {
-  const dragStart$ = mouse.rawDown$
-    .when(mode$, identical('idle'))
-    .whenNot(mouse.isBusy$)
-    .sampleCombine(state$, config$)
-    .map(([rawPos, state, config]) => {
-      const pos = state.transform.invertPos(rawPos)
-      const clickedItems = state.items.filter(item => item.containsPoint(pos))
-      if (clickedItems.every(item => item.locked)) {
-        return { rawPos, transform: state.transform, senseRange: config.senseRange }
-      }
-      return null
-    })
-    .filter(Boolean)
-
-  const drag$ = dragStart$
-    .map(dragStart =>
-      mouse.rawMove$
-        .map(rawPos => {
-          const k = dragStart.transform.k
-          const dx = rawPos.x - dragStart.rawPos.x
-          const dy = rawPos.y - dragStart.rawPos.y
-          const target = dragStart.transform.translate(dx / k, dy / k)
-          return new SetTransformAction(target, dragStart.transform, null, dragStart.senseRange)
-        })
-        .endWhen(mouse.up$),
+  const mouseZoomConfig$: Stream<ZoomConfig> = xs
+    .merge(
+      mouse.rawDblclick$.map(pos => ({
+        pos,
+        delta: 2,
+        useTransition: true,
+      })),
+      mouse.rawWheel$.map(({ pos, deltaY }) => ({
+        pos,
+        delta: 0.95 ** (deltaY / 100),
+        useTransition: false,
+      })),
     )
-    .flatten()
-
-  const zoomFromDblclick$ = mouse.rawDblclick$.map(pos => ({ pos, delta: 2, useTransition: true }))
-  const zoomFromWheel$ = mouse.rawWheel$.map(({ pos, deltaY }) => ({
-    pos,
-    delta: 0.95 ** (deltaY / 100),
-    useTransition: false,
-  }))
-  const zoom$ = xs
-    .merge(zoomFromDblclick$, zoomFromWheel$)
     .sampleCombine(state$, config$, svgDOMRect$)
     .map(
       ([{ pos: rawPos, delta, useTransition }, { transform: startTransform }, config, viewBox]) => {
@@ -93,52 +86,75 @@ const zoom: Component = ({
         const nextX = factor * (x - rawPos.x) + rawPos.x
         const nextY = factor * (y - rawPos.y) + rawPos.y
         const targetTransform = d3.zoomIdentity.translate(nextX, nextY).scale(nextK)
-
-        const action = (transform: d3.ZoomTransform) =>
-          new SetTransformAction(transform, startTransform, rawPos, config.senseRange)
-
-        if (useTransition && factor !== 1) {
-          return transition(
-            250,
-            startTransform,
-            targetTransform,
-            interpolateTransform(viewBox),
-          ).map(action)
-        } else {
-          return xs.of(action(targetTransform))
+        return {
+          rawPos,
+          targetTransform,
+          useTransition,
         }
       },
     )
-    .flatten()
 
-  const zoomToItem$ = UI.intent<UIIntent.ZoomToItem>('zoom-to-item')
-    .sampleCombine(state$, svgDOMRect$)
-    .map(([{ itemId }, state, viewBox]) => {
+  const toItemIntentFromShortcut$ = keyboard
+    .shortcut('1')
+    .whenNot(state$, state => state.selIdSet.isEmpty())
+    .peek(state$)
+    .map(state => ({ itemId: state.selIdSet.first() }))
+
+  const toItemZoomConfig$: Stream<ZoomConfig> = xs
+    .merge(toItemIntentFromShortcut$, UI.intent<UIIntent.ZoomToItem>('zoom-to-item'))
+    .sampleCombine(state$, config$, svgDOMRect$)
+    .map(([{ itemId }, state, config, viewBox]) => {
       const item = state.items.get(itemId)
       const bbox = getBoundingBoxOfPoints(item.getVertices())
-      return getProperTransform(viewBox, bbox)
+      return {
+        targetTransform: getProperTransform(viewBox, bbox, config),
+        useTransition: true,
+        rawPos: null,
+      }
     })
-    .sampleCombine(state$, config$, svgDOMRect$)
-    .map(([targetTransform, { transform: startTransform }, config, viewBox]) =>
-      transition(250, startTransform, targetTransform, interpolateTransform(viewBox)).map(
-        nextTransform =>
-          new SetTransformAction(nextTransform, startTransform, null, config.senseRange),
-      ),
-    )
-    .flatten()
 
-  const resetZoom$ = UI.intent('reset-zoom')
+  const fitZoomConfig$: Stream<ZoomConfig> = keyboard
+    .shortcut('2')
+    .whenNot(state$, state => state.items.isEmpty())
     .peek(xs.combine(state$, config$, svgDOMRect$))
-    .map(([{ transform: startTransform }, config, viewBox]) =>
-      transition(250, startTransform, d3.zoomIdentity, interpolateTransform(viewBox)).map(
-        nextTransform =>
-          new SetTransformAction(nextTransform, startTransform, null, config.senseRange),
-      ),
-    )
+    .map(([state, config, viewBox]) => {
+      const bbox = getBoundingBoxOfPoints(state.items.toList().flatMap(item => item.getVertices()))
+      return {
+        targetTransform: getProperTransform(viewBox, bbox, config, 0.2),
+        useTransition: true,
+        rawPos: null,
+      }
+    })
+
+  const resetZoomConfig$: Stream<ZoomConfig> = xs
+    .merge(keyboard.shortcut('3'), UI.intent('reset-zoom'))
+    .whenNot(state$, state => isZoomIdentity(state.transform))
+    .mapTo({
+      targetTransform: d3.zoomIdentity,
+      useTransition: true,
+      rawPos: null,
+    })
+
+  const zoom$ = xs
+    .merge(mouseZoomConfig$, toItemZoomConfig$, fitZoomConfig$, resetZoomConfig$)
+    .sampleCombine(state$, config$, svgDOMRect$)
+    .map(([zoomConfig, { transform: startTransform }, config, viewBox]) => {
+      const { rawPos, targetTransform, useTransition } = zoomConfig
+      if (useTransition) {
+        return transition(250, startTransform, targetTransform, interpolateTransform(viewBox)).map(
+          nextTransform =>
+            new SetTransformAction(nextTransform, startTransform, rawPos, config.senseRange),
+        )
+      } else {
+        return xs.of(
+          new SetTransformAction(targetTransform, startTransform, rawPos, config.senseRange),
+        )
+      }
+    })
     .flatten()
 
   return {
-    action: xs.merge(zoom$, drag$, resetZoom$, zoomToItem$),
+    action: zoom$,
   }
 }
 

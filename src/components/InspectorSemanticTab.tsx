@@ -35,19 +35,6 @@ export default function InspectorSemanticTab({
       tagName: e.ownerTarget.dataset.name,
     }))
 
-  const toggleSemanticTagFromShortcutIntent$ = config$
-    .map(config =>
-      xs.merge(
-        ...config.semantics.tags.slice(0, 9).map((tag, index) =>
-          keyboard.shortcut(String(index + 1)).mapTo<UIIntent.ToggleSemanticTag>({
-            type: 'toggle-semantic-tag',
-            tagName: tag.name,
-          }),
-        ),
-      ),
-    )
-    .flatten()
-
   const editIntent$ = domSource
     .select('.label-wrapper input')
     .events('input')
@@ -114,10 +101,6 @@ export default function InspectorSemanticTab({
 
   return {
     DOM: vdom$,
-    intent: xs.merge(
-      editIntent$,
-      toggleSemanticTagFromClickIntent$,
-      toggleSemanticTagFromShortcutIntent$,
-    ),
+    intent: xs.merge(editIntent$, toggleSemanticTagFromClickIntent$),
   }
 }

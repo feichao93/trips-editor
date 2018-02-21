@@ -1,4 +1,5 @@
 import copyPaste from './copyPaste'
+import dragBoard from './dragBoard'
 import dragItems from './dragItems'
 import drawLine from './drawLine'
 import drawPolygon from './drawPolygon'
@@ -13,6 +14,7 @@ export default [
   copyPaste,
   file,
   selInteraction,
+  dragBoard,
   dragItems,
   resizeItems,
   zoom,
