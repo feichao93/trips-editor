@@ -2,7 +2,7 @@ meta:
   type: editor-config
   version: 0.7
 
-minScale: 0.25
+minScale: 0.1
 maxScale: 5
 senseRange: 15
 

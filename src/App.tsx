@@ -78,9 +78,9 @@ export default function App(sources: Sources): Sinks {
     .merge<undo, redo, clearHistory, Action>(undo$, redo$, clearHistory$, actionProxy$)
     .fold((h, action) => {
       if (action === undo) {
-        return h.undo(h.getLastAction())
+        return h.undo()
       } else if (action === redo) {
-        return h.redo(h.getNextAction())
+        return h.redo()
       } else if (action === clearHistory) {
         return h.clearHistory()
       } else {
@@ -160,7 +160,7 @@ export default function App(sources: Sources): Sinks {
   const vdom$ = xs
     .combine(menubar.DOM, svg.DOM, structure.DOM, inspector.DOM, statusBar.DOM)
     .map(([menubar, svg, structure, inspector, statusBar]) =>
-      h('div.app', [menubar, h('main', [structure, svg, inspector]), statusBar]),
+      h('div.app', [menubar, h('main', [/*structure,*/ svg, inspector]), statusBar]),
     )
 
   return {

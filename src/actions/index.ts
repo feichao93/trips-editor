@@ -1,14 +1,8 @@
 import { State, AppHistory } from '../interfaces'
 
 export default abstract class Action {
-  constructor() {}
-
-  next(state: State): State {
-    return state
-  }
-  prev(state: State): State {
-    return state
-  }
+  abstract next(state: State): State
+  abstract prev(state: State): State
 
   prepare(appHistory: AppHistory): AppHistory {
     return appHistory

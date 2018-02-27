@@ -18,11 +18,7 @@ const AppHistoryRecord = Record({
 
 export default class AppHistory extends AppHistoryRecord {
   pop() {
-    return this.merge({
-      list: this.list.splice(this.index, 1),
-      index: this.index - 1,
-      state: this.state,
-    })
+    return this.update('list', list => list.splice(this.index, 1)).update('index', x => x - 1)
   }
 
   getLastAction() {
@@ -49,7 +45,8 @@ export default class AppHistory extends AppHistoryRecord {
     }
   }
 
-  redo(action: Action | typeof emptyAction) {
+  redo() {
+    const action = this.getNextAction()
     if (action === emptyAction) {
       return this
     } else {
@@ -61,7 +58,8 @@ export default class AppHistory extends AppHistoryRecord {
     }
   }
 
-  undo(action: Action | typeof emptyAction) {
+  undo() {
+    const action = this.getLastAction()
     if (action === emptyAction) {
       return this
     } else {
