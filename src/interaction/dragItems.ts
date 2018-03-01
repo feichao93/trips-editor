@@ -25,7 +25,6 @@ const dragItems: Component = ({ mouse, mode: mode$, state: state$, keyboard }) =
     })
 
   const selInfoAfterMouseDown$ = posAndClickItemId$
-    .whenNot(keyboard.isPressing('mod'))
     .sampleCombine(state$)
     .map(([{ clickItemId, pos }, { selIdSet }]) => {
       const result = {
@@ -48,17 +47,9 @@ const dragItems: Component = ({ mouse, mode: mode$, state: state$, keyboard }) =
       return result
     })
 
-  const nextSelectoinFromToggle$ = posAndClickItemId$
-    .filter(Boolean)
-    .when(keyboard.isPressing('mod'))
-    .sampleCombine(state$)
-    .map(([{ clickItemId }, { selIdSet }]) => toggle(selIdSet, clickItemId).toArray())
-
-  const changeSel$ = xs
-    .merge(
-      selInfoAfterMouseDown$.filter(info => info.shouldUpdate).map(info => info.idArray),
-      nextSelectoinFromToggle$,
-    )
+  const changeSel$ = selInfoAfterMouseDown$
+    .filter(info => info.shouldUpdate)
+    .map(info => info.idArray)
     .map(idArray => new ChangeSelAction(idArray))
 
   const dragStart$ = selInfoAfterMouseDown$

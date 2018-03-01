@@ -49,6 +49,7 @@ export default function Inspector(sources: Sources): Sinks {
       .map(e => e.ownerTarget.dataset.tab as TabName),
     keyboard.shortcut('s').mapTo<TabName>('semantic'),
     keyboard.shortcut('g').mapTo<TabName>('geometric'),
+    keyboard.shortcut('h').mapTo<TabName>('history'),
   )
 
   const tabName$ = nextTabName$
