@@ -1,6 +1,7 @@
 import { Seq, Set } from 'immutable'
 import { Item, ItemId, PolygonItem, PolylineItem, State } from '../interfaces'
 import { isPolygonItem, isPolylineItem } from './common'
+import ImgItem from './ImgItem'
 
 function getImgTypeString(item: Item) {
   if (isPolygonItem(item)) return 'PolygonItem'
@@ -8,9 +9,10 @@ function getImgTypeString(item: Item) {
   throw new Error('Invalid item.')
 }
 
-function getImgTypeConstructor(name: string) {
+function getItemConstructor(name: string) {
   if (name === 'PolygonItem') return PolygonItem
   if (name === 'PolylineItem') return PolylineItem
+  if (name === 'ImgItem') return ImgItem
   throw new Error('Invalid type name.')
 }
 
@@ -34,7 +36,7 @@ const serializeUtils = {
   fromJS(object: any) {
     const items = Seq(object.items)
       .toIndexedSeq()
-      .map((item: any) => getImgTypeConstructor(item.type).fromJS(item))
+      .map((item: any) => getItemConstructor(item.type).fromJS(item))
       .toMap()
       .mapKeys((_: any, item: Item) => item.id)
     const zlist: any = Seq(object.zlist)

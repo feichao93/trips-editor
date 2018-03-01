@@ -2,7 +2,7 @@ import { h } from '@cycle/dom'
 import { List, Record, Set } from 'immutable'
 import { identity } from 'ramda'
 import { containsPoint, getCoordinateUpdater } from './common'
-import { ItemMethods, Point, ResizeDirConfig } from '../interfaces'
+import { ItemMethods, Point, ResizeDirConfig, AppConfig } from '../interfaces'
 
 const PolygonItemRecord = Record(
   {
@@ -70,7 +70,7 @@ export default class PolygonItem extends PolygonItemRecord implements ItemMethod
     return this.update('points', ps => ps.map(p => ({ x: p.x + dx, y: p.y + dy })))
   }
 
-  render() {
+  render(config: AppConfig) {
     const vertices = this.getVertices()
     const x = vertices.map(v => v.x).min()
     const y = vertices.map(v => v.y).min()
@@ -98,8 +98,8 @@ export default class PolygonItem extends PolygonItemRecord implements ItemMethod
                   x,
                   y,
                   dx: 2,
-                  dy: 17,
-                  'font-size': 20,
+                  dy: config.fontSize,
+                  'font-size': config.fontSize,
                 },
               },
               this.label,

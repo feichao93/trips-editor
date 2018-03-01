@@ -19,6 +19,8 @@ import AppHistory, { clearHistory, redo, undo } from './utils/AppHistory'
 import { mergeSinks } from './utils/common'
 import makeAdjuster from './utils/makeAdjuster'
 import UIClass from './utils/UI'
+import serializeUtils from './utils/serializeUtils'
+import testData from './testData'
 
 export interface Sources {
   DOM: DOMSource
@@ -86,7 +88,7 @@ export default function App(sources: Sources): Sinks {
       } else {
         return action.prepare(h).apply(action)
       }
-    }, new AppHistory())
+    }, AppHistory.fromState(serializeUtils.fromJS(testData).set('transform', d3.zoomIdentity.scale(0.2))))
     .dropRepeats()
     .remember()
 

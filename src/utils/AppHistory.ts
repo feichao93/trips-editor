@@ -17,6 +17,10 @@ const AppHistoryRecord = Record({
 })
 
 export default class AppHistory extends AppHistoryRecord {
+  static fromState(state: State) {
+    return new AppHistory({ state })
+  }
+
   pop() {
     return this.update('list', list => list.splice(this.index, 1)).update('index', x => x - 1)
   }

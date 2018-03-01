@@ -40,7 +40,7 @@ export interface Updater<T, S = null> {
 }
 
 export interface ItemMethods {
-  render(): VNode
+  render(config: AppConfig): VNode
   getVertices(): List<Point>
   containsPoint(p: Point): boolean
   move(dx: number, dy: number): this
@@ -159,6 +159,7 @@ export interface AppConfig {
   }
   minScale: number
   maxScale: number
+  fontSize: number
   senseRange: number
   semantics: {
     tags: SemanticTagConfig[]

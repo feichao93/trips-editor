@@ -34,6 +34,7 @@ export default function Svg(sources: ComponentSources): Partial<ComponentSinks> 
   const domSource = sources.DOM
   const svgdom = domSource.select('.svg')
   const state$ = sources.state
+  const config$ = sources.config
   const mouse = sources.mouse
   const keyboard = sources.keyboard
   const working = sources.working
@@ -83,21 +84,21 @@ export default function Svg(sources: ComponentSources): Partial<ComponentSinks> 
     .map(([s, vi, v, a, pc]) => h('g.indicators', [s, vi, v, a, pc].filter(Boolean)))
 
   const itemsVdom$ = xs
-    .combine(state$, keyboard.isPressing('`'), working.editing)
-    .map(([{ zlist, items }, reverseZList, editing]) =>
+    .combine(state$, config$, keyboard.isPressing('`'), working.editing)
+    .map(([{ zlist, items }, config, reverseZList, editing]) =>
       h(
         'g.items',
         (reverseZList ? zlist.reverse() : zlist)
           .map(itemId => items.get(itemId))
           .map(item => (editing.has(item.id) ? item.set('opacity', item.opacity * 0.6) : item))
-          .map(item => item.render())
+          .map(item => item.render(config))
           .toArray(),
       ),
     )
 
   const vdom$ = xs
-    .combine(itemsVdom$, mouse.cursor$, state$, working.drawing, indicatorsVdom$)
-    .map(([items, cursor, { transform }, drawingItem, indicators]) =>
+    .combine(itemsVdom$, mouse.cursor$, state$, config$, working.drawing, indicatorsVdom$)
+    .map(([items, cursor, { transform }, config, drawingItem, indicators]) =>
       h('svg.svg', { style: { cursor } }, [
         h('g', { attrs: { transform: String(transform) } }, [
           h('line', { attrs: { x1: 0, y1: 0, x2: 300, y2: 0, stroke: 'red' } }),
@@ -105,9 +106,9 @@ export default function Svg(sources: ComponentSources): Partial<ComponentSinks> 
           items,
           h(
             'g.drawing-item',
-            [drawingItem && drawingItem.set('opacity', drawingItem.opacity * 0.6).render()].filter(
-              Boolean,
-            ),
+            [
+              drawingItem && drawingItem.set('opacity', drawingItem.opacity * 0.6).render(config),
+            ].filter(Boolean),
           ),
           indicators,
         ]),

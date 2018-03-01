@@ -34,6 +34,10 @@ export default class ImgItem extends ImgItemRecord implements ItemMethods {
     })
   }
 
+  static fromJS(object: any) {
+    return new ImgItem(object).update('tags', Set)
+  }
+
   toJS() {
     // null means that this item does not support serialization.
     return null as any
