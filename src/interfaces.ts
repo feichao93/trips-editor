@@ -9,6 +9,7 @@ import AppHistory, { emptyAction } from './utils/AppHistory'
 import ImgItem from './utils/ImgItem'
 import PolygonItem from './utils/PolygonItem'
 import PolylineItem from './utils/PolylineItem'
+import Sem from './utils/Sem'
 import State, { SelMode } from './utils/State'
 import UIClass, { UIIntent } from './utils/UI'
 
@@ -57,9 +58,8 @@ export interface ItemMethods {
 
 export type CommonRecordUpdaters = RecordUpdater<'id', number> &
   RecordUpdater<'locked', boolean> &
-  RecordUpdater<'label', string> &
   RecordUpdater<'opacity', number> &
-  RecordUpdater<'tags', Set<string>>
+  RecordUpdater<'sem', Sem>
 
 export type Item = (PolygonItem | PolylineItem | ImgItem) & CommonRecordUpdaters & ItemMethods
 

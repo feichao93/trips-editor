@@ -19,8 +19,14 @@ export default {
       type: 'PolygonItem',
       id: 2,
       locked: true,
-      label: 'Toy Shop',
-      tags: ['room'],
+      sem: {
+        label: 'Toy Shop',
+        show: true,
+        tags: ['room'],
+        dx: 0,
+        dy: 0,
+        fontSize: 20,
+      },
       points: [
         {
           x: 12,
@@ -48,8 +54,14 @@ export default {
       type: 'PolygonItem',
       id: 3,
       locked: true,
-      label: 'Electronics Shop',
-      tags: ['room'],
+      sem: {
+        label: 'Electronics Shop',
+        show: true,
+        tags: ['room'],
+        dx: 0,
+        dy: 0,
+        fontSize: 20,
+      },
       points: [
         {
           x: 278.5,
@@ -77,8 +89,14 @@ export default {
       type: 'PolygonItem',
       id: 4,
       locked: true,
-      label: 'Souvenir Shop',
-      tags: ['room'],
+      sem: {
+        label: 'Souvenir Shop',
+        show: true,
+        tags: ['room'],
+        dx: 0,
+        dy: 0,
+        fontSize: 20,
+      },
       points: [
         {
           x: 691.607384842044,
@@ -106,8 +124,14 @@ export default {
       type: 'PolygonItem',
       id: 5,
       locked: true,
-      label: 'Northern Hall',
-      tags: ['hallway'],
+      sem: {
+        label: 'Northern Hall',
+        show: true,
+        tags: ['hallway'],
+        dx: 400,
+        dy: 13,
+        fontSize: 20,
+      },
       points: [
         {
           x: 12,
@@ -135,8 +159,14 @@ export default {
       type: 'PolylineItem',
       id: 6,
       locked: true,
-      label: '',
-      tags: ['door'],
+      sem: {
+        label: '',
+        show: true,
+        tags: ['door'],
+        dx: 0,
+        dy: 0,
+        fontSize: 20,
+      },
       points: [
         {
           x: 70.82016389910768,
@@ -156,8 +186,14 @@ export default {
       type: 'PolylineItem',
       id: 7,
       locked: true,
-      label: '',
-      tags: ['door'],
+      sem: {
+        label: '',
+        show: true,
+        tags: ['door'],
+        dx: 0,
+        dy: 0,
+        fontSize: 20,
+      },
       points: [
         {
           x: 329.29125087907096,
@@ -177,8 +213,14 @@ export default {
       type: 'PolylineItem',
       id: 8,
       locked: true,
-      label: '',
-      tags: ['door'],
+      sem: {
+        label: '',
+        show: true,
+        tags: ['door'],
+        dx: 0,
+        dy: 0,
+        fontSize: 20,
+      },
       points: [
         {
           x: 574.8387835100361,
@@ -198,8 +240,14 @@ export default {
       type: 'PolylineItem',
       id: 9,
       locked: true,
-      label: '',
-      tags: ['door'],
+      sem: {
+        label: '',
+        show: true,
+        tags: ['door'],
+        dx: 0,
+        dy: 0,
+        fontSize: 20,
+      },
       points: [
         {
           x: 712.2365718520166,
@@ -217,54 +265,47 @@ export default {
     },
     {
       type: 'PolygonItem',
-      id: 10,
-      locked: true,
-      label: '',
-      tags: ['hallway'],
-      points: [
-        {
-          x: 450.35769378771266,
-          y: 182.50671201908577,
-        },
-        {
-          x: 520.0954392256192,
-          y: 182.50671201908577,
-        },
-        {
-          x: 520.0954392256192,
-          y: 230.86653447062747,
-        },
-        {
-          x: 450.35769378771266,
-          y: 230.86653447062747,
-        },
-      ],
-      stroke: 'none',
-      strokeWidth: 1,
-      opacity: 1,
-      fill: '#ffffff',
-    },
-    {
-      type: 'PolygonItem',
       id: 11,
       locked: true,
-      label: 'Info Desk',
-      tags: ['door', 'hallway'],
+      sem: {
+        label: 'Info\\nDesk',
+        show: true,
+        tags: ['hallway'],
+        dx: 82,
+        dy: 82,
+        fontSize: 20,
+      },
       points: [
         {
-          x: 379.06995499120404,
+          x: 379.55762997031957,
           y: 230.86653447062747,
         },
         {
-          x: 591.2883211431738,
+          x: 452.00438869996634,
           y: 230.86653447062747,
         },
         {
-          x: 591.2883211431738,
+          x: 452.00438869996634,
+          y: 182.50671201908577,
+        },
+        {
+          x: 521.2542357343716,
+          y: 182.50671201908577,
+        },
+        {
+          x: 521.2542357343716,
+          y: 230.86653447062747,
+        },
+        {
+          x: 591.7759961222894,
+          y: 230.86653447062747,
+        },
+        {
+          x: 591.7759961222894,
           y: 393.7454519954075,
         },
         {
-          x: 379.06995499120404,
+          x: 379.55762997031957,
           y: 393.7454519954075,
         },
       ],
@@ -277,8 +318,14 @@ export default {
       type: 'PolygonItem',
       id: 12,
       locked: true,
-      label: 'Center Hall',
-      tags: ['room', 'hallway'],
+      sem: {
+        label: 'Center Hall',
+        show: true,
+        tags: ['hallway'],
+        dx: 126,
+        dy: 0,
+        fontSize: 20,
+      },
       points: [
         {
           x: 304.49669480026864,
@@ -306,8 +353,14 @@ export default {
       type: 'PolygonItem',
       id: 13,
       locked: true,
-      label: 'Cafe',
-      tags: ['room'],
+      sem: {
+        label: 'Cafe',
+        show: true,
+        tags: ['room'],
+        dx: 0,
+        dy: 0,
+        fontSize: 20,
+      },
       points: [
         {
           x: 664.4418581103913,
@@ -335,8 +388,14 @@ export default {
       type: 'PolygonItem',
       id: 14,
       locked: true,
-      label: 'MCM',
-      tags: ['room'],
+      sem: {
+        label: 'MCM',
+        show: true,
+        tags: ['room'],
+        dx: 0,
+        dy: 0,
+        fontSize: 20,
+      },
       points: [
         {
           x: 836.5511314119611,
@@ -364,8 +423,14 @@ export default {
       type: 'PolygonItem',
       id: 15,
       locked: true,
-      label: 'Eastern Hall',
-      tags: ['hallway'],
+      sem: {
+        label: 'Eastern\\nHall',
+        show: true,
+        tags: ['hallway'],
+        dx: 20,
+        dy: 0,
+        fontSize: 20,
+      },
       points: [
         {
           x: 664.4418581103913,
@@ -393,8 +458,14 @@ export default {
       type: 'PolygonItem',
       id: 16,
       locked: true,
-      label: 'Snack Bar',
-      tags: ['room'],
+      sem: {
+        label: 'Snack Bar',
+        show: true,
+        tags: ['room'],
+        dx: 0,
+        dy: 0,
+        fontSize: 20,
+      },
       points: [
         {
           x: 12,
@@ -422,8 +493,14 @@ export default {
       type: 'PolygonItem',
       id: 17,
       locked: true,
-      label: 'Chanel',
-      tags: ['room'],
+      sem: {
+        label: 'Chanel',
+        show: true,
+        tags: ['room'],
+        dx: 0,
+        dy: 0,
+        fontSize: 20,
+      },
       points: [
         {
           x: 12,
@@ -451,8 +528,14 @@ export default {
       type: 'PolygonItem',
       id: 18,
       locked: true,
-      label: 'Western Hall',
-      tags: ['hallway'],
+      sem: {
+        label: 'Western\\nHall',
+        show: true,
+        tags: ['hallway'],
+        dx: 20,
+        dy: 0,
+        fontSize: 20,
+      },
       points: [
         {
           x: 133.3973744310988,
@@ -480,8 +563,14 @@ export default {
       type: 'PolygonItem',
       id: 19,
       locked: true,
-      label: '',
-      tags: ['staircase'],
+      sem: {
+        label: '',
+        show: true,
+        tags: ['staircase'],
+        dx: 0,
+        dy: 0,
+        fontSize: 20,
+      },
       points: [
         {
           x: 403.02443824134735,
@@ -505,6 +594,114 @@ export default {
       opacity: 1,
       fill: '#d4eb8b',
     },
+    {
+      type: 'PolylineItem',
+      id: 20,
+      locked: true,
+      sem: {
+        label: '',
+        show: true,
+        tags: ['door'],
+        dx: 0,
+        dy: 0,
+        fontSize: 20,
+      },
+      points: [
+        {
+          x: 192.22520357020278,
+          y: 314.32772551093444,
+        },
+        {
+          x: 258.1153258135,
+          y: 314.32772551093444,
+        },
+      ],
+      stroke: '#666666',
+      strokeWidth: 4,
+      opacity: 1,
+      fill: 'none',
+    },
+    {
+      type: 'PolylineItem',
+      id: 21,
+      locked: true,
+      sem: {
+        label: '',
+        show: true,
+        tags: ['door'],
+        dx: 0,
+        dy: 0,
+        fontSize: 20,
+      },
+      points: [
+        {
+          x: 133.3973744310988,
+          y: 422.82474448710013,
+        },
+        {
+          x: 133.3973744310988,
+          y: 488.28059235511915,
+        },
+      ],
+      stroke: '#666666',
+      strokeWidth: 4,
+      opacity: 1,
+      fill: 'none',
+    },
+    {
+      type: 'PolylineItem',
+      id: 22,
+      locked: true,
+      sem: {
+        label: '',
+        show: true,
+        tags: ['door'],
+        dx: 0,
+        dy: 0,
+        fontSize: 20,
+      },
+      points: [
+        {
+          x: 706.654041401089,
+          y: 314.32772551093444,
+        },
+        {
+          x: 771.4040414010891,
+          y: 314.32772551093444,
+        },
+      ],
+      stroke: '#666666',
+      strokeWidth: 4,
+      opacity: 1,
+      fill: 'none',
+    },
+    {
+      type: 'PolylineItem',
+      id: 23,
+      locked: true,
+      sem: {
+        label: '',
+        show: true,
+        tags: ['door'],
+        dx: 0,
+        dy: 0,
+        fontSize: 20,
+      },
+      points: [
+        {
+          x: 836.5511314119611,
+          y: 422.82474448710013,
+        },
+        {
+          x: 836.5511314119611,
+          y: 488.28059235511915,
+        },
+      ],
+      stroke: '#666666',
+      strokeWidth: 4,
+      opacity: 1,
+      fill: 'none',
+    },
   ],
-  zlist: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+  zlist: [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
 }

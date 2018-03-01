@@ -1,8 +1,9 @@
-import { h } from '@cycle/dom'
+import { h, VNode } from '@cycle/dom'
 import xs from 'xstream'
 import Checkbox from './common/Checkbox'
 import { Sinks, Sources } from './Inspector'
-import { SemanticTagConfig, UIIntent } from '../interfaces'
+import { SemanticTagConfig, UIIntent, State, AppConfig } from '../interfaces'
+import { EditableField, Row } from './InspectorCommon'
 
 function generateTagPreviewStyle({ styles }: SemanticTagConfig) {
   const result: any = {}
@@ -21,11 +22,68 @@ function generateTagPreviewStyle({ styles }: SemanticTagConfig) {
   return result
 }
 
+function SemanticTagList(state: State, config: AppConfig) {
+  const sitem = state.sitem()
+  return (
+    <div key="tag-list" className="tag-list-wrapper">
+      <h2 style={{ 'margin-left': '10px' }}>
+        Tags
+        <button className="manage" disabled>
+          Manage
+        </button>
+      </h2>
+      <ul className="tag-list">
+        {config.semantics.tags.map((tag, index) => (
+          <li key={tag.name} className="tag" data-tag={tag.name}>
+            <div className="preview" style={generateTagPreviewStyle(tag)} />
+            <p className="name">
+              {index + 1} {tag.name}
+            </p>
+            <Checkbox name={tag.name} checked={sitem.sem.tags.has(tag.name)} />
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+const SemanticLabel = {
+  Label(state: State) {
+    const sitem = state.sitem()
+    console.log(JSON.stringify(sitem.sem.label))
+    return Row({ label: 'Label', key: 'semantic-label' }, [
+      EditableField({
+        field: 'sem.label',
+        label: 'label',
+        type: 'string',
+        value: sitem.sem.label,
+      }),
+    ])
+  },
+  Position(state: State, config: AppConfig) {
+    const sitem = state.sitem()
+    return Row({ label: 'Position', key: 'label-position' }, [
+      EditableField({ field: 'sem.dx', label: 'dx', type: 'number', value: sitem.sem.dx }),
+      EditableField({ field: 'sem.dy', label: 'dy', type: 'number', value: sitem.sem.dy }),
+    ])
+  },
+  FontSize(state: State, config: AppConfig) {
+    const sitem = state.sitem()
+    return Row({ label: 'Font Size', key: 'font-size' }, [
+      EditableField({
+        field: 'sem.fontSize',
+        label: 'font size',
+        type: 'number',
+        value: sitem.sem.fontSize,
+      }),
+    ])
+  },
+}
+
 export default function InspectorSemanticTab({
   state: state$,
   config: config$,
   DOM: domSource,
-  keyboard,
 }: Sources): Sinks {
   const toggleSemanticTagFromClickIntent$ = domSource
     .select('.tag-list .checkbox')
@@ -36,68 +94,28 @@ export default function InspectorSemanticTab({
     }))
 
   const editIntent$ = domSource
-    .select('.label-wrapper input')
+    .select('.field input')
     .events('input')
     .map<UIIntent.Edit>(e => {
       const input = e.ownerTarget as HTMLInputElement
-      return { type: 'edit', field: 'label', value: input.value }
+      return { type: 'edit', field: input.dataset.field, value: input.value }
     })
 
-  const labelVdom$ = state$.map(state => {
+  const vdom$ = xs.combine(state$, config$).map(([state, config]) => {
+    let children: VNode[] = []
     const sitem = state.sitem()
     if (sitem == null) {
-      return null
-    }
-    return (
-      <div key="label" className="label-wrapper">
-        <p>
-          Label
-          <input type="text" value={sitem.label} />
-        </p>
-      </div>
-    )
-  })
-
-  const tagsVdom$ = xs.combine(config$, state$).map(([config, state]) => {
-    const sitem = state.sitem()
-    if (sitem == null) {
-      return null
-    }
-    return (
-      <div key="tag-list" className="tag-list-wrapper">
-        <p>
-          Tags
-          <button className="manage" disabled>
-            Manage
-          </button>
-        </p>
-        <ul className="tag-list">
-          {config.semantics.tags.map((tag, index) => (
-            <li key={tag.name} className="tag" data-tag={tag.name}>
-              <div className="preview" style={generateTagPreviewStyle(tag)} />
-              <p className="name">
-                {index + 1} {tag.name}
-              </p>
-              <Checkbox name={tag.name} checked={sitem.tags.has(tag.name)} />
-            </li>
-          ))}
-        </ul>
-      </div>
-    )
-  })
-
-  const emptyPrompt$ = state$.map(state => {
-    const sitem = state.sitem()
-    if (sitem == null) {
-      return h('p.empty-prompt', { key: 'empty-prompt' }, 'No Selected Items.')
+      children = [h('p.empty-prompt', { key: 'empty-prompt' }, 'No Selected Items.')]
     } else {
-      return null
+      children = [
+        SemanticLabel.Label(state),
+        SemanticLabel.Position(state, config),
+        SemanticLabel.FontSize(state, config),
+        SemanticTagList(state, config),
+      ]
     }
+    return h('div.tab.semantic-tab', children)
   })
-
-  const vdom$ = xs
-    .combine(emptyPrompt$, labelVdom$, tagsVdom$)
-    .map(([emptyPrompt, label, tags]) => h('div.tab.semantic-tab', [emptyPrompt, label, tags]))
 
   return {
     DOM: vdom$,

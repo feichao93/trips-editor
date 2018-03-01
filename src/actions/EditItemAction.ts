@@ -24,7 +24,7 @@ export default class EditItemAction extends Action {
   }
 
   next(state: State) {
-    const updatedItems = state.sitems().map(item => item.set(this.field as any, this.val))
+    const updatedItems = state.sitems().map(item => item.setIn(this.field.split('.'), this.val))
     return state.mergeIn(['items'], updatedItems)
   }
 

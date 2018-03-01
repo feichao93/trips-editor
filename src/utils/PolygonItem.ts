@@ -3,13 +3,13 @@ import { List, Record, Set } from 'immutable'
 import { identity } from 'ramda'
 import { containsPoint, getCoordinateUpdater } from './common'
 import { ItemMethods, Point, ResizeDirConfig, AppConfig } from '../interfaces'
+import Sem from './Sem'
 
 const PolygonItemRecord = Record(
   {
     id: -1,
     locked: false,
-    label: '',
-    tags: Set<string>(),
+    sem: new Sem(),
     points: List<Point>(),
     stroke: 'black',
     strokeWidth: 1,
@@ -26,7 +26,7 @@ export default class PolygonItem extends PolygonItemRecord implements ItemMethod
     return superJS
   }
   static fromJS(object: any) {
-    return new PolygonItem(object).update('points', List).update('tags', Set)
+    return new PolygonItem(object).update('points', List).update('sem', Sem.fromJS)
   }
 
   static rectFromPoints(startPos: Point, endPos: Point) {
@@ -89,22 +89,7 @@ export default class PolygonItem extends PolygonItemRecord implements ItemMethod
             points: this.points.map(p => `${p.x},${p.y}`).join(' '),
           },
         }),
-        this.label
-          ? h(
-              'text',
-              {
-                key: 'label',
-                attrs: {
-                  x,
-                  y,
-                  dx: 2,
-                  dy: config.fontSize,
-                  'font-size': config.fontSize,
-                },
-              },
-              this.label,
-            )
-          : null,
+        this.sem.renderLabel(x, y, config),
       ].filter(Boolean),
     )
   }

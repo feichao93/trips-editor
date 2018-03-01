@@ -2,6 +2,7 @@ import { h } from '@cycle/dom'
 import { List, Record, Set } from 'immutable'
 import { add, identity } from 'ramda'
 import { containsPoint, getCoordinateUpdater } from './common'
+import Sem from './Sem'
 import { ItemMethods, Point, ResizeDirConfig } from '../interfaces'
 import { ImgFileStat } from '../makeFileDriver'
 
@@ -9,8 +10,7 @@ const ImgItemRecord = Record(
   {
     id: -1,
     locked: false,
-    label: '',
-    tags: Set<string>(),
+    sem: new Sem(),
     opacity: 1,
     x: 0,
     y: 0,
@@ -35,7 +35,7 @@ export default class ImgItem extends ImgItemRecord implements ItemMethods {
   }
 
   static fromJS(object: any) {
-    return new ImgItem(object).update('tags', Set)
+    return new ImgItem(object).update('sem', Sem.fromJS)
   }
 
   toJS() {

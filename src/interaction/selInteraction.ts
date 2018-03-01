@@ -46,7 +46,8 @@ const selInteraction: Component = ({
     .map(() => new ToggleLockAction())
 
   const edit$ = UI.intent<UIIntent.Edit>('edit').map(({ field, value }) => {
-    const useNumberValue = ['strokeWidth', 'opacity'].includes(field)
+    const numberFields = ['strokeWidth', 'opacity', 'sem.dx', 'sem.dy', 'sem.fontSize']
+    const useNumberValue = numberFields.includes(field)
     const val: any = useNumberValue ? Number(value) : value
     return new EditItemAction(field, val)
   })

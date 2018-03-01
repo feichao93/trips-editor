@@ -2,14 +2,14 @@ import { h } from '@cycle/dom'
 import { List, Record, Set } from 'immutable'
 import { identity } from 'ramda'
 import { distanceBetweenPointAndSegment, getCoordinateUpdater } from './common'
+import Sem from './Sem'
 import { ItemMethods, Point, ResizeDirConfig } from '../interfaces'
 
 const PolylineItemRecord = Record(
   {
     id: -1,
     locked: false,
-    label: '',
-    tags: Set<string>(),
+    sem: new Sem(),
     points: List<Point>(),
     stroke: '#000000',
     strokeWidth: 5,
@@ -26,7 +26,7 @@ export default class PolylineItem extends PolylineItemRecord implements ItemMeth
     return superJS
   }
   static fromJS(object: any) {
-    return new PolylineItem(object).update('points', List).update('tags', Set)
+    return new PolylineItem(object).update('points', List).update('sem', Sem.fromJS)
   }
   static lineFromPoints([p1, p2]: [Point, Point]) {
     return new PolylineItem({ points: List([p1, p2]) })

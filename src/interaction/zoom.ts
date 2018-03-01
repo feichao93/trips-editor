@@ -44,7 +44,7 @@ function interpolateTransform(viewBox: DOMRect) {
   }
 }
 
-function getProperTransform(viewBox: DOMRect, rect: Rect, config: AppConfig, marginRatio = 1) {
+function getProperTransform(viewBox: DOMRect, rect: Rect, config: AppConfig, marginRatio: number) {
   const k = clamp(
     config.minScale,
     config.maxScale,
@@ -116,7 +116,7 @@ const zoom: Component = ({
       const item = state.items.get(itemId)
       const bbox = getBoundingBoxOfPoints(item.getVertices())
       return {
-        targetTransform: getProperTransform(viewBox, bbox, config),
+        targetTransform: getProperTransform(viewBox, bbox, config, 0.8),
         useTransition: true,
         rawPos: null,
       }
@@ -129,7 +129,7 @@ const zoom: Component = ({
     .map(([state, config, viewBox]) => {
       const bbox = getBoundingBoxOfPoints(state.items.toList().flatMap(item => item.getVertices()))
       return {
-        targetTransform: getProperTransform(viewBox, bbox, config, 0.2),
+        targetTransform: getProperTransform(viewBox, bbox, config, 0.3),
         useTransition: true,
         rawPos: null,
       }

@@ -4,25 +4,7 @@ import xs from 'xstream'
 import { Sinks, Sources } from './Inspector'
 import { Item, State, UIIntent } from '../interfaces'
 import { isPolygonItem, isPolylineItem, round3 } from '../utils/common'
-
-function Row({ label, key }: { label: string; key: string }, children: VNode[]) {
-  return h('div.row', { key }, [h('h2', label), ...children])
-}
-
-type EditableFieldProps = {
-  label: string
-  field: string
-  type: string
-  value: number | string
-  [key: string]: any
-}
-
-function EditableField({ label, type, value, field, ...otherProps }: EditableFieldProps) {
-  return h('div.field', [
-    h('input', { dataset: { field }, attrs: { type, value, ...otherProps } }),
-    h('p', label),
-  ])
-}
+import { EditableField, Row } from './InspectorCommon'
 
 function PositionAndSize(state: State) {
   const bbox = state.getBBox()
@@ -55,9 +37,6 @@ function PositionAndSize(state: State) {
 }
 
 function Fill(sitem: Item) {
-  if (sitem == null) {
-    return null
-  }
   if (isPolygonItem(sitem)) {
     return Row({ label: 'Fill', key: 'fill' }, [
       EditableField({ field: 'fill', label: 'Fill', type: 'color', value: sitem.fill }),
@@ -67,9 +46,6 @@ function Fill(sitem: Item) {
 }
 
 function Stroke(sitem: Item) {
-  if (sitem == null) {
-    return null
-  }
   if (isPolygonItem(sitem) || isPolylineItem(sitem)) {
     return Row({ label: 'Stroke', key: 'stroke' }, [
       EditableField({ field: 'stroke', label: 'Stroke', type: 'color', value: sitem.stroke }),
@@ -87,9 +63,6 @@ function Stroke(sitem: Item) {
 }
 
 function Opacity(sitem: Item) {
-  if (sitem == null) {
-    return null
-  }
   return Row({ label: 'Opacity', key: 'opacity' }, [
     EditableField({
       field: 'opacity',
@@ -124,9 +97,6 @@ function Z({ selIdSet, items, zlist }: State) {
 }
 
 function LockInfo(sitem: Item) {
-  if (sitem == null) {
-    return null
-  }
   return Row(
     { label: 'Lock', key: 'lock' },
     sitem.locked

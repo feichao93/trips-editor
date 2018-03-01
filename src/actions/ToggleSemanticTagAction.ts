@@ -10,18 +10,20 @@ export default class ToggleSemanticTagAction extends Action {
 
   prepare(h: AppHistory) {
     this.prevItem = h.state.sitem()
-    this.addOrRemove = this.prevItem.tags.has(this.tagConfig.name) ? 'remove' : 'add'
+    this.addOrRemove = this.prevItem.sem.tags.has(this.tagConfig.name) ? 'remove' : 'add'
     return h
   }
 
   next(state: State) {
     const item = state.sitem()
     const tagName = this.tagConfig.name
-    const updatedItem = item.tags.has(tagName)
+    const updatedItem = item.sem.tags.has(tagName)
       ? // Remove tag
-        item.update('tags', tags => tags.remove(tagName))
+        item.update('sem', sem => sem.update('tags', tags => tags.remove(tagName)))
       : // Add tag and apply the styles
-        item.update('tags', tags => tags.add(tagName)).merge(this.tagConfig.styles)
+        item
+          .update('sem', sem => sem.update('tags', tags => tags.add(tagName)))
+          .merge(this.tagConfig.styles)
     return state.setIn(['items', item.id], updatedItem)
   }
 
