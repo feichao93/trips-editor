@@ -7,8 +7,7 @@ import serializeUtils from '../utils/serializeUtils'
 
 const file: Component = ({ FILE, UI, keyboard, state: state$ }) => {
   /* Menubar File -> Save as JSON */
-  const save$ = xs
-    .merge(UI.intent('save'), keyboard.shortcut('mod+s'))
+  const save$ = UI.intent('save')
     .peek(state$)
     .map(state => ({
       blob: new Blob([JSON.stringify(serializeUtils.toJS(state))], {

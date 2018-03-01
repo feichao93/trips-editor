@@ -101,7 +101,16 @@ const zoom: Component = ({
     .map(state => ({ itemId: state.selIdSet.first() }))
 
   const toItemZoomConfig$: Stream<ZoomConfig> = xs
-    .merge(toItemIntentFromShortcut$, UI.intent<UIIntent.ZoomToItem>('zoom-to-item'))
+    .merge(
+      toItemIntentFromShortcut$,
+      UI.intent<UIIntent.ZoomToItem>('zoom-to-item'),
+      UI.intent('zoom-to-sel').peek(
+        state$
+          .filter(s => !s.selIdSet.isEmpty())
+          .map(state => state.selIdSet.first())
+          .map(itemId => ({ itemId })),
+      ),
+    )
     .sampleCombine(state$, config$, svgDOMRect$)
     .map(([{ itemId }, state, config, viewBox]) => {
       const item = state.items.get(itemId)
@@ -113,8 +122,8 @@ const zoom: Component = ({
       }
     })
 
-  const fitZoomConfig$: Stream<ZoomConfig> = keyboard
-    .shortcut('2')
+  const fitZoomConfig$: Stream<ZoomConfig> = xs
+    .merge(keyboard.shortcut('2'), UI.intent('zoom-to-fit'))
     .whenNot(state$, state => state.items.isEmpty())
     .peek(xs.combine(state$, config$, svgDOMRect$))
     .map(([state, config, viewBox]) => {

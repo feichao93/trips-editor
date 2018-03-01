@@ -98,7 +98,7 @@ export default function Menubar({
     .map(([{ selIdSet }, appHistory, activeCategory]) => (
       <div className="menubar" tabIndex="1">
         <MenuCategory category="File" active={activeCategory === 'File'}>
-          <MenuItem name="Save as JSON" intent="save" hint="Ctrl+S" />
+          <MenuItem name="Save as JSON" intent="save" />
           <MenuItem name="Load JSON" intent="load-data" />
           <MenuItem name="Export as SVG" disabled />
           <MenuItem name="Load Image" intent="load-image" />
@@ -136,8 +136,14 @@ export default function Menubar({
           <MenuItem name="Add Line" hint="L" intent="line" />
         </MenuCategory>
         <MenuCategory category="View" active={activeCategory === 'View'}>
-          <MenuItem name="Reset Zoom" intent="reset-zoom" />
-          <MenuItem name="Centralize Selection" disabled />
+          <MenuItem
+            name="Centralize Selection"
+            intent="zoom-to-sel"
+            disabled={selIdSet.isEmpty()}
+            hint="Num 1"
+          />
+          <MenuItem name="Fit" intent="zoom-to-fit" hint="Num 2" />
+          <MenuItem name="Reset Zoom" intent="reset-zoom" hint="Num 3" />
         </MenuCategory>
       </div>
     ))
