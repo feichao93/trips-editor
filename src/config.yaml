@@ -5,7 +5,7 @@ meta:
 minScale: 0.1
 maxScale: 5
 senseRange: 15
-fontSize: 80
+fontSize: 20
 
 semantics:
   tags:

@@ -88,7 +88,7 @@ export default function App(sources: Sources): Sinks {
       } else {
         return action.prepare(h).apply(action)
       }
-    }, AppHistory.fromState(serializeUtils.fromJS(testData).set('transform', d3.zoomIdentity.scale(0.2))))
+    }, AppHistory.fromState(serializeUtils.fromJS(testData)))
     .dropRepeats()
     .remember()
 
