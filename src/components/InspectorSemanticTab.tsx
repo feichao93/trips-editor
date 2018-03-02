@@ -50,7 +50,6 @@ function SemanticTagList(state: State, config: AppConfig) {
 const SemanticLabel = {
   Label(state: State) {
     const sitem = state.sitem()
-    console.log(JSON.stringify(sitem.sem.label))
     return Row({ label: 'Label', key: 'semantic-label' }, [
       EditableField({
         field: 'sem.label',

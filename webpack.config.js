@@ -41,7 +41,7 @@ module.exports = env => {
       }),
     ].concat(
       isProduction
-        ? [new UglifyJsPlugin()]
+        ? [new UglifyJsPlugin({ uglifyOptions: { compress: { inline: false } } })]
         : [new webpack.NamedModulesPlugin(), new webpack.HotModuleReplacementPlugin()],
     ),
 
