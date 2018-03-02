@@ -2,53 +2,57 @@
 
 ## Motivation
 
-(TODO) Add a basic description about __our algorithm__.
+The spatial topological relations of the floor is one of the key inputs to [our algorithm](https://longaspire.github.io/trips/static/semTraj-indoo_p13.pdf), but it is hard to generate or extract. In many cases, we could only get a bitmap image of the floorplan. There are sophisticated tools such as [Microsoft Visio][] or [Inkscape][] which can load the image file and make a diagram manually according to the image file. But the main disadvantage is that the output of these tools is too complicated to fit in our algorithm: it is hard to parse and manipulate in our code, and it lacks the abilities of attaching semantic information to shapes. Our algorithm prefers a simple and clean data format so it can focus on processing positioning data and aggregating semantic trajectories.
 
-The spatial topological relations of the floor is one of the key inputs to our algorithm, but it is hard to generate or extract. In many cases, we could only get a bitmap image file of the floorplan. And there are sophisticated tools such as [Microsoft Visio][] or [Inkscape][] which can load the image file and make a diagram manually according to the image file. But the main disadvantage is that the output of these tools is too complicated to fit in our algorithm: it is hard to parse and manipulate in our code, and it lacks the abilities of attaching semantic information to shapes. Our algorithm prefers a simple and clean data format so it can focus on processing positioning data and aggregating semantic trajectories.
-
-The editor could help us build up the topological relations from a image file. The editor can load the image file and display it, then we can draw polygons/polylines imitating the spatial structures on the image. After completing the geometric information, we can use the editor to attach specific semantic information to polygons/polyglines. For example, we can designate severals rectangles as rooms or specify a polyline as a wall. When all is done, the editor can export both geometric and semantic information to a single json file, which can be parsed by our algorithm easily.
+The editor could help us build up the topological relations from a image file. The editor can load the image file and display it, then we can draw polygons/polylines imitating the spatial structures on the image. After completing the geometric information, we can use the editor to attach specific semantic information to shapes. For example, we can designate severals rectangles as rooms or specify a polyline as a wall. When all is done, the editor can export both geometric and semantic information to a single json file, which can be parsed by our algorithm easily.
 
 While the editor is created originally for our algorithm, the editor itself is just a good SVG editor which focuses on editing polygons/polylines and attaching semantic data to them. The editor should be easy to be reused in other situations.
 
-## Introduction
+![screenshot](docs/editor.jpg)
 
-This section describes the concepts and features about the editor.
+## User Interface
 
-* UI: The user interface contains several components:
+As the above figure shows, the editor consists of several UI components.
 
-  - The menu bar is a container of various buttons;
+* The menu bar at the top contains several categories of buttons;
+* The board is where shapes display and user interactions happens. You can drag and zoom the board, or drag and resize the shapes on the board;
+* The status bar displays some useful information including current mode, current selection mode, current view box and current zoom percentage;
+* The inspector shows properties about the current selected shapes. The inspector has three tabs: geometric tab lists the geometric and style properties; semantic tab displays the semantic label and tags; history tab shows the action history and offers undo/redo functionality.
 
+## Concept Introduction
 
-  - The board is where shapes display and user interactions happens. You can drag and zoom the board, or drag and resize the shapes on the board;
-  - The status bar displays some useful information such as current mode, current selection mode and current zoom percentage;
-  - The inspector shows properties about the current selected shapes. The inspector has two tabs: geometric tab lists the geometric and style properties, and semantic tab displays the semantic label and tags;
+In order to make better use of the editor, you need to learn some basic concepts.
 
-* Concept _Mode_: The mode is displayed at the left corner. It tells the user 'What you are doing': The mode is default to `idle`; The mode is `rect.xxx` when drawing a rect; The mode is `line.xxx` when drawing a line and so on.
+* Concept _Mode_ : The mode is displayed in the left of the status bar. It tells the users _What you are doing_. The mode is default to `idle`; The mode is `rect.xxx` when drawing a rect; The mode is `line.xxx` when drawing a line and so on. Some functionalities may behave differently in different modes. For example, undo/redo can only be triggered in idle mode.
 
-*  Drawing:
+* Concept _Selection Mode_ : The selection mode is displayed near the mode. It indicates the current mode for selection. Currently, it should be either `'bbox'` or `'vertices'`. In bbox selection mode, you can resize the selected shapes; In vertices selection mode, you can add/move/delete vertices of the shapes. You can press shortcut `E` to toggle selection mode.
 
-   - Polygons: In `idle` mode, press `P` to enter `polygon` mode, and an empty drawing-polygon is set up; In `polygon` mode, every mouse click will add a vertex to the drawing-polygon; If the user closes the drawing-polygon by clicks near the first vertex, a new polygon will be added and mode changes back to `idle`. The user can always press `ESC` to return `idle` mode.
-   - Lines / Rectangles: Press the shortcut and enter the corresponding mode, drag the mouse and a new shape will be added;
-   - With various shortcuts and intuitive auto-adjust, you can draw complex shapes quickly.
+## Drawing & Editing
 
-*  Point editing: Press `E` to toggle selection mode between `bbox`(default) and `vertices`. In `vertices` selection mode, a small circle will appear at every vertex of the selected polygon/polyline, the user could drag the circle to change the vertex position, or press `D` to delete the hovered vertex, or drag from near an edge and add a new vertex.
+* Polygons: In `idle` mode, press `P` to enter `polygon` mode, and an empty drawing-polygon is set up; In `polygon` mode, every mouse click will add a vertex to the drawing-polygon; If the user closes the drawing-polygon by clicks near the first vertex, a new polygon will be added and mode changes back to `idle`. The user can always press `ESC` to return `idle` mode.
+* Lines / Rectangles: Press the shortcut and enter the corresponding mode, drag the mouse and a new shape will be added;
+* Point editing: In `vertices` selection mode, a small circle will appear at every vertex of the selected polygon/polyline, the user could drag the circle to change the vertex position, or press `D` to delete the hovered vertex, or drag from near an edge and add a new vertex. With various shortcuts and intuitive auto-adjust, you can draw complex shapes quickly.
+* Geometric/Semantic data editing: After select some shapes, you can edit these properties in the inspector.
+* Load and Save Files:
 
-*  Load and Save Files:
-
-   - The editor use JSON with a flexible structure as the data format which is easy to parse and manipulate. You can save the current state to a JSON file or load state from a JSON file;
-   - Load image file: Drag the image file from file explorer and drop it onto the editor board.
+  * Data File: The editor use JSON with a flexible structure as the data format which is easy to parse and manipulate. You can save the current state to a JSON file or load state from a JSON file;
+  * Image file: Drag the image file from file explorer and drop it onto the editor board.
 
 ## Interaction Refinement
 
-We have make efforts to improve the interactions details.
+We have make efforts to improve the interactions experience.
 
-#### Shortcuts
+### Shortcuts
 
 We attach shortcuts to almost every action in the editor, including deleting a shape, start adding a rectangle, toggle between two selection mode and so on. We also display the shortcuts alongside the entries of the actions in menu bar, so the users can quickly remember the shortcuts.
 
-The `ESC` shortcut has a consistent meaning in different modes: abort the current interaction and go back to the idle mode. And we have familiar `Ctrl + Z` (undo), `Ctrl + Y` / `Ctrl + Shift + Z` (redo), `Ctrl + C` (copy) and `Ctrl + V` (redo). (TODO ctrl+z, ctrl+c and ctrl+v are not implemented).
+The `ESC` shortcut has a consistent meaning in different modes: abort the current interaction and return back to the idle mode. And we have familiar `Ctrl + Z` (undo), `Ctrl + Y` / `Ctrl + Shift + Z` (redo), `Ctrl + C` (copy) and `Ctrl + V` (redo).
 
-#### Auto-Adjust
+### Action History
+
+The editor records all the executed actions and displays them in the history tab. It tells you what happened recently with a proper granularity which makes undo/redo more usable and predictable.
+
+### Auto-Adjust
 
 When drawing shapes or moving vertices, auto-adjust helps the users find the correct positions without trivial minor adjustments. Auto-adjust is useful in the following situations:
 
@@ -58,13 +62,15 @@ When drawing shapes or moving vertices, auto-adjust helps the users find the cor
 
 Auto-adjust is default to be enabled, but it be can be disabled when the shortcuts is pressed. Since the state of editor is changing, the behavior the adjuster should also be changing. We create an adjuster stream which abstracts the changing behaviors. The adjuster reads the adjust-configs (returned from the interaction functions), current drawing mode, existed vertices of all shapes, and the current mouse position and then determine the adjusted position.
 
-In practice, auto-adjust makes interactions more fluently, and it speeds up the generation of the output.
+In practice, auto-adjust makes the interactions fluent and enjoyable, and it speeds up the generation of the output.
 
 ## Implementation Overview
 
-This editor is built upon the web platform. We use SVG to render shapes.
+**_Note: The code in this section is out of date, but the main idea remains the same._**
 
-We adopt [reactive programming][RP] to implement this editor. Anything changing when the editor is running, including variables, user inputs and data structures, are abstracted as asynchronous data stream in the editor. For example, click events on the board are encapsulated into a point stream, denoted by `click$` in code. Every time the user clicks, the stream emits an object that contains x and y coordinates of the click position. The state of drawn shapes is just another stream of list of polygon/polyline objects, and every time we peek the stream we can get the current state at that time. In such a framework, our editor application can be simplified as a pure function (the main function) which accepts a collection of streams (one stream for one kind of input) and returns a view stream (for rendering) plus a file stream (for exporting files). States that should be preserved when the application is running are kept as local varaiables of the main function. Note that we use `$` as the postfix to indicate that the name references to a stream.
+This editor is built upon the web platform. We use [Cycle.js](https://github.com/cyclejs/cyclejs/) front-end framework to build this application and we use SVG to render shapes.
+
+We adopt [reactive programming][rp] to implement this editor. Anything changing when the editor is running, including variables, user inputs and data structures, are abstracted as asynchronous data stream in the editor. For example, click events on the board are encapsulated into a point stream, denoted by `click$` in code. Every time the user clicks, the stream emits an object that contains x and y coordinates of the click position. The state of drawn shapes is just another stream of list of polygon/polyline objects, and every time we peek the stream we can get the current state at that time. In such a framework, our editor application can be simplified as a pure function (the main function) which accepts a collection of streams (one stream for one kind of input) and returns a view stream (for rendering) plus a file stream (for exporting files). States that should be preserved when the application is running are kept as local varaiables of the main function. Note that we use `$` as the postfix to indicate that the name references to a stream.
 
 #### Some important streams
 
@@ -113,7 +119,7 @@ function drawRect({ mouse, keyboard, mode: mode$ }) {
   /* 2 */
   const startPos$ = mouse.down$.when(mode$, identical('rect.ready'))
   const toRectDrawingMode$ = startPos$.mapTo('rect.drawing')
-  
+
   /* 3 */
   const drawingRect$ = startPos$
     .map(startPos =>
@@ -122,14 +128,14 @@ function drawRect({ mouse, keyboard, mode: mode$ }) {
         .map(movingPos => PolygonItem.rectFromPoints(startPos, movingPos)),
     )
     .flatten()
-  
+
   /* 4 */
   const addItem$ = mouse.up$
     .when(mode$, identical('rect.drawing'))
     .peek(drawingRect$)
-  	.map(actions.addItem)
+    .map(actions.addItem)
   const toIdleMode$ = addItem$.mapTo('idle')
-  
+
   return {
     drawingItem: drawingRect$,
     action: addItem$,
@@ -147,9 +153,7 @@ Code blocks 1-4 are logics at different stages.
 
 The above code maintains the mode at different stages, reacts to mouse events correctly according to the current mode, handles the drawing preview, and adds a new polygon when the drawing operation is completed. It is expressive thanks to mouse/keyboard abstraction and various operators for streams. Moreover, the above interaction function, in essence, is just a puer function that maps from input streams to output streams, which makes this code easy to understand and easy to test.
 
-
-
-[Inkscape]: https://inkscape.org/
-[Microsoft Visio]: https://products.office.com/en-us/visio/flowchart-software
+[inkscape]: https://inkscape.org/
+[microsoft visio]: https://products.office.com/en-us/visio/flowchart-software
 [repo]: https://github.com/shinima/editor
-[RP]: https://en.wikipedia.org/wiki/Reactive_programming
+[rp]: https://en.wikipedia.org/wiki/Reactive_programming
