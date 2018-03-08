@@ -2,13 +2,13 @@
 
 ## Motivation
 
-The spatial topological relations of the floor is one of the key inputs to [our algorithm](https://longaspire.github.io/trips/static/semTraj-indoo_p13.pdf), but it is hard to generate or extract. In many cases, we could only get a bitmap image of the floorplan. There are sophisticated tools such as [Microsoft Visio][] or [Inkscape][] which can load the image file and make a diagram manually according to the image file. But the main disadvantage is that the output of these tools is too complicated to fit in our algorithm: it is hard to parse and manipulate in our code, and it lacks the abilities of attaching semantic information to shapes. Our algorithm prefers a simple and clean data format so it can focus on processing positioning data and aggregating semantic trajectories.
+The spatial topological relations of the floor is one of the key inputs to [our algorithm](https://longaspire.github.io/trips/static/semTraj-indoor_p13.pdf), but it is hard to generate or extract. In many cases, we could only get a bitmap image of the floorplan. There are sophisticated tools such as [Microsoft Visio][] or [Inkscape][] which can load the image file and make a diagram manually according to the image file. But the main disadvantage is that the output of these tools is too complicated to fit in our algorithm: it is hard to parse and manipulate in our code, and it lacks the abilities of attaching semantic information to shapes. Our algorithm prefers a simple and clean data format so it can focus on processing positioning data and aggregating semantic trajectories.
 
-The editor could help us build up the topological relations from a image file. The editor can load the image file and display it, then we can draw polygons/polylines imitating the spatial structures on the image. After completing the geometric information, we can use the editor to attach specific semantic information to shapes. For example, we can designate severals rectangles as rooms or specify a polyline as a wall. When all is done, the editor can export both geometric and semantic information to a single json file, which can be parsed by our algorithm easily.
+The editor could help us build up the topological relations from a image file. The editor can load the image file and display it, then we can draw polygons/polylines imitating the spatial structures on the image. After completing the geometric information, we can use the editor to attach specific semantic information to shapes. For example, we can designate several rectangles as rooms or specify a polyline as a wall. When all is done, the editor can export both geometric and semantic information to a single json file, which can be parsed by our algorithm easily.
 
 While the editor is created originally for our algorithm, the editor itself is just a good SVG editor which focuses on editing polygons/polylines and attaching semantic data to them. The editor should be easy to be reused in other situations.
 
-![screenshot](docs/editor.jpg)
+![screenshots](docs/editor.jpg)
 
 ## User Interface
 
@@ -23,7 +23,7 @@ As the above figure shows, the editor consists of several UI components.
 
 In order to make better use of the editor, you need to learn some basic concepts.
 
-* Concept _Mode_ : The mode is displayed in the left of the status bar. It tells the users _What you are doing_. The mode is default to `idle`; The mode is `rect.xxx` when drawing a rect; The mode is `line.xxx` when drawing a line and so on. Some functionalities may behave differently in different modes. For example, undo/redo can only be triggered in idle mode.
+* Concept _Mode_ : The mode is displayed in the left of the status bar. It tells the users _What you are doing_. The mode is default to `idle`; The mode is `rect.xxx` when drawing a rect; The mode is `line.xxx` when drawing a line and so on. Some functionality may behave differently in different modes. For example, undo/redo can only be triggered in idle mode.
 
 * Concept _Selection Mode_ : The selection mode is displayed near the mode. It indicates the current mode for selection. Currently, it should be either `'bbox'` or `'vertices'`. In bbox selection mode, you can resize the selected shapes; In vertices selection mode, you can add/move/delete vertices of the shapes. You can press shortcut `E` to toggle selection mode.
 
@@ -56,7 +56,7 @@ The editor records all the executed actions and displays them in the history tab
 
 When drawing shapes or moving vertices, auto-adjust helps the users find the correct positions without trivial minor adjustments. Auto-adjust is useful in the following situations:
 
-* Start drawing a line from an existed polgyon vertex.
+* Start drawing a line from an existed polygon vertex.
 * Move a rectangle to a position where it tangents exactly to another rectangle. (TODO not implemented)
 * Move a polygon vertex to a position that has the same x or y coordinate of another vertex.
 
@@ -70,7 +70,7 @@ In practice, auto-adjust makes the interactions fluent and enjoyable, and it spe
 
 This editor is built upon the web platform. We use [Cycle.js](https://github.com/cyclejs/cyclejs/) front-end framework to build this application and we use SVG to render shapes.
 
-We adopt [reactive programming][rp] to implement this editor. Anything changing when the editor is running, including variables, user inputs and data structures, are abstracted as asynchronous data stream in the editor. For example, click events on the board are encapsulated into a point stream, denoted by `click$` in code. Every time the user clicks, the stream emits an object that contains x and y coordinates of the click position. The state of drawn shapes is just another stream of list of polygon/polyline objects, and every time we peek the stream we can get the current state at that time. In such a framework, our editor application can be simplified as a pure function (the main function) which accepts a collection of streams (one stream for one kind of input) and returns a view stream (for rendering) plus a file stream (for exporting files). States that should be preserved when the application is running are kept as local varaiables of the main function. Note that we use `$` as the postfix to indicate that the name references to a stream.
+We adopt [reactive programming][rp] to implement this editor. Anything changing when the editor is running, including variables, user inputs and data structures, are abstracted as asynchronous data stream in the editor. For example, click events on the board are encapsulated into a point stream, denoted by `click$` in code. Every time the user clicks, the stream emits an object that contains x and y coordinates of the click position. The state of drawn shapes is just another stream of list of polygon/polyline objects, and every time we peek the stream we can get the current state at that time. In such a framework, our editor application can be simplified as a pure function (the main function) which accepts a collection of streams (one stream for one kind of input) and returns a view stream (for rendering) plus a file stream (for exporting files). States that should be preserved when the application is running are kept as local variables of the main function. Note that we use `$` as the postfix to indicate that the name references to a stream.
 
 #### Some important streams
 
@@ -83,7 +83,7 @@ These four streams are the most important streams in the editor:
 
 Each of above streams reacts to a corresponding update-stream: when the update-stream emits a new value, the above stream will emit a new value reflecting the update. For example, when `action$` emits a "Add a new polygon", `state$` emits a new state object that contains the new polygon. The update-streams are from sub-components and this is the only way that sub-components mutates the state in the main function.
 
-Many other streams can be calculated by above streams. For example, the stream of the inspector content can be calculated by combining `state$` and `selection$` and extracting selected-part state. The view of the shapes can be obtained by applying a puer map function to `state$`. Once we define how to calculate these streams, or in other words, once we define the dependencies of these streams, a mechanism of change propagation will be established. Under this mechanism, whenever one of the dependency streams emits a new value, the calculation will be automatically re-executed, and the calculated stream could emit a new value. Further streams thats depends on the calculated streams will be 'awaked' as well. The view of this editor is a calculated stream from above important streams, so our editor can focus on the state rather than the view.
+Many other streams can be calculated by above streams. For example, the stream of the inspector content can be calculated by combining `state$` and `selection$` and extracting selected-part state. The view of the shapes can be obtained by applying a pure map function to `state$`. Once we define how to calculate these streams, or in other words, once we define the dependencies of these streams, a mechanism of change propagation will be established. Under this mechanism, whenever one of the dependency streams emits a new value, the calculation will be automatically re-executed, and the calculated stream could emit a new value. Further streams that depends on the calculated streams will be _awaken_ as well. The view of this editor is a calculated stream from above important streams, so our editor can focus on the state rather than the view.
 
 #### Mouse and Keyboard
 
@@ -91,23 +91,23 @@ The editor is a highly interactive web application with a multitude of UI events
 
 **Shortcuts as lazy and queryable streams**
 
-`keyboard.shortcut('xxx')` will give us a stream which emits a `KeyboardEvent` everytime the user press the specified shortcut. The shortcut can be a simple key like `D` or can be a complex combination like `ctrl + shift + T`. The streams are lazy that none of the streams existed before calling `shortcuts('xxx')`; The streams are queryable that all the potential shortcut streams can be get from a single method.
+`keyboard.shortcut('xxx')` will give us a stream which emits a `KeyboardEvent` every time the user press the specified shortcut. The shortcut can be a simple key like `D` or can be a complex combination like `ctrl + shift + T`. The streams are lazy that none of the streams existed before calling `shortcuts('xxx')`; The streams are queryable that all the potential shortcut streams can be get from a single method.
 
 The keyboard also provides a `isPressing` method. For example, when implementing "Press Z to disable auto-adjust", `keyboard.isPressing('z')` returns a stream indicating whether a key is pressing, which is then map to the stream of whether the auto-adjust feature is disabled.
 
 **Pre-calculated mouse positions**
 
-There are three different types of mouse positions: **Raw positions** are from mouse event listener directly and records the coordinates relative to the web page. **Board positions** records the coordinates relative to the board, which are calculating by combining the transform stream and raw position stream and [inverting](https://github.com/d3/d3-zoom#transform_invert) the position by the transform. **Adjusted position** are board positions processed by the adjuster.
+There are three different types of mouse positions: **Raw positions** are from mouse event listener directly and records the coordinates relative to the web page. **Board positions** records the coordinates relative to the board, which are calculating by combining the transform stream and raw position stream and [inverting](https://github.com/d3/d3-zoom#transform_invert) the position by the transform. **Adjusted positions** are board positions calculated by auto-adjust.
 
 We pre-calculate all types of mouse positions and pack them into the `mouse` object. For example, `mouse.rawDown$` is the stream that records the raw position of the mouse down event, and `mouse.down$` records the board position, and `mouse.adown$` records the adjusted board position.
 
-In different situations, we use different types of mouse positions. We use adjusted board positions when drawing a new shape. When the auto-adjust is disbled, we switch to board positions. And raw positions are useful when dragging the board. As a result of pre-calculating mouse positions, the logic of interaction is seperated from transformations among different types of mouse positions, which makes the interaction implementation clean and expressive.
+In different situations, we use different types of mouse positions. We use adjusted board positions when drawing a new shape. When the auto-adjust is disabled, we switch to board positions. And raw positions are useful when dragging the board. As a result of pre-calculating mouse positions, the logic of interaction is separated from transformations among different types of mouse positions, which makes the interaction implementation clean and expressive.
 
 #### Interaction Implementation
 
 Every interaction is implemented by an interaction function. Interaction functions have a common interface that each function takes a collection of streams as input and returns a collection of output streams. Input streams tell the interaction functions _what's the current state_ and _what does the user do_. For example, `keyboard` are a typical input stream container that records the keyboard usages, and `mode$` tells the interaction functions what is the current mode. Output streams returned from interaction functions in turn tells the main function _what should be updated and how to update them_. For example, `nextMode$` is a typical output stream that decides the next mode.
 
-The `mode$` is the most important state in interaction implementation. The same mouse or keyboard events will be translated into different actions in different mode. And during different stages of an drawing operation, the mode is different reflecting the current drawing state. Here we pick the `drawRect` interaction function as the example to illustrate the common pattern of the interaction implementation.
+The `mode$` is the most important state in interaction implementation. The same mouse or keyboard events will be translated into different actions in different mode. And during different stages of an drawing operation, the mode is always reflecting the current drawing state. Here we pick the `drawRect` interaction function as the example to illustrate the common pattern of the interaction implementation.
 
 The below is a slim version of `drawRect`:
 
@@ -151,7 +151,7 @@ Code blocks 1-4 are logics at different stages.
 * Block 3: In `rect.drawing` mode, the mouse moving position will be the end point of the drawing rectangle. The segment from start point to end point is a diagonal of the drawing rectangle. We call `PolygonItem.rectFromPoints` to create a new polygon from the two points as the drawing preview.
 * Block 4: In `rect.drawing` mode, when mouse is released we peek `drawingRect$` to get the drawing rectangle and transform it into an action which will add an polygon to state.
 
-The above code maintains the mode at different stages, reacts to mouse events correctly according to the current mode, handles the drawing preview, and adds a new polygon when the drawing operation is completed. It is expressive thanks to mouse/keyboard abstraction and various operators for streams. Moreover, the above interaction function, in essence, is just a puer function that maps from input streams to output streams, which makes this code easy to understand and easy to test.
+The above code maintains the mode at different stages, reacts to mouse events correctly according to the current mode, handles the drawing preview, and adds a new polygon when the drawing operation is completed. It is expressive thanks to mouse/keyboard abstraction and various operators of streams. Moreover, the above interaction function, in essence, is just a pure function that maps from input streams to output streams, which makes this code easy to understand and easy to test.
 
 [inkscape]: https://inkscape.org/
 [microsoft visio]: https://products.office.com/en-us/visio/flowchart-software
