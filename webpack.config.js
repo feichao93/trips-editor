@@ -2,6 +2,7 @@ const webpack = require('webpack')
 const path = require('path')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
+const packageInfo = require('./package')
 
 module.exports = env => {
   env = env || {}
@@ -35,6 +36,8 @@ module.exports = env => {
       new HtmlWebpackPlugin({ template: 'src/template.html' }),
       new webpack.DefinePlugin({
         'node.env.NODE_ENV': JSON.stringify(isProduction ? 'production' : 'development'),
+        BUILD_VERSION: JSON.stringify(packageInfo.version),
+        BUILD_TIME: JSON.stringify(new Date().toString()),
       }),
       new webpack.ProvidePlugin({
         Snabbdom: 'snabbdom-pragma',

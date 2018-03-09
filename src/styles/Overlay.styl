@@ -1,0 +1,53 @@
+.overlay {
+  position absolute
+  top 0
+  right 0
+  bottom 0
+  left 0
+
+  .content {
+    position absolute
+    top 0
+    left 50%
+    z-index 10
+    width 700px
+    background white
+    padding 0 16px
+    box-shadow 1px 1px 5px 1px #9E9E9E
+    transform translate(-50%, -102%)
+    transition transform 250ms
+    &.show {
+      transform translate(-50%, 0)
+    }
+
+    p {
+      font-size 16px
+    }
+
+    .shortcut-list {
+      padding-left 8px
+      margin-bottom 16px
+      p {
+        margin 0.5em 0
+      }
+      b {
+        display inline-block
+        width 170px
+      }
+    }
+
+    .close {
+      position absolute
+      font-size 16px
+      top 16px
+      right 16px
+      border none
+      text-decoration underline
+      background none
+      cursor pointer
+      &:hover {
+        background lightsteelblue
+      }
+    }
+  }
+}

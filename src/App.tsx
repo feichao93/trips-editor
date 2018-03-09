@@ -1,16 +1,16 @@
 import { DOMSource, h, VNode } from '@cycle/dom'
 import isolate from '@cycle/isolate'
-import * as d3 from 'd3'
-import { List, Set } from 'immutable'
+import { Set } from 'immutable'
 import { identical } from 'ramda'
 import xs, { MemoryStream, Stream } from 'xstream'
 import Inspector from './components/Inspector'
 import Menubar from './components/Menubar'
 import StatusBar from './components/StatusBar'
 import Structure from './components/Structure'
+import Overlay from './components/Overlay'
 import Svg from './components/Svg'
 import interactions from './interaction'
-import { Action, AdjustConfig, AppConfig, Item, ItemId, SaveConfig, State } from './interfaces'
+import { Action, AdjustConfig, AppConfig, Item, ItemId, SaveConfig } from './interfaces'
 import { DialogRequest, FileStat } from './makeFileDriver'
 import { KeyboardSource } from './makeKeyboardDriver'
 import './styles/app.styl'
@@ -159,10 +159,41 @@ export default function App(sources: Sources): Sinks {
   nextVertexIndexProxy$.imitate(mergeSinks(allSinks, 'nextVertexIndex'))
   nextVertexInsertIndexProxy$.imitate(mergeSinks(allSinks, 'nextVertexInsertIndex'))
 
+  const closeOverlayProxy$ = xs.create<any>()
+  const overlayType$ = xs
+    .merge(
+      UI.intent('show-about').mapTo('about'),
+      UI.intent('show-shortcut').mapTo('shortcut'),
+      closeOverlayProxy$.mapTo(null),
+      keyboard.shortcut('esc').mapTo(null),
+    )
+    .startWith(null)
+  const overlay = isolate(Overlay, 'overlay')({ overlayType: overlayType$, DOM: domSource })
+  closeOverlayProxy$.imitate(overlay.closeOverlay)
+  const showOverlay$ = overlayType$.map(Boolean)
+
   const vdom$ = xs
-    .combine(menubar.DOM, svg.DOM, structure.DOM, inspector.DOM, statusBar.DOM)
-    .map(([menubar, svg, structure, inspector, statusBar]) =>
-      h('div.app', [menubar, h('main', [/*structure,*/ svg, inspector]), statusBar]),
+    .combine(
+      showOverlay$,
+      overlay.DOM,
+      menubar.DOM,
+      svg.DOM,
+      structure.DOM,
+      inspector.DOM,
+      statusBar.DOM,
+    )
+    .map(([showOverlay, overlay, menubar, svg, structure, inspector, statusBar]) =>
+      h(
+        'div',
+        [
+          overlay,
+          h('div.app', { key: 'app', style: { filter: showOverlay ? 'blur(3px)' : 'blur(0)' } }, [
+            menubar,
+            h('main', [/*structure,*/ svg, inspector]),
+            statusBar,
+          ]),
+        ].filter(Boolean),
+      ),
     )
 
   return {

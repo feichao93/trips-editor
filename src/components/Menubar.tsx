@@ -145,6 +145,10 @@ export default function Menubar({
           <MenuItem name="Fit" intent="zoom-to-fit" hint="Num 2" />
           <MenuItem name="Reset Zoom" intent="reset-zoom" hint="Num 3" />
         </MenuCategory>
+        <MenuCategory category="Help" active={activeCategory === 'Help'}>
+          <MenuItem name="About" intent="show-about" />
+          <MenuItem name="Shortcut" intent="show-shortcut" />
+        </MenuCategory>
       </div>
     ))
 
