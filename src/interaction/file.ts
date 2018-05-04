@@ -28,9 +28,6 @@ const file: Component = ({ FILE, UI, keyboard, state: state$ }) => {
   const loadState$ = loadedState$.map(newState => new LoadAction(newState))
   const toIdleMode$ = loadedState$.mapTo('idle')
 
-  /* Menubar File -> Export as SVG */
-  // TODO export as svg
-
   /* Menubar File -> Load Image */
   const openImageFileDialog$ = UI.intent('load-image').mapTo<DialogRequest>({
     type: 'dialog',

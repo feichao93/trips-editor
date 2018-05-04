@@ -74,7 +74,6 @@ export default function Svg(sources: ComponentSources): Partial<ComponentSinks> 
 
   const indicatorsVdom$ = xs
     .combine(
-      // TODO why the following streams need `startWith`
       selectionIndicator.DOM.startWith(null),
       vertexInsertIndicator.DOM.startWith(null),
       verticesIndicator.DOM.startWith(null),

@@ -100,7 +100,6 @@ export default function Menubar({
         <MenuCategory category="File" active={activeCategory === 'File'}>
           <MenuItem name="Save as JSON" intent="save" />
           <MenuItem name="Load JSON" intent="load-data" />
-          <MenuItem name="Export as SVG" disabled />
           <MenuItem name="Load Image" intent="load-image" />
         </MenuCategory>
         <MenuCategory category="Edit" active={activeCategory === 'Edit'}>
