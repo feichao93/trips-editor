@@ -1,4 +1,4 @@
-# Editor
+# trips-editor
 
 ## Motivation
 
