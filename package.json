@@ -6,8 +6,8 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "start": "webpack-dev-server",
-    "build": "webpack --env.prod",
+    "start": "webpack-dev-server --mode development",
+    "build": "webpack --mode production",
     "prettier": "prettier --write \"src/**/*.{ts,tsx,js,jsx}\"",
     "gh-pages": "rm -rf build && yarn build && git checkout gh-pages && git pull && git rm index.html main.* && mv build/* . && git add index.html main.* && git commit -m update && git push && git checkout master"
   },
@@ -47,7 +47,6 @@
     "stylus-loader": "^3.0.2",
     "ts-loader": "^5.3.3",
     "typescript": "^3.4.1",
-    "uglifyjs-webpack-plugin": "^2.1.2",
     "webpack": "^4.29.6",
     "webpack-cli": "^3.3.0",
     "webpack-dev-server": "^3.2.1",

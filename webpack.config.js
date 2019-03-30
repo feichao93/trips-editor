@@ -1,16 +1,13 @@
 const webpack = require('webpack')
 const path = require('path')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
 const packageInfo = require('./package')
 
-module.exports = env => {
-  env = env || {}
-  const isProduction = env.prod
+module.exports = (env, argv) => {
+  const isProduction = argv.mode === 'production'
 
   return {
     context: __dirname,
-    devtool: isProduction ? false : 'source-map',
 
     entry: './src/main.tsx',
 
@@ -35,18 +32,13 @@ module.exports = env => {
     plugins: [
       new HtmlWebpackPlugin({ template: 'src/template.html' }),
       new webpack.DefinePlugin({
-        'node.env.NODE_ENV': JSON.stringify(isProduction ? 'production' : 'development'),
         BUILD_VERSION: JSON.stringify(packageInfo.version),
         BUILD_TIME: JSON.stringify(new Date().toString()),
       }),
       new webpack.ProvidePlugin({
         Snabbdom: 'snabbdom-pragma',
       }),
-    ].concat(
-      isProduction
-        ? [new UglifyJsPlugin({ uglifyOptions: { compress: { inline: false } } })]
-        : [new webpack.NamedModulesPlugin(), new webpack.HotModuleReplacementPlugin()],
-    ),
+    ],
 
     devServer: {
       hot: true,
