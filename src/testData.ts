@@ -3,7 +3,7 @@ export default {
     {
       type: 'ImgItem',
       id: 1,
-      locked: true,
+      locked: false,
       label: '',
       tags: [],
       opacity: 0.4,
@@ -18,7 +18,7 @@ export default {
     {
       type: 'PolygonItem',
       id: 2,
-      locked: true,
+      locked: false,
       sem: {
         label: 'Toy Shop',
         show: true,
@@ -53,7 +53,7 @@ export default {
     {
       type: 'PolygonItem',
       id: 3,
-      locked: true,
+      locked: false,
       sem: {
         label: 'Electronics Shop',
         show: true,
@@ -88,7 +88,7 @@ export default {
     {
       type: 'PolygonItem',
       id: 4,
-      locked: true,
+      locked: false,
       sem: {
         label: 'Souvenir Shop',
         show: true,
@@ -123,7 +123,7 @@ export default {
     {
       type: 'PolygonItem',
       id: 5,
-      locked: true,
+      locked: false,
       sem: {
         label: 'Northern Hall',
         show: true,
@@ -158,7 +158,7 @@ export default {
     {
       type: 'PolylineItem',
       id: 6,
-      locked: true,
+      locked: false,
       sem: {
         label: '',
         show: true,
@@ -185,7 +185,7 @@ export default {
     {
       type: 'PolylineItem',
       id: 7,
-      locked: true,
+      locked: false,
       sem: {
         label: '',
         show: true,
@@ -212,7 +212,7 @@ export default {
     {
       type: 'PolylineItem',
       id: 8,
-      locked: true,
+      locked: false,
       sem: {
         label: '',
         show: true,
@@ -239,7 +239,7 @@ export default {
     {
       type: 'PolylineItem',
       id: 9,
-      locked: true,
+      locked: false,
       sem: {
         label: '',
         show: true,
@@ -266,7 +266,7 @@ export default {
     {
       type: 'PolygonItem',
       id: 11,
-      locked: true,
+      locked: false,
       sem: {
         label: 'Info\\nDesk',
         show: true,
@@ -317,7 +317,7 @@ export default {
     {
       type: 'PolygonItem',
       id: 12,
-      locked: true,
+      locked: false,
       sem: {
         label: 'Center Hall',
         show: true,
@@ -352,7 +352,7 @@ export default {
     {
       type: 'PolygonItem',
       id: 13,
-      locked: true,
+      locked: false,
       sem: {
         label: 'Cafe',
         show: true,
@@ -387,7 +387,7 @@ export default {
     {
       type: 'PolygonItem',
       id: 14,
-      locked: true,
+      locked: false,
       sem: {
         label: 'MCM',
         show: true,
@@ -422,7 +422,7 @@ export default {
     {
       type: 'PolygonItem',
       id: 15,
-      locked: true,
+      locked: false,
       sem: {
         label: 'Eastern\\nHall',
         show: true,
@@ -457,7 +457,7 @@ export default {
     {
       type: 'PolygonItem',
       id: 16,
-      locked: true,
+      locked: false,
       sem: {
         label: 'Snack Bar',
         show: true,
@@ -492,7 +492,7 @@ export default {
     {
       type: 'PolygonItem',
       id: 17,
-      locked: true,
+      locked: false,
       sem: {
         label: 'Chanel',
         show: true,
@@ -527,7 +527,7 @@ export default {
     {
       type: 'PolygonItem',
       id: 18,
-      locked: true,
+      locked: false,
       sem: {
         label: 'Western\\nHall',
         show: true,
@@ -562,7 +562,7 @@ export default {
     {
       type: 'PolygonItem',
       id: 19,
-      locked: true,
+      locked: false,
       sem: {
         label: '',
         show: true,
@@ -597,7 +597,7 @@ export default {
     {
       type: 'PolylineItem',
       id: 20,
-      locked: true,
+      locked: false,
       sem: {
         label: '',
         show: true,
@@ -624,7 +624,7 @@ export default {
     {
       type: 'PolylineItem',
       id: 21,
-      locked: true,
+      locked: false,
       sem: {
         label: '',
         show: true,
@@ -651,7 +651,7 @@ export default {
     {
       type: 'PolylineItem',
       id: 22,
-      locked: true,
+      locked: false,
       sem: {
         label: '',
         show: true,
@@ -678,7 +678,7 @@ export default {
     {
       type: 'PolylineItem',
       id: 23,
-      locked: true,
+      locked: false,
       sem: {
         label: '',
         show: true,

@@ -8,8 +8,8 @@
     "jsxFactory": "Snabbdom.createElement",
     "noImplicitReturns": true,
     "noImplicitAny": true,
-    "allowJs": true,
-    "noStrictGenericChecks": true
+    "noStrictGenericChecks": true,
+    "skipLibCheck": true
   },
-  "exclude": ["node_modules"]
+  "include": ["src", "custom-typings.d.ts"]
 }

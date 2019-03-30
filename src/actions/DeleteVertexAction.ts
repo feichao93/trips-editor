@@ -8,14 +8,14 @@ export default class DeleteVertexAction extends Action {
   }
 
   prepare(h: AppHistory): AppHistory {
-    this.prevItem = h.state.items.get(h.state.selIdSet.first())
+    this.prevItem = h.state.items.get(h.state.selIdSet.first() as number)
     return h
   }
 
   next(state: State) {
     return state.update('items', items =>
       items.update(
-        state.selIdSet.first(),
+        state.selIdSet.first() as number,
         item => (item.supportEditVertex() ? item.deleteVertex(this.vertexIndex) : item),
       ),
     )

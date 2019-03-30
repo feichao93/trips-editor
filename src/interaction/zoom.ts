@@ -98,7 +98,7 @@ const zoom: Component = ({
     .shortcut('1')
     .whenNot(state$, state => state.selIdSet.isEmpty())
     .peek(state$)
-    .map(state => ({ itemId: state.selIdSet.first() }))
+    .map(state => ({ itemId: state.selIdSet.first() as number }))
 
   const toItemZoomConfig$: Stream<ZoomConfig> = xs
     .merge(
@@ -107,7 +107,7 @@ const zoom: Component = ({
       UI.intent('zoom-to-sel').peek(
         state$
           .filter(s => !s.selIdSet.isEmpty())
-          .map(state => state.selIdSet.first())
+          .map(state => state.selIdSet.first() as number)
           .map(itemId => ({ itemId })),
       ),
     )

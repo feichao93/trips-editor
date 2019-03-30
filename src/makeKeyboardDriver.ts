@@ -49,11 +49,7 @@ export class KeyboardSource {
             key,
             (e: KeyboardEvent, combo: string | string[]) => {
               listener.next(e)
-              if (config.noPreventDefault) {
-                return true
-              } else {
-                return false
-              }
+              return config.noPreventDefault
             },
             type,
           )

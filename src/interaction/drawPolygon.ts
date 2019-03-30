@@ -84,7 +84,7 @@ const drawPolygon: Component = ({
     .combine(mode$, canClose$)
     .checkedFlatMap(
       ([mode, canClose]) => mode === 'polygon' && canClose,
-      () => points$.map(points => points.first()),
+      () => points$.map(points => points.first() as Point),
     )
     .checkedFlatMap(p =>
       xs.combine(state$, config$).map(([{ transform }, config]) =>

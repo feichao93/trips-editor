@@ -1,4 +1,5 @@
 import { Action, Point, State, Item, AppHistory } from '../interfaces'
+import { updateIn } from 'typed-immutable'
 
 type InsertVertexConfig = [Point, number]
 
@@ -16,9 +17,8 @@ export default class InsertVertexAction extends Action {
 
   next(state: State) {
     const [pos, insertIndex] = this.config
-    return state.updateIn(
-      ['items', state.selIdSet.first()],
-      (item: Item) => (item.supportEditVertex() ? item.insertVertex(insertIndex, pos) : item),
+    return updateIn(state, <const>['items', state.selIdSet.first() as number], (item: Item) =>
+      item.supportEditVertex() ? item.insertVertex(insertIndex, pos) : item,
     )
   }
 

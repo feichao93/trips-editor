@@ -33,7 +33,7 @@ export default function Overlay({ overlayType: overlayType$, DOM: domSource }: S
           </p>
           <p>
             If you're interested in this editor, you can view documentation on{' '}
-            <a href="https://github.com/shinima/editor" target="_blank">
+            <a href="https://github.com/shinima/trips-editor" target="_blank">
               GitHub
             </a>. There is also{' '}
             <a href="https://zhuanlan.zhihu.com/p/34026505" target="_blank">

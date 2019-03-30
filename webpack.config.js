@@ -24,7 +24,7 @@ module.exports = env => {
     },
 
     module: {
-      loaders: [
+      rules: [
         { test: /\.tsx?$/, loaders: ['ts-loader'] },
         { test: /\.css$/, loaders: ['style-loader', 'css-loader'] },
         { test: /\.styl$/, loaders: ['style-loader', 'css-loader', 'stylus-loader'] },

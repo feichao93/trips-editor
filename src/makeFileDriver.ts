@@ -1,5 +1,4 @@
 import xs, { Stream } from 'xstream'
-import { identical } from 'ramda'
 
 export type FileStat = ImgFileStat | TextFileStat
 
@@ -74,7 +73,7 @@ export default function makeFileDriver() {
               const reader = new FileReader()
               reader.readAsText(file)
               reader.onloadend = () => {
-                const content: string = reader.result
+                const content = reader.result as string
                 listener.next({
                   file,
                   content,

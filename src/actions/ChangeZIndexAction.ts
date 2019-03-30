@@ -20,7 +20,7 @@ export default class ChangeZIndexAction extends Action {
     if (idSet.count() !== 1) {
       return state
     } else {
-      const sid = idSet.first()
+      const sid = idSet.first() as number
       const zlist = state.zlist
       const oldZ = zlist.indexOf(sid)
       const zs = zlist.delete(oldZ)

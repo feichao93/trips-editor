@@ -53,7 +53,7 @@ export default function Inspector(sources: Sources): Sinks {
   )
 
   const tabName$ = nextTabName$
-    .startWith('history')
+    .startWith('geometric')
     .dropRepeats()
     .remember()
 

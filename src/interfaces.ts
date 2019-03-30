@@ -155,7 +155,7 @@ export type AdjustResultExtraInfo = Partial<{
 export interface AppConfig {
   meta: {
     type: 'editor-config'
-    vertion: 0.7
+    version: 0.7
   }
   minScale: number
   maxScale: number

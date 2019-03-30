@@ -8,7 +8,7 @@ The editor could help us build up the topological relations from a image file. T
 
 While the editor is created originally for our algorithm, the editor itself is just a good SVG editor which focuses on editing polygons/polylines and attaching semantic data to them. The editor should be easy to be reused in other situations.
 
-![screenshots](docs/editor.jpg)
+![screenshots](/docs/screenshot.jpg)
 
 ## User Interface
 
@@ -155,5 +155,5 @@ The above code maintains the mode at different stages, reacts to mouse events co
 
 [inkscape]: https://inkscape.org/
 [microsoft visio]: https://products.office.com/en-us/visio/flowchart-software
-[repo]: https://github.com/shinima/editor
+[repo]: https://github.com/shinima/trips-editor
 [rp]: https://en.wikipedia.org/wiki/Reactive_programming

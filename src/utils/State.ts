@@ -1,7 +1,7 @@
 import * as d3 from 'd3'
 import { List, Map, OrderedSet, Record } from 'immutable'
 import { getBoundingBoxOfPoints } from './common'
-import { Item, ItemId } from '../interfaces'
+import { Item, ItemId, Point } from '../interfaces'
 
 export type SelMode = 'bbox' | 'vertices'
 
@@ -21,7 +21,7 @@ export default class State extends StateRecord {
   vertices() {
     const item = this.sitem()
     if (this.selMode !== 'vertices' || item == null) {
-      return List()
+      return List<Point>()
     } else {
       return item.getVertices()
     }
