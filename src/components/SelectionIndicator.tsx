@@ -174,10 +174,10 @@ export default function SelectedItemsIndicator({ mouse, state: state$ }: Sources
     const { k, bbox, Shape, showShape } = shapeConfig
     const { x, y, width, height } = bbox
     return (
-      <g role="selected-items-indicator">
+      <g className="selection-indicator">
         <BBoxIndicator bbox={bbox} k={k} />
         {showShape ? (
-          <g>
+          <g className="resizer">
             <Shape k={k} x={x} y={y} />
             <Shape k={k} x={x + width / 2} y={y} />
             <Shape k={k} x={x + width} y={y} />

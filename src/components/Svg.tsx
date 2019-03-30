@@ -67,10 +67,10 @@ export default function Svg(sources: ComponentSources): Partial<ComponentSinks> 
     .events('wheel')
     .map(e => ({ pos: e, deltaY: e.deltaY }))
 
-  const selectionIndicator = isolate(SelectionIndicator)(sources)
-  const verticesIndicator = isolate(VerticesIndicator)(sources)
-  const vertexInsertIndicator = isolate(VertexInsertIndicator)(sources)
-  const adjustIndicator = isolate(AdjustIndicator)(sources)
+  const selectionIndicator = isolate(SelectionIndicator, '.selection-indicator')(sources)
+  const verticesIndicator = isolate(VerticesIndicator, '.vertices-indicator')(sources)
+  const vertexInsertIndicator = isolate(VertexInsertIndicator, '.vertex-insert-indicator')(sources)
+  const adjustIndicator = isolate(AdjustIndicator, '.adjust-indicator')(sources)
 
   const indicatorsVdom$ = xs
     .combine(

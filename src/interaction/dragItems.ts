@@ -5,15 +5,7 @@ import ChangeSelAction from '../actions/ChangeSelAction'
 import MoveItemsAction from '../actions/MoveItemsAction'
 import { Component } from '../interfaces'
 
-function toggle<T>(set: Set<T>, t: T) {
-  if (set.has(t)) {
-    return set.remove(t)
-  } else {
-    return set.add(t)
-  }
-}
-
-const dragItems: Component = ({ mouse, mode: mode$, state: state$, keyboard }) => {
+const dragItems: Component = ({ mouse, mode: mode$, state: state$ }) => {
   const posAndClickItemId$ = mouse.down$
     .when(mode$, identical('idle'))
     .whenNot(mouse.isBusy$)
