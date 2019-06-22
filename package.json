@@ -35,6 +35,9 @@
     "typed-immutable": "shinima/typed-immutable",
     "xstream": "^11.10.0"
   },
+  "resolutions": {
+    "js-yaml": "3.13.1"
+  },
   "devDependencies": {
     "@types/node": "^11.12.2",
     "css-loader": "^2.1.1",
